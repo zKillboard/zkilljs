@@ -7,8 +7,7 @@ A rewrite of zkillboard using JavaScript Node and NPM packages.
 ## TODO
 
 ### Backend
-- fetch all wars
-- fetch war details
+- fetch war killmails
 - character apis
 - corporation apis
 - fetch insurance
@@ -37,7 +36,7 @@ A rewrite of zkillboard using JavaScript Node and NPM packages.
 - Top chars, corps, allis, ships
 - golden wrecks list
 - Map (will need a complete overhaul, so big big maybe)
-- Menu with Abyssal, Abyssal PVP, Awox, Bi Kills, Citadels, Ganked, Solo, Sponsored, Highsec, Lowsec, Nullsec, W-Space, 5b+, 10b+, Capitals, Freighters, Rorquals, Supers
+- Menu with Abyssal, Abyssal PVP, Awox, Big Kills, Citadels, Ganked, Solo, Sponsored, Highsec, Lowsec, Nullsec, W-Space, 5b+, 10b+, Capitals, Freighters, Rorquals, Supers
 - Tracker, based on logged in char, corp, alli, etc. allow for any entity type
 - Post killmails \o/
 - Golden Wreck page
@@ -66,6 +65,7 @@ A rewrite of zkillboard using JavaScript Node and NPM packages.
 - implement hasSupers to show hasSupers on alli/corp pages (maybe?)
 
 ## Completed
+- Implemented Cron Instance (crinstance). Allows to the second cron type scheduling ensuring only one instance of a function is executing at a time.
 - Fetch Dailies (from php zkill)
 - Fetch location information (Thank you FuzzySteve)
 - Fetch killmails from ESI
@@ -75,3 +75,5 @@ A rewrite of zkillboard using JavaScript Node and NPM packages.
 - Populate/Update Locations (using fetched location information)
 - Populate/Update Information for: item_id, group_id, character_id, corporation_id, alliance_id, solar_system_id, constellation_id, region_id
 - Populate/Update Prices (also currently using older zkill prices to fill in older data)
+- fetch all wars
+- fetch war details

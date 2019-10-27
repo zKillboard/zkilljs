@@ -22,7 +22,8 @@ var urls = {
     'category_id': '/v1/universe/categories/:id/',
     'solar_system_id': '/v4/universe/systems/:id/',
     'constellation_id': '/v1/universe/constellations/:id/',
-    'region_id': '/v1/universe/regions/:id/'
+    'region_id': '/v1/universe/regions/:id/',
+    'war_id': '/v1/wars/:id/'
 };
 
 async function f(app, iteration) {
@@ -90,10 +91,14 @@ async function parse(app, res, options) {
             var body = JSON.parse(res.body);
             body.last_updated = now;
             body.etag = res.headers.etag;
+            if (options.type == 'war_id') {
+                // Special case for wars, something with this war changed
+                body.check_wars = true;
+            }
             await app.db.information.updateOne(options, {
                 $set: body
             });
-            if (options.name != body.name) console.log('Added ' + options.type + ' ' + options.id + ' ' + body.name);
+            //if (options.name != body.name) console.log('Added ' + options.type + ' ' + options.id + ' ' + body.name);
 
 
             let keys = Object.keys(body);

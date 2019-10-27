@@ -44,6 +44,9 @@ let tasks = {
     'update_factions.js': {
         span: 86400
     },
+    'fetch_wars.js': {
+        span: 9600
+    }
 }
 
 // Clear existing running keys

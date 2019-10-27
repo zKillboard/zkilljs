@@ -84,7 +84,10 @@ async function parse_mail(app, killhash) {
             }
         }
 
-        if (rawmail.war_id != undefined) addTypeId(app, involved, 'war_id', rawmail.war_id);
+        if (rawmail.war_id != undefined) {
+            addTypeId(app, involved, 'war_id', rawmail.war_id);
+            await app.util.entity.add(app, 'war_id', rawmail.war_id, false);
+        }
 
         const npc = await isNPC(rawmail);
         const labels = [];
