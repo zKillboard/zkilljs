@@ -7,7 +7,6 @@ A rewrite of zkillboard using JavaScript Node and NPM packages.
 ## TODO
 
 ### Backend
-- fetch war killmails
 - character apis
 - corporation apis
 - fetch insurance
@@ -77,3 +76,4 @@ A rewrite of zkillboard using JavaScript Node and NPM packages.
 - Populate/Update Prices (also currently using older zkill prices to fill in older data)
 - fetch all wars
 - fetch war details
+- fetch war killmails

@@ -46,7 +46,10 @@ let tasks = {
     },
     'fetch_wars.js': {
         span: 9600
-    }
+    },
+    'fetch_warmails': {
+        span: 1
+    },
 }
 
 // Clear existing running keys

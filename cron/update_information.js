@@ -77,15 +77,6 @@ async function fetchType(app, type, dayAgo) {
 async function parse(app, res, options) {
     try {
         let now = Math.floor(Date.now() / 1000);
-        if (res.statusCode == 304) { // ETAG match
-            await app.db.information.updateOne(options, {
-                $set: {
-                    last_updated: now
-                }
-            });
-            return;
-        }
-
         switch (res.statusCode) {
         case 200:
             var body = JSON.parse(res.body);
@@ -119,6 +110,13 @@ async function parse(app, res, options) {
             }
 
             return true;
+            break;
+        case 304: // ETAG match
+            await app.db.information.updateOne(options, {
+                $set: {
+                    last_updated: now
+                }
+            });
             break;
         case 404:
             console.log(options, '404 ' + res.statusCode);
