@@ -1,0 +1,4 @@
+.dropbox
+.env
+node_modules
+restart.txt
