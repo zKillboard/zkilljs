@@ -62,6 +62,7 @@ async function populateSet(app) {
             fetched++;
         }
         if (fetched == 0) await app.sleep(1000);
+        while (set.size > 0) await app.sleep(1);
     } catch (e) {
         console.log(e);
     } finally {
