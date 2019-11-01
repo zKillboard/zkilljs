@@ -77,3 +77,4 @@ A rewrite of zkillboard using JavaScript Node and NPM packages.
 - fetch all wars
 - fetch war details
 - fetch war killmails
+- Implemented sets to allow simultaneous processing while preventing too much happening at once
