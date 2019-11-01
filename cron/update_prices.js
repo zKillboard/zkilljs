@@ -1,6 +1,8 @@
 'use strict';
 
 async function f(app) {
+    if (await app.redis.get("zkb:no_parsing") == "true") return;
+    
     let todays_price_key = app.util.price.get_todays_price_key();
     let now = new Date();
 

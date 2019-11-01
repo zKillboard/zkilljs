@@ -1,6 +1,8 @@
 'use strict';
 
 async function f(app) {
+    if (await app.redis.get("zkb:no_parsing") == "true") return;
+    
     let row = await app.db.information.findOne({
         check_wars: true
     });

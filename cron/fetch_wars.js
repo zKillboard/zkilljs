@@ -1,6 +1,9 @@
 'use strict';
 
 async function f(app) {
+    if (await app.redis.get("zkb:no_parsing") == "true") return;
+    return;
+    
     let res, json, min_id = 9999999999;
     do {
     	if (app.bailing) throw 'fetch_wars.js bailing';
@@ -10,6 +13,7 @@ async function f(app) {
             json = JSON.parse(res.body);
 
             for (let war_id of json) {
+                if (app.bailing) throw 'fetch_wars.js bailing';
                 min_id = Math.min(min_id, war_id);
                 if (await app.db.information.countDocuments({
                         type: 'war_id',
@@ -19,6 +23,7 @@ async function f(app) {
                 }
             }
         } else json = [];
+        await app.sleep(50);
     } while (json.length > 0 && min_id > 1);
 }
 

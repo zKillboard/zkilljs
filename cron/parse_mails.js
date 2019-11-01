@@ -5,10 +5,14 @@ module.exports = f;
 const no_solo_ships = [29, 31, 237];
 
 let sequence = undefined;
+const queryLimit = 1000;
+const noAction = "zkb:no_stats";
+
+
+const set = new Set();
+var firstRun = true;
 
 async function f(app) {
-    //if (await app.db.killhashes.countDocuments({status: 'pending'}) > 100 ) return;
-
     if (sequence === undefined) {
         let resultset = await app.db.killmails.find({}).sort({
             sequence: -1
@@ -16,21 +20,47 @@ async function f(app) {
         sequence = (resultset.length == 0) ? 0 : resultset[0].sequence;
     }
 
-    let killhashes = await app.db.killhashes.find({
-        status: 'fetched'
-    }).limit(1000).toArray();
-
-    let promises = [];
-    for (let killhash of killhashes) {
-        if (app.bailout == true) break;
-
-        promises.push(parse_mail(app, killhash));
+    if (firstRun) {
+        firstRun = false;
+        populateSet(app);
     }
-    await app.waitfor(promises);
+
+    await app.sleep(1000);
+    while (app.bailout && set.size > 0) await app.sleep(1000);
+}
+
+async function populateSet(app) {
+    try {
+        if (await app.redis.get("zkb:no_parsing") == "true") return;
+
+        let killhashes = await app.db.killhashes.find({
+            status: 'fetched'
+        }).batchSize(1000);
+
+        let parsed = 0;
+        while (await killhashes.hasNext()) {
+            if (app.bailout == true) break;
+
+            parse_mail(app, await killhashes.next());
+            while (set.size >= 10) await app.sleep(1);
+
+            parsed++;
+            if (parsed % 1000 == 0) await app.redis.setex(noAction, 300, "true");
+        }
+        if (parsed < 1000) await app.redis.del(noAction);
+        while (set.size > 0) await app.sleep(1);
+    } catch (e) {
+        console.log(e);
+    } finally {
+        await app.sleep(1000);
+        populateSet(app);
+    }
 }
 
 async function parse_mail(app, killhash) {
     try {
+        set.add(killhash);
+
         if (killhash == null) return;
         var killmail = {};
         killmail.killmail_id = killhash.killmail_id;
@@ -134,6 +164,8 @@ async function parse_mail(app, killhash) {
         });
     } catch (e) {
         console.trace(e);
+    } finally {
+        set.delete(killhash);
     }
 }
 

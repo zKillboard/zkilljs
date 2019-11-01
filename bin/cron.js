@@ -14,50 +14,38 @@ if (process.argv[2]) {
     return;
 }
 
-let tasks = {
-    'listen_redisq.js': {
-        span: 60
-    },
-    'update_prices': {
-        span: 1
-    },
+function createTaskSettings(span = 1, iterations = 0) {
+    return {
+        span: span,
+        iterations: iterations
+    }
+}
 
-    'fetch_mails.js': {
-        span: 1
-    },
-    'fetch_locations.js': {
-        span: 1
-    },
-    'update_information.js': {
-        span: 1,
-        iterations: 10
-    },
-    'parse_mails': {
-        span: 1
-    },
-    'do_stats': {
-        span: 1
-    },
-    'fetch_dailies': {
-        span: 1
-    },
-    'update_factions.js': {
-        span: 86400
-    },
-    'fetch_wars.js': {
-        span: 9600
-    },
-    'fetch_warmails': {
-        span: 1
-    },
+const tasks = {
+    // maintenance fun
+    'update_prices': createTaskSettings(1),
+    'update_factions.js': createTaskSettings(86400),
+    'update_information.js': createTaskSettings(1),
+    'fetch_locations.js': createTaskSettings(1),
+    'fetch_wars.js': createTaskSettings(9600),
+
+    // killmail producers
+    'listen_redisq.js': createTaskSettings(60),
+    'fetch_warmails': createTaskSettings(1),
+    'fetch_dailies': createTaskSettings(86400),
+
+    // killmail consumers
+    'fetch_mails.js': createTaskSettings(1),
+    'parse_mails': createTaskSettings(1),
+    //'do_stats': createTaskSettings(1),
 }
 
 // Clear existing running keys
 setTimeout(function () {
-    clearRunKeys(undefined);
+    clearRunKeys();
 }, 1);
-async function clearRunKeys(app) {
-    app = await getApp();
+async function clearRunKeys() {
+    let app = await getApp();
     let runkeys = await app.redis.keys('crinstance:running*');
     for (let i = 0; i < runkeys.length; i++) {
         await app.redis.del(runkeys[i]);
@@ -90,8 +78,8 @@ async function runTasks(app, tasks) {
     let arr = Object.keys(tasks);
     for (let i = 0; i < arr.length; i++) {
         let task = arr[i];
-        let taskConfig = tasks[task];
-        let currentSpan = now - (now % taskConfig.span);
+        let taskConfig = tasks[task] || {};
+        let currentSpan = now - (now % (taskConfig.span || 1));
         let iterations = taskConfig.iterations || 1;
 
         for (let j = 0; j < iterations; j++) {

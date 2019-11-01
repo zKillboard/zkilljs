@@ -25,72 +25,77 @@ var urls = {
     'region_id': '/v1/universe/regions/:id/',
     'war_id': '/v1/wars/:id/'
 };
+var types = Object.keys(urls);
 
-async function f(app, iteration) {
-    const dayAgo = Math.floor(Date.now() / 1000) - 86400;
-    let now = Date.now();
+const set = new Set();
+var firstRun = true;
 
-    if (iteration >= urls.length) return;
-    let types = Object.keys(urls);
-    let type = types[iteration];
+async function f(app) {
+    if (firstRun) {
+        firstRun = false;
+        populateSet(app);
+    }
 
-    if (type != undefined) await fetchType(app, type, dayAgo);
+    await app.sleep(1000);
+    while (app.bailout && set.size > 0) await app.sleep(1000);
+    while (set.size) await app.sleep(1000);
 }
 
-async function fetchType(app, type, dayAgo) {
-    var promises = [];
+async function populateSet(app) {
+    try {
+        const fullStop = false && (await app.redis.get("zkb:no_parsing") == "true" || await app.redis.get("zkb:no_stats") == "true");
+        const dayAgo = (fullStop ? 1 : (Math.floor(Date.now() / 1000) - 86400));
 
-    let rows = await app.db.information.find({
-        type: type
-    }).limit(100).sort({
-        last_updated: 1
-    }).toArray();
+        let rows = await app.db.information.find({
+            last_updated: {
+                $lt: dayAgo
+            }
+        }).sort({last_updated: 1}).limit(1000); // Limit so we reset this query often
 
-    for (let i = 0; i < rows.length; i++) {
-        if (app.bailout == true) {
-            console.log('update_information: bailing');
-            break;
+        let fetched = 0;
+        while (await rows.hasNext()) {
+            if (app.bailout == true) break;
+
+            fetch(app, await rows.next());
+            while (set.size >= 100) await app.sleep(1);
+            await app.sleep(1);
+            fetched++;
         }
+        if (fetched == 0) await app.sleep(1000);
+    } catch (e) {
+        console.log(e);
+    } finally {
+        await app.sleep(1);
+        populateSet(app);
+    }
+}
 
-        let row = rows[i];
-        if (urls[row.type] == undefined) {
-            console.log('Not mapped: ' + row.type);
-            continue;
-        }
-        if (row.last_updated > dayAgo) continue;
-        if (urls[row.type] === false) continue;
-
+async function fetch(app, row) {
+    try {
+        set.add(row);
 
         let url = app.esi + urls[row.type].replace(':id', row.id);
-        promises.push(app.fetch({
+        let res = await app.phin({
             url: url,
             headers: {
                 'If-None-Match': row.etag || ''
             }
-        }, parse, failed, row));
-        await app.sleep(100);
-    }
+        });
 
-    await app.waitfor(promises);
-}
-
-async function parse(app, res, options) {
-    try {
         let now = Math.floor(Date.now() / 1000);
         switch (res.statusCode) {
         case 200:
             var body = JSON.parse(res.body);
             body.last_updated = now;
             body.etag = res.headers.etag;
-            if (options.type == 'war_id') {
+            if (row.type == 'war_id') {
                 // Special case for wars, something with this war changed
                 body.check_wars = true;
             }
-            await app.db.information.updateOne(options, {
+            await app.db.information.updateOne(row, {
                 $set: body
             });
-            //if (options.name != body.name) console.log('Added ' + options.type + ' ' + options.id + ' ' + body.name);
-
+            //if (row.name != body.row) console.log('Added ' + row.type + ' ' + row.id + ' ' + body.name);
 
             let keys = Object.keys(body);
             for (let key of keys) {
@@ -112,15 +117,15 @@ async function parse(app, res, options) {
             return true;
             break;
         case 304: // ETAG match
-            await app.db.information.updateOne(options, {
+            await app.db.information.updateOne(row, {
                 $set: {
                     last_updated: now
                 }
             });
             break;
         case 404:
-            console.log(options, '404 ' + res.statusCode);
-            await app.db.information.updateOne(options, {
+            console.log(row, '404 ' + res.statusCode);
+            await app.db.information.updateOne(row, {
                 $set: {
                     last_updated: now
                 }
@@ -135,19 +140,17 @@ async function parse(app, res, options) {
             break;
         case 502:
         case 504:
-            //console.log(options, '5xx ' + res.statusCode);
             break; // Try again later
         default:
-            console.log(options, 'Unhandled error code ' + res.statusCode);
+            console.log(row, 'Unhandled error code ' + res.statusCode);
         }
-    } catch (e) {
-        console.trace(e.stack);
-    }
-    return false;
-}
 
-async function failed(app, e, options) {
-    console.log(e);
+        return false;
+    } catch (e) {
+        console.log(e)
+    } finally {
+        set.delete(row);
+    }
 }
 
 module.exports = f;

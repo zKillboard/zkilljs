@@ -2,6 +2,9 @@
 
 const info_cache = {};
 
+const set = new Set(); // cache for keeping track of what has been inserted to information
+setInterval(function() { set.clear(); }, 900000)
+
 const entity = {
     async add(app, type, id, wait) {
         // check that type is string
@@ -12,6 +15,7 @@ const entity = {
 
         if (id <= 0) return;
         const key = type + ':' + id;
+        if (set.has(key)) return;
 
         let row = await app.db.information.findOne({
             type: type,
@@ -37,6 +41,7 @@ const entity = {
             }
         }
 
+        set.add(key);
         if (wait) await entity.wait(app, type, id);
     },
 

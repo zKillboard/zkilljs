@@ -38,6 +38,7 @@ async function f() {
         killmails: require('../util/killmails.js'),
         //points: require('../util/points.js'),
         price: require('../util/price.js'),
+        stats: require('../util/stats.js'),
     };
 
     app.cache = {
@@ -76,7 +77,13 @@ async function f() {
         useUnifiedTopology: true
     });
 
-    await client.connect();
+    try {
+        await client.connect();
+    } catch (e) {
+        // server not up? wait 15 seconds and exit, let the daemon restart us
+        await app.sleep(15);
+        process.exit();
+    }
     app.db = client.db(dbName);
     var collections = await app.db.listCollections().toArray();
     for (let i = 0; i < collections.length; i++) {
