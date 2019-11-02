@@ -38,21 +38,20 @@ async function f(app) {
 
     await app.sleep(1000);
     while (app.bailout && set.size > 0) await app.sleep(1000);
-    while (set.size) await app.sleep(1000);
 }
 
 async function populateSet(app) {
     try {
-        const fullStop = false && (await app.redis.get("zkb:no_parsing") == "true" || await app.redis.get("zkb:no_stats") == "true");
+        const fullStop = app.bailout || app.no_parsing || app.no_stats;
         const dayAgo = (fullStop ? 1 : (Math.floor(Date.now() / 1000) - 86400));
 
+        let fetched = 0;
         let rows = await app.db.information.find({
             last_updated: {
                 $lt: dayAgo
             }
         }).sort({last_updated: 1}).limit(1000); // Limit so we reset this query often
 
-        let fetched = 0;
         while (await rows.hasNext()) {
             if (app.bailout == true) break;
 
@@ -61,12 +60,11 @@ async function populateSet(app) {
             await app.sleep(1);
             fetched++;
         }
-        if (fetched == 0) await app.sleep(1000);
         while (set.size > 0) await app.sleep(1);
     } catch (e) {
         console.log(e);
     } finally {
-        await app.sleep(1);
+        await app.sleep(1000);
         populateSet(app);
     }
 }

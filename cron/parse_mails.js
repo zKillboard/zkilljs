@@ -5,9 +5,6 @@ module.exports = f;
 const no_solo_ships = [29, 31, 237];
 
 let sequence = undefined;
-const queryLimit = 1000;
-const noAction = "zkb:no_stats";
-
 
 const set = new Set();
 var firstRun = true;
@@ -31,7 +28,7 @@ async function f(app) {
 
 async function populateSet(app) {
     try {
-        if (await app.redis.get("zkb:no_parsing") == "true") return;
+        if (app.no_parsing) return;
 
         let killhashes = await app.db.killhashes.find({
             status: 'fetched'
@@ -45,9 +42,9 @@ async function populateSet(app) {
             while (set.size >= 10) await app.sleep(1);
 
             parsed++;
-            if (parsed % 1000 == 0) await app.redis.setex(noAction, 300, "true");
+            if (parsed % 1000 == 0) app.no_stats = true;
         }
-        if (parsed < 1000) await app.redis.del(noAction);
+        if (parsed < 1000) app.no_stats = false;
         while (set.size > 0) await app.sleep(1);
     } catch (e) {
         console.log(e);

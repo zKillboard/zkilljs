@@ -1,7 +1,7 @@
 'use strict';
 
 async function f(app) {
-    if (await app.redis.get("zkb:no_parsing") == "true") return;
+    if (app.no_parsing) return;
     return;
     
     let res, json, min_id = 9999999999;

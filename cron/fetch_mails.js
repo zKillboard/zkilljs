@@ -1,7 +1,5 @@
 module.exports = f;
 
-const queryLimit = 5000;
-
 const set = new Set();
 var firstRun = true;
 
@@ -28,18 +26,17 @@ async function populateSet(app) {
             }
 
             fetch(app, await mails.next());
-            await app.redis.setex("zkb:populateSet", 60, set.size);
             while (set.size >= 100) await app.sleep(1);
 
             // Do we seem to have a lot of mails to fetch?
             fetched++;
             if (fetched % 1000 == 0) {
-                await app.redis.setex("zkb:no_parsing", 300, "true");
-                await app.redis.setex("zkb:no_stats", 300, "true");
+                app.no_parsing = true;
+                app.no_stats = true;
             }
             await app.sleep(1);
         }
-        if (fetched < 1000) await app.redis.del("zkb:no_parsing");
+        if (fetched < 1000) app.no_parsing = false;
         while (set.size > 0) await app.sleep(1);
     } catch (e) {
         console.log(e);

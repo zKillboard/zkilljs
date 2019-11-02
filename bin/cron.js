@@ -31,13 +31,13 @@ const tasks = {
 
     // killmail producers
     'listen_redisq.js': createTaskSettings(60),
-    'fetch_warmails': createTaskSettings(1),
-    'fetch_dailies': createTaskSettings(86400),
+    //'fetch_warmails': createTaskSettings(1),
+    //'fetch_dailies': createTaskSettings(86400),
 
     // killmail consumers
     'fetch_mails.js': createTaskSettings(1),
     'parse_mails': createTaskSettings(1),
-    //'do_stats': createTaskSettings(1),
+    'do_stats': createTaskSettings(1),
 }
 
 // Clear existing running keys
@@ -46,7 +46,7 @@ setTimeout(function () {
 }, 1);
 async function clearRunKeys() {
     let app = await getApp();
-    let runkeys = await app.redis.keys('crinstance:running*');
+    let runkeys = await app.redis.keys('crin:running*');
     for (let i = 0; i < runkeys.length; i++) {
         await app.redis.del(runkeys[i]);
     }
@@ -59,8 +59,10 @@ async function runTasks(app, tasks) {
     if (await app.redis.get("STOP") != null || await app.redis.get("RESTART") != null) {
         console.log("STOPPING");
         app.bailout = true;
-        while ((await app.redis.keys("crinstance:running:*")).length > 0) {
-            console.log('Running: ', await app.redis.keys("crinstance:running:*"));
+        app.no_parsing = true;
+        app.no_stats = true;
+        while ((await app.redis.keys("crin:running:*")).length > 0) {
+            console.log('Running: ', await app.redis.keys("crin:running:*"));
             await app.sleep(1000);
         }
         if (await app.redis.get("RESTART") != null) {
@@ -83,8 +85,8 @@ async function runTasks(app, tasks) {
         let iterations = taskConfig.iterations || 1;
 
         for (let j = 0; j < iterations; j++) {
-            let curKey = 'crinstance:current:' + j + ':' + task + ':' + currentSpan;
-            let runKey = 'crinstance:running:' + j + ':' + task;
+            let curKey = 'crin:current:' + j + ':' + task + ':' + currentSpan;
+            let runKey = 'crin:running:' + j + ':' + task;
 
             if (await app.redis.get(curKey) != 'true' && await app.redis.get(runKey) != 'true') {
                 await app.redis.setex(curKey, taskConfig.span || 3600, 'true');
