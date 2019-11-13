@@ -6,7 +6,7 @@ const redis = require('async-redis').createClient({
 const phin = require('phin').defaults({
     'method': 'get',
     'headers': {
-        'User-Agent': 'zkillboard.com'
+        'User-Agent': 'zkillboard.dev (zkilljs)'
     }
 });
 
@@ -32,6 +32,8 @@ function redis_retry_strategy(options) {
 async function f() {
     const app = {};
 
+    app.totals = 0;
+
     app.util = {
         entity: require('../util/entity.js'),
         info: require('../util/info.js'),
@@ -44,10 +46,11 @@ async function f() {
     app.cache = {
         prices: {}
     };
+
     app.debug = false;
     app.bailout = false;
-    app.no_parsing = false;
-    app.no_stats = false;
+    app.no_parsing = true;
+    app.no_stats = true;
     app.error_count = 0;
     app.phin = phin;
     app.fetch = async function (url, parser, failure, options) {
@@ -59,7 +62,7 @@ async function f() {
     };
     app.redis = redis;
     app.esi = 'https://esi.evetech.net';
-    app.waitfor = async function (promises) {
+    app.waitfor = async function (promises, key = undefined) {
         for (let i = 0; i < promises.length; i++) {
             await promises[i];
         }
@@ -92,6 +95,14 @@ async function f() {
         console.log('Prepping ' + collections[i].name);
         app.db[collections[i].name] = app.db.collection(collections[i].name);
     }
+
+    app.zincr = function (key) {
+        app.redis.hincrby('ztop', key, 1);
+        setTimeout(function () {
+            app.redis.hincrby('ztop', key, -1);
+        }, 300000);
+    };
+    await app.redis.del('ztop');
 
     return app;
 }

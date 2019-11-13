@@ -17,8 +17,7 @@ async function f(app) {
         if (app.bailout == true) break;
         promises.push(update_price(app, row, todays_price_key));
     }
-    await app.waitfor(promises);
-    //console.log('done fetching');
+    await app.waitfor(promises, 'update_prices');
 }
 
 async function update_price(app, row, todays_price_key) {
@@ -48,6 +47,7 @@ async function update_price(app, row, todays_price_key) {
     console.log('Fetching price history for ' + item_id);
     let res = await app.phin(app.esi + '/v1/markets/10000002/history/?type_id=' + item_id);
     if (res.statusCode == 200) {
+        app.zincr('esi_fetched');
         let json = JSON.parse(res.body);
         for (const day of json) {
             if (row[day.date] == undefined) {

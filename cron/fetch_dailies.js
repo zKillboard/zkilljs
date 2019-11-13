@@ -10,14 +10,22 @@ async function f(app) {
         let res = await app.phin('https://zkillboard.com/api/history/totals.json');
         let json = JSON.parse(res.body);
         for (const [key, value] of Object.entries(json)) {
+            // Don't add it if the counts haven't been altered... 
+            let currentCount = await app.redis.hget("zkb:dailies_count", key);
+            if (parseInt(await app.redis.hget("zkb:dailies_lastcount", key)) == currentCount) continue;
+
             await app.redis.sadd("zkb:dailies", key);
+            await app.redis.hset("zkb:dailies_count", key, value);
         }
         await app.redis.setex(todaysKey, 86400, "true");
     }
 
     let key = await app.redis.spop("zkb:dailies");
     if (key == undefined || key == null) return;
-    console.log(key);
+
+    let currentCount = await app.redis.hget("zkb:dailies_count", key);
+    if (parseInt(await app.redis.hget("zkb:dailies_lastcount", key)) == currentCount) return;
+    console.log('Fetching daily: ' + key);
 
     let res = await app.phin('https://zkillboard.com/api/history/' + key + '.json');
     if (res.statusCode == 200) {
@@ -25,6 +33,7 @@ async function f(app) {
             await app.util.killmails.add(app, parseInt(id), hash);
         }
     }
+    await app.redis.hset("zkb:dailies_lastcount", key, currentCount);
 }
 
 module.exports = f;

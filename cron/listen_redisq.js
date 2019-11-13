@@ -5,6 +5,7 @@ let url = 'https://redisq.zkillboard.com/listen.php?ttw=1';
 async function f(app) {
     try {
         do {
+            if (app.bailout) return;
             let res = await app.phin(url);
             if (res.statusCode != 200) return;
 

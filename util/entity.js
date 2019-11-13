@@ -3,7 +3,7 @@
 const info_cache = {};
 
 const set = new Set(); // cache for keeping track of what has been inserted to information
-setInterval(function() { set.clear(); }, 900000)
+setInterval(function() { set.clear(); }, 900000);
 
 const entity = {
     async add(app, type, id, wait) {

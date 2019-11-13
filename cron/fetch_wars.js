@@ -1,18 +1,24 @@
 'use strict';
 
+let max_war_id = 0;
+
 async function f(app) {
     if (app.no_parsing) return;
-    return;
     
-    let res, json, min_id = 9999999999;
+    let res, json, min_id = 9999999999, max_id = 0;
     do {
     	if (app.bailing) throw 'fetch_wars.js bailing';
+        
         let url = app.esi + '/v1/wars/' + (min_id == 9999999999 ? '' : '?max_war_id=' + min_id);
         res = await app.phin(url);
         if (res.statusCode == 200) {
+            app.zincr('esi_fetched');
             json = JSON.parse(res.body);
 
             for (let war_id of json) {
+                if (war_id <= max_war_id) break;
+                max_id = Math.max(war_id, max_id);
+
                 if (app.bailing) throw 'fetch_wars.js bailing';
                 min_id = Math.min(min_id, war_id);
                 if (await app.db.information.countDocuments({
@@ -24,7 +30,8 @@ async function f(app) {
             }
         } else json = [];
         await app.sleep(50);
-    } while (json.length > 0 && min_id > 1);
+    } while (json.length > 0 && min_id > 1 && min_id > max_war_id);
+    max_war_id = max_id;
 }
 
 module.exports = f;

@@ -36,16 +36,19 @@ async function populateSet(app) {
 
         let parsed = 0;
         while (await killhashes.hasNext()) {
-            if (app.bailout == true) break;
+            if (app.no_parsing == true) break;
 
             parse_mail(app, await killhashes.next());
             while (set.size >= 10) await app.sleep(1);
 
             parsed++;
             if (parsed % 1000 == 0) app.no_stats = true;
+            app.zincr('mails_parsed');
         }
         if (parsed < 1000) app.no_stats = false;
-        while (set.size > 0) await app.sleep(1);
+        while (set.size > 0) {
+            await app.sleep(1);
+        }
     } catch (e) {
         console.log(e);
     } finally {

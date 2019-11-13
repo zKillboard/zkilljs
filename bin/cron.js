@@ -27,17 +27,19 @@ const tasks = {
     'update_factions.js': createTaskSettings(86400),
     'update_information.js': createTaskSettings(1),
     'fetch_locations.js': createTaskSettings(1),
-    'fetch_wars.js': createTaskSettings(9600),
-
+    
     // killmail producers
-    'listen_redisq.js': createTaskSettings(60),
-    //'fetch_warmails': createTaskSettings(1),
-    //'fetch_dailies': createTaskSettings(86400),
+    'listen_redisq.js': createTaskSettings(15),
+    'fetch_wars.js': createTaskSettings(9600),
+    'fetch_warmails': createTaskSettings(1),
+    'fetch_dailies': createTaskSettings(1),
 
     // killmail consumers
     'fetch_mails.js': createTaskSettings(1),
     'parse_mails': createTaskSettings(1),
     'do_stats': createTaskSettings(1),
+
+    //'ztop.js': createTaskSettings(1),
 }
 
 // Clear existing running keys
@@ -109,6 +111,7 @@ async function runTask(task, f, app, curKey, runKey, iteration) {
     } catch (e) {
         console.log(task + ' failure:');
         console.log(e);
+        await app.redis.del(curKey);
     } finally {
         //console.log(task + ' finished');
         await app.redis.del(runKey);

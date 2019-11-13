@@ -7,17 +7,16 @@ A rewrite of zkillboard using JavaScript Node and NPM packages.
 ## TODO
 
 ### Backend
-- character apis
-- corporation apis
+- character apis (scoped sso v2)
+- corporation apis (scoped sso v2)
+- implement scope cleanup
 - fetch insurance
 - fetch implant slots (is this in esi item info now?)
 - implement redis searching for names
 - implement alltime ranking
 - implement recent ranking (last 90 days) (can now use epoch)
 - implement weekly ranking (last 7 days) (can now use epoch)
-- implement scope cleanup
 - implement top all time (use alltime label?)
-- implement dayDump for daily killmail_id/hash api
 - implement ganked detection (how to do these stats?)
 - (install) implement zkbsetup for wormhole classes (zkbsetup.php)
 - implement redisq output
@@ -78,3 +77,4 @@ A rewrite of zkillboard using JavaScript Node and NPM packages.
 - fetch war details
 - fetch war killmails
 - Implemented sets to allow simultaneous processing while preventing too much happening at once
+- implement dayDump for daily killmail_id/hash api

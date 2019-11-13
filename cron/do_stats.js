@@ -15,7 +15,7 @@ async function f(app) {
 
 async function populateSet(app) {
     let prepped = 0;
-    try {        
+    try {
         let killhashes = await app.db.killhashes.find({
             status: 'parsed'
         });
@@ -24,16 +24,19 @@ async function populateSet(app) {
             if (app.no_stats) break;
 
             prepStats(app, await killhashes.next());
-            while (prepSet.size >= 100) await app.sleep(1);
+            while (prepSet.size >= 10) await app.sleep(1);
             prepped++;
+            app.zincr('stats_prepped');
         }
-        while (prepSet.size > 0) await app.sleep(1);
+        while (prepSet.size > 0) {
+            await app.sleep(1);
+        }
 
         if (prepped < 100) await update_stats(app);
     } catch (e) {
         console.log(e);
     } finally {
-        if (prepped = 0) await app.sleep(1000);
+        await app.sleep(1000);
         populateSet(app);
     }
 }
@@ -46,18 +49,20 @@ async function prepStats(app, killhash) {
             killmail_id: killhash.killmail_id
         });
 
+        let promises = [];
         let keys = Object.keys(killmail.involved);
         for (let i = 0; i < keys.length; i++) {
             let type = keys[i];
             let values = killmail.involved[type];
             for (let j = 0; j < values.length; j++) {
                 let id = values[j];
-                await addKM(app, killmail, type, id, "alltime");
+                promises.push(addKM(app, killmail, type, id, "alltime"));
             }
             for (let j = 0; j < killmail.labels.length; j++) {
-                await addKM(app, killmail, 'label', killmail.labels[j], "alltime");
+                promises.push(addKM(app, killmail, 'label', killmail.labels[j], "alltime"));
             }
         }
+        await Promise.all(promises); // If one errors they all error!
 
         await app.db.killhashes.updateOne({
             _id: killhash._id
@@ -73,10 +78,10 @@ async function prepStats(app, killhash) {
     }
 }
 
-const addSet = new Set(); // cache for keeping track of what has been inserted to information
+const addSet = new Set(); // cache for keeping track of what has been inserted to stats collection
 setInterval(function () {
     addSet.clear();
-}, 900000);
+}, 3600000);
 
 async function addKM(app, killmail, type, id, span) {
     if (typeof id != 'string') id = Math.abs(id);
@@ -88,10 +93,11 @@ async function addKM(app, killmail, type, id, span) {
                 id: id,
                 span: 'alltime'
             });
+            addSet.add(addKey);
         }
-        addSet.add(addKey);
     } catch (e) {
         if (e.code != 11000) { // ignore duplicate key error
+            addSet.add(addKey);
             console.log(e);
         }
     }
@@ -99,14 +105,16 @@ async function addKM(app, killmail, type, id, span) {
     await app.db.statistics.updateOne({
         type: type,
         id: id,
-        span: 'alltime'
+        span: 'alltime',
+        sequence: {
+            $lt: killmail.sequence
+        }
     }, {
         $set: {
             update: true,
             sequence: killmail.sequence
         },
     });
-
 }
 
 const nextAgg = {
@@ -123,6 +131,7 @@ async function update_stats(app) {
         update: true
     });
 
+    let calced = 0;
     while (await records.hasNext()) {
         if (app.no_stats) break;
 
@@ -137,8 +146,12 @@ async function update_stats(app) {
         update_stat_record(app, record, match);
 
         while (updateSet.size >= 10) await app.sleep(1);
+        calced++;
+        app.zincr('stats_updated');
     }
-    while (updateSet.size > 0) await app.sleep(1);
+    while (updateSet.size > 0) {
+        await app.sleep(1);
+    }
 }
 
 async function update_stat_record(app, record, match) {

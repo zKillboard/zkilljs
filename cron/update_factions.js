@@ -1,8 +1,10 @@
 'use strict';
 
 async function f(app) {
+    console.log('Updating factions');
     let res = await app.phin(app.esi + '/latest/universe/factions/');
     if (res.statusCode == 200) {
+        app.zincr('esi_fetched');
         let json = JSON.parse(res.body);
         for (let row of json) {
             let infoRow = await app.db.information.findOne({

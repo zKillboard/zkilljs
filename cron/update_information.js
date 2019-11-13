@@ -30,6 +30,8 @@ var types = Object.keys(urls);
 const set = new Set();
 var firstRun = true;
 
+let esi_error = 0;
+
 async function f(app) {
     if (firstRun) {
         firstRun = false;
@@ -41,30 +43,39 @@ async function f(app) {
 }
 
 async function populateSet(app) {
+    let fetched = 0;
     try {
         const fullStop = app.bailout || app.no_parsing || app.no_stats;
         const dayAgo = (fullStop ? 1 : (Math.floor(Date.now() / 1000) - 86400));
 
-        let fetched = 0;
         let rows = await app.db.information.find({
             last_updated: {
                 $lt: dayAgo
             }
-        }).sort({last_updated: 1}).limit(1000); // Limit so we reset this query often
+        }).sort({
+            last_updated: 1
+        }).limit(1000); // Limit so we reset this query often
 
         while (await rows.hasNext()) {
             if (app.bailout == true) break;
 
             fetch(app, await rows.next());
-            while (set.size >= 100) await app.sleep(1);
-            await app.sleep(1);
+            let wait = 20;
+            while (set.size > 10) {
+                wait--;
+                await app.sleep(1);
+            }
+            await app.sleep(wait);
+            if (esi_error > 0) await app.sleep(1000);
             fetched++;
         }
-        while (set.size > 0) await app.sleep(1);
+        while (set.size > 0) {
+            await app.sleep(1);
+        }
     } catch (e) {
         console.log(e);
     } finally {
-        await app.sleep(1000);
+        if (fetched == 0) await app.sleep(1000);
         populateSet(app);
     }
 }
@@ -73,6 +84,11 @@ async function fetch(app, row) {
     try {
         set.add(row);
 
+        if (urls[row.type] == undefined) {
+            console.log('Unmatched information: ', row);
+            return;
+        }
+
         let url = app.esi + urls[row.type].replace(':id', row.id);
         let res = await app.phin({
             url: url,
@@ -80,6 +96,10 @@ async function fetch(app, row) {
                 'If-None-Match': row.etag || ''
             }
         });
+
+        if (res.statusCode != 200 && res.statusCode != 304) {
+            esi_err_log(app);
+        }
 
         let now = Math.floor(Date.now() / 1000);
         switch (res.statusCode) {
@@ -95,6 +115,7 @@ async function fetch(app, row) {
                 $set: body
             });
             //if (row.name != body.row) console.log('Added ' + row.type + ' ' + row.id + ' ' + body.name);
+            app.zincr('esi_fetched');
 
             let keys = Object.keys(body);
             for (let key of keys) {
@@ -121,9 +142,9 @@ async function fetch(app, row) {
                     last_updated: now
                 }
             });
+             app.zincr('esi_304');
             break;
         case 404:
-            console.log(row, '404 ' + res.statusCode);
             await app.db.information.updateOne(row, {
                 $set: {
                     last_updated: now
@@ -135,7 +156,7 @@ async function fetch(app, row) {
             setTimeout(() => {
                 app.bailout = false;
             }, 1000 + (Date.now() % 60000));
-            console.log("420'ed");
+            console.log("420'ed", row);
             break;
         case 502:
         case 504:
@@ -153,3 +174,11 @@ async function fetch(app, row) {
 }
 
 module.exports = f;
+
+function esi_err_log(app) {
+    esi_error++;
+    app.zincr('esi_error');
+    setTimeout(function () {
+        esi_error--;
+    }, 1000);
+}

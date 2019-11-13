@@ -2,21 +2,26 @@
 
 async function f(app) {
     if (app.no_parsing) return;
-    
+
     let row = await app.db.information.findOne({
         check_wars: true
     });
-    if (row == null) return;
+    if (row == null) {
+        await app.sleep(300000);
+        return;
+    }
 
-    let page = 1,
-        url, res, json;
+    let page = 1;
+    let url, res, json;
     do {
         let url = app.esi + '/v1/wars/' + row.id + '/killmails/?page=' + page;
         let res = await app.phin(url);
         if (res.statusCode != 200) return; // Something went wrong!
+        app.zincr('esi_fetched');
 
         json = JSON.parse(res.body);
         for (let mail of json) {
+            if (app.bailout) return;
             await app.util.killmails.add(app, mail.killmail_id, mail.killmail_hash);
         }
         page++;
