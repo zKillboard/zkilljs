@@ -3,6 +3,7 @@ module.exports = f;
 let url = 'https://redisq.zkillboard.com/listen.php?ttw=1';
 
 async function f(app) {
+
     try {
         do {
             if (app.bailout) return;

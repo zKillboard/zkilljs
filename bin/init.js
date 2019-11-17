@@ -49,8 +49,8 @@ async function f() {
 
     app.debug = false;
     app.bailout = false;
-    app.no_parsing = true;
-    app.no_stats = true;
+    app.no_parsing = false;
+    app.no_stats = false;
     app.error_count = 0;
     app.phin = phin;
     app.fetch = async function (url, parser, failure, options) {

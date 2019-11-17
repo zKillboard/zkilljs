@@ -1,8 +1,15 @@
 module.exports = f;
 
-const set = new Set();
-var firstRun = true;
+const sw = require('../util/StreamWatcher.js');
 
 async function f(app) {
-    console.log(await app.db.killmails.estimatedDocumentCount());
+    let match = {
+        status: 'pending'
+    };
+    sw.start(app, app.db.killhashes, match, foo, 10);
+    await app.sleep(120000);
+}
+
+async function foo(app, doc) {
+    console.log(doc);
 }

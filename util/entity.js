@@ -50,8 +50,7 @@ const entity = {
         while (true) {
             let row = await app.db.information.findOne({
                 type: type,
-                id,
-                id
+                id: id
             });
             if (row != null && row.last_updated != 0) return;
             if (row == null) {

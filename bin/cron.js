@@ -14,10 +14,11 @@ if (process.argv[2]) {
     return;
 }
 
-function createTaskSettings(span = 1, iterations = 0) {
+function createTaskSettings(span = 1, iterations = 0, offset = 0) {
     return {
         span: span,
-        iterations: iterations
+        iterations: iterations,
+        offset: offset
     }
 }
 
@@ -32,7 +33,7 @@ const tasks = {
     'listen_redisq.js': createTaskSettings(15),
     'fetch_wars.js': createTaskSettings(9600),
     'fetch_warmails': createTaskSettings(1),
-    'fetch_dailies': createTaskSettings(1),
+    'fetch_dailies': createTaskSettings(1, 0, -43200),
 
     // killmail consumers
     'fetch_mails.js': createTaskSettings(1),
@@ -83,7 +84,7 @@ async function runTasks(app, tasks) {
     for (let i = 0; i < arr.length; i++) {
         let task = arr[i];
         let taskConfig = tasks[task] || {};
-        let currentSpan = now - (now % (taskConfig.span || 1));
+        let currentSpan = now - (now % (taskConfig.span || 1)) + (taskConfig.offset || 0);
         let iterations = taskConfig.iterations || 1;
 
         for (let j = 0; j < iterations; j++) {

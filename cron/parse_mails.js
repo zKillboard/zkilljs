@@ -9,6 +9,11 @@ let sequence = undefined;
 const set = new Set();
 var firstRun = true;
 
+const sw = require('../util/StreamWatcher.js');
+const match = {
+    status: 'fetched'
+};
+
 async function f(app) {
     if (sequence === undefined) {
         let resultset = await app.db.killmails.find({}).sort({
@@ -18,50 +23,13 @@ async function f(app) {
     }
 
     if (firstRun) {
+        sw.start(app, app.db.killhashes, match, parse_mail, 10);
         firstRun = false;
-        populateSet(app);
-    }
-
-    await app.sleep(1000);
-    while (app.bailout && set.size > 0) await app.sleep(1000);
-}
-
-async function populateSet(app) {
-    try {
-        if (app.no_parsing) return;
-
-        let killhashes = await app.db.killhashes.find({
-            status: 'fetched'
-        }).batchSize(1000);
-
-        let parsed = 0;
-        while (await killhashes.hasNext()) {
-            if (app.no_parsing == true) break;
-
-            parse_mail(app, await killhashes.next());
-            while (set.size >= 10) await app.sleep(1);
-
-            parsed++;
-            if (parsed % 1000 == 0) app.no_stats = true;
-            app.zincr('mails_parsed');
-        }
-        if (parsed < 1000) app.no_stats = false;
-        while (set.size > 0) {
-            await app.sleep(1);
-        }
-    } catch (e) {
-        console.log(e);
-    } finally {
-        await app.sleep(1000);
-        populateSet(app);
     }
 }
 
 async function parse_mail(app, killhash) {
     try {
-        set.add(killhash);
-
-        if (killhash == null) return;
         var killmail = {};
         killmail.killmail_id = killhash.killmail_id;
         killmail.hash = killhash.hash;
@@ -131,9 +99,8 @@ async function parse_mail(app, killhash) {
         if (system.security_status < 0.05 && region.id < 11000001) labels.push('nullsec');
         if (region.id >= 11000000 && region.id < 12000000) labels.push('w-space');
         if (region.id >= 12000000 && region.id < 13000000) labels.push('abyssal');
-
         const ship_price = await app.util.price.get(app, rawmail.victim.ship_type_id, km_date_str);
-        const item_prices = await get_item_prices(app, rawmail.victim.items, km_date);
+        const item_prices = await get_item_prices(app, rawmail.victim.items, km_date, false);
         killmail.total_value = Math.round(ship_price + item_prices);
 
         killmail.stats = !npc;
@@ -152,20 +119,18 @@ async function parse_mail(app, killhash) {
                 }) > 5) killmail.stats = false;
         }
 
-        await app.db.killmails.replaceOne({
+        await app.db.killmails.removeOne({
             killmail_id: killmail.killmail_id
-        }, killmail, {
-            upsert: true
         });
+        await app.db.killmails.insertOne(killmail);
         await app.db.killhashes.updateOne(killhash, {
             $set: {
                 status: 'parsed'
             }
         });
+        app.zincr('mails_parsed');
     } catch (e) {
-        console.trace(e);
-    } finally {
-        set.delete(killhash);
+        console.log(e);
     }
 }
 
@@ -239,33 +204,45 @@ async function isSolo(app, rawmail) {
     return (numPlayers == 1);
 }
 
-async function get_item_prices(app, items, date, in_container) {
-    if (in_container == undefined) in_container = false;
+var added = [];
+
+async function get_item_prices(app, items, date, in_container = false) {
+    let promises = [];
+    for (let item of items) {
+        promises.push(get_item_price(app, item, date, in_container));
+    }
+    let total = 0;
+    promises = await Promise.all(promises);
+    for (let p in promises) total += p;
+    return total;
+}
+
+async function get_item_price(app, item, date, in_container) {
+    if (added.indexOf(item.item_type_id) == -1) {
+        await app.util.entity.add(app, 'item_id', item.item_type_id);
+        added.push(item.item_type_id);
+    }
 
     let total = 0;
-    for (let index in items) {
-        const item = items[index];
-        await app.util.entity.add(app, 'item_id', item.item_type_id);
+    if (item.items instanceof Array) {
+        total += await get_item_prices(app, item.items, date, true);
+    }
 
-        if (item instanceof Array) total += get_item_prices(item, date, true);
-        else {
-            let modifier = 1;
-            if (item.singleton != 0 || in_container == true) {
-                const item_info = await app.util.entity.info(app, 'item_id', item.item_type_id);
-                const group = (item.group_id == undefined ? undefined : await app.util.entity.info(app, 'group_id', item.group_id));
-                if (group != undefined) {
-                    const category = await app.util.entity.info(app, 'category_id', group.category_id);
-                    if (category != undefined) {
-                        if (category.id == 9 && item.singleton != 0 || in_container == true) modifier = 0.01;
-                    }
-                }
+    if (item.singleton != 0 || in_container == true) {
+        const item_info = await app.util.entity.info(app, 'item_id', item.item_type_id);
+        const group = (item_info.group_id == undefined ? undefined : await app.util.entity.info(app, 'group_id', item_info.group_id));
+        if (group != undefined) {
+            const category = await app.util.entity.info(app, 'category_id', group.category_id);
+            if (category != undefined) {
+                if (category.id == 9 && (item.singleton != 0 || in_container == true)) item.singleton = 2;
             }
-            const item_price = await app.util.price.get(app, item.item_type_id, date) * modifier;
-            const qty = (item.quantity_dropped == undefined ? 0 : item.quantity_dropped) + (item.quantity_destroyed == undefined ? 0 : item.quantity_destroyed);
-            const value = qty * item_price;
-            total += value;
         }
     }
+
+    const item_price = item.singleton != 0 ? 0.01 : await app.util.price.get(app, item.item_type_id, date);
+    const qty = (item.quantity_dropped || 0) + (item.quantity_destroyed || 0);
+    total += (qty * item_price);
+
     return total;
 }
 

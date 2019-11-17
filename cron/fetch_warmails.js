@@ -1,16 +1,19 @@
 'use strict';
 
+const sw = require('../util/StreamWatcher.js');
+const match = {
+    check_wars: true
+};
+var firstRun = true;
+
 async function f(app) {
-    if (app.no_parsing) return;
-
-    let row = await app.db.information.findOne({
-        check_wars: true
-    });
-    if (row == null) {
-        await app.sleep(300000);
-        return;
+    if (firstRun) {
+        sw.start(app, app.db.information, match, fetchWarMails, 10);
+        firstRun = false;
     }
+}
 
+async function fetchWarMails(app, row) {
     let page = 1;
     let url, res, json;
     do {

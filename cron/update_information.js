@@ -158,6 +158,7 @@ async function fetch(app, row) {
             }, 1000 + (Date.now() % 60000));
             console.log("420'ed", row);
             break;
+        case 500:
         case 502:
         case 504:
             break; // Try again later
