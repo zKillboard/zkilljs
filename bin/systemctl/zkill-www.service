@@ -1,0 +1,14 @@
+[Unit]
+Description=ZKill-WWW
+
+[Service]
+ExecStart=/usr/bin/node ./bin/www.js
+Restart=always
+User=zkill
+Group=zkill
+Environment=PATH=/usr/bin:/usr/local/bin
+EnvironmentFile=/home/zkill/Dropbox/zkilljs/.env
+WorkingDirectory=/home/zkill/Dropbox/zkilljs
+
+[Install]
+WantedBy=multi-user.target

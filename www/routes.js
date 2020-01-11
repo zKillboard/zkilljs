@@ -5,7 +5,8 @@ module.exports = router;
 addGet('/api/information/:type/:id.json', 'api/information');
 addGet('/api/killmail/:id.json', 'api/killmail');
 addGet('/api/statistics/:type/:id.json', 'api/statistics');
-
+addGet('/api/killmails/recent/:type/:id.json', 'api/killmails');
+addGet('/api/killmails/:date/:type/:id.json', 'api/killmails-daily');
 
 async function doStuff(req, res, next, controllerFile, pugFile) {
     try {

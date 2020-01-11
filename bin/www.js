@@ -4,6 +4,7 @@ var express = require('express');
 var path = require('path');
 var debug = require('debug')('server');
 var http = require('http');
+var morgan = require('morgan');
 var app = undefined;
 var server;
 
@@ -36,6 +37,9 @@ async function startWebListener() {
         next();
     });
 
+    www.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
+    www.use(express.static('www/public'))
+
     www.disable('x-powered-by');
     www.use('/api/', require('cors')());
 
@@ -55,9 +59,9 @@ function onError(error) {
         throw error;
     }
 
-    var bind = typeof port === 'string' ?
-        'Pipe ' + port :
-        'Port ' + port;
+    var bind = typeof process.env.PORT === 'string' ?
+        'Pipe ' + process.env.PORT :
+        'Port ' + process.env.PORT;
     // handle specific listen errors with friendly messages
     switch (error.code) {
     case 'EACCES':
@@ -84,3 +88,10 @@ function onListening() {
         'port ' + addr.port;
     debug('Listening on ' + bind);
 }
+
+var watch = require('node-watch');
+watch('www/', {
+    recursive: true
+}, async function (evt, name) {
+    process.exit();
+}); 

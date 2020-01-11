@@ -14,7 +14,8 @@ async function getData(req, res) {
     }).project({
         _id: 0,
         update: 0,
-        sequence: 0
+        sequence: 0,
+        last_sequence: 0
     }).toArray();
     return {
         json: (result.length == 1 ? result[0] : null)
