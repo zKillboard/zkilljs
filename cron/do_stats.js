@@ -18,6 +18,8 @@ async function populateSet(app) {
     try {
         let killhashes = await app.db.killhashes.find({
             status: 'parsed'
+        }).sort({
+            _id: -1
         });
 
         while (await killhashes.hasNext()) {
@@ -28,15 +30,15 @@ async function populateSet(app) {
             prepped++;
             app.zincr('stats_prepped');
         }
-        while (prepSet.size > 0) {
+        while (prepSet.size > 100) {
             await app.sleep(1);
         }
 
-        if (prepped < 100) await update_stats(app);
+ await update_stats(app);
     } catch (e) {
         console.log(e);
     } finally {
-        await app.sleep(1000);
+        if (prepped == 0) await app.sleep(1000);
         populateSet(app);
     }
 }
@@ -48,8 +50,22 @@ async function prepStats(app, killhash) {
         let killmail = await app.db.killmails.findOne({
             killmail_id: killhash.killmail_id
         });
+        if (killmail == undefined) {
+            await app.db.killhashes.updateOne({
+                _id: killhash._id
+            }, {
+                $set: {
+                    status: 'fetch'
+                }
+            });
+            return;
+        }
 
         let promises = [];
+        if (killmail.involved == undefined) {
+            console.log(killhash.killmail_id + ' has no involved');
+            return;
+        }
         let keys = Object.keys(killmail.involved);
         for (let i = 0; i < keys.length; i++) {
             let type = keys[i];
@@ -79,8 +95,10 @@ async function prepStats(app, killhash) {
 }
 
 const addSet = new Set(); // cache for keeping track of what has been inserted to stats collection
+let sequenceUpdates = new Map();
 setInterval(function () {
     addSet.clear();
+    sequenceUpdates.clear();
 }, 3600000);
 
 async function addKM(app, killmail, type, id, span) {
@@ -91,30 +109,39 @@ async function addKM(app, killmail, type, id, span) {
             await app.db.statistics.insertOne({
                 type: type,
                 id: id,
-                span: 'alltime'
+                span: 'alltime',
+                update: true,
+                sequence: killmail.sequence
             });
             addSet.add(addKey);
+            return;
         }
     } catch (e) {
-        if (e.code != 11000) { // ignore duplicate key error
+        if (e.code == 11000) { // ignore duplicate key error
             addSet.add(addKey);
+        } else {
             console.log(e);
         }
     }
 
-    await app.db.statistics.updateOne({
-        type: type,
-        id: id,
-        span: 'alltime',
-        sequence: {
-            $lt: killmail.sequence
-        }
-    }, {
-        $set: {
-            update: true,
-            sequence: killmail.sequence
-        },
-    });
+    let previousSequence = sequenceUpdates.get(addKey);
+    if (previousSequence == undefined || killmail.sequence > previousSequence) {
+  
+        await app.db.statistics.updateOne({
+            type: type,
+            id: id,
+            span: 'alltime',
+            sequence: {
+                $lt: killmail.sequence
+            }
+        }, {
+            $set: {
+                update: true,
+                sequence: killmail.sequence
+            },
+        });
+        sequenceUpdates.set(addKey, killmail.sequence);
+    }
 }
 
 const nextAgg = {
@@ -126,42 +153,73 @@ const nextAgg = {
 let updateSet = new Set();
 
 async function update_stats(app) {
-
-    let records = await app.db.statistics.find({
-        update: true
-    });
-
-    let calced = 0;
-    while (await records.hasNext()) {
+    let calced;
+    do {
+        let promises = [];
+        calced = 0;
         if (app.no_stats) break;
+        let records = await app.db.statistics.find({
+            update: true
+        });
 
-        let record = await records.next();
-        let match = {
-            sequence: {
-                '$gt': (record.last_sequence || 0),
-                '$lte': record.sequence
-            },
-            stats: true,
-        };
-        update_stat_record(app, record, match);
+        let min, max;
+        while (await records.hasNext()) {
+            if (app.no_stats) break;
+            let record = await records.next();
 
-        while (updateSet.size >= 10) await app.sleep(1);
-        calced++;
-        app.zincr('stats_updated');
-    }
+            if (record.reset == true) {
+                let keep = ['_id', 'type', 'id', 'span', 'sequence', 'update'];
+                let remove = {};
+                let keys = Object.keys(record);
+                for (let key of keys) {
+                    if (keep.indexOf(key) < 0) {
+                        remove[key] = 1;
+                        delete record[key];
+                    }
+                }
+                await app.db.statistics.updateOne(record, {
+                    $unset: remove
+                });
+            }
+
+            min = (record.last_sequence || 0);
+            max = Math.min(min + 100000000, record.sequence);
+
+            let match = {
+                stats: true,
+                sequence: {
+                    '$gt': min,
+                    '$lte': max,
+                },
+            };
+
+            while (updateSet.size > 12) await app.sleep(1);
+            promises.push(update_stat_record(app, record, match, max));
+            await app.sleep(1);
+
+            calced++;
+            app.zincr('stats_updated');
+        }
+        while (updateSet.size > 0) {
+            await app.sleep(1);
+        }
+        await app.waitfor(promises);
+    } while (calced > 0);
+
     while (updateSet.size > 0) {
         await app.sleep(1);
     }
 }
 
-async function update_stat_record(app, record, match) {
+async function update_stat_record(app, record, match, max) {
+    const s = Symbol();
     try {
-        updateSet.add(record);
-        await app.util.stats.update_stat_record(app, record, match);
+        updateSet.add(s);
+        await app.util.stats.update_stat_record(app, record, match, max);
     } catch (e) {
         console.log(e);
     } finally {
-        updateSet.delete(record);
+        updateSet.delete(s);
     }
 }
 

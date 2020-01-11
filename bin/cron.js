@@ -125,9 +125,7 @@ async function debug(task) {
     console.log('Debugging ' + task);
     let f = require('../cron/' + process.argv[2]);
     await runTask(process.argv[2], f, app, '0', '0');
-    await app.sleep(1000);
-    console.log('Exiting debug');
-    process.exit();
+    console.log("Debug finished");
 }
 
 var watch = require('node-watch');

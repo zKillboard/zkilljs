@@ -3,6 +3,11 @@
 module.exports = f;
 
 const no_solo_ships = [29, 31, 237];
+const parsed = {
+    $set: {
+        status: 'parsed'
+    }
+};
 
 let sequence = undefined;
 
@@ -23,13 +28,17 @@ async function f(app) {
     }
 
     if (firstRun) {
-        sw.start(app, app.db.killhashes, match, parse_mail, 10);
+        sw.start(app, app.db.killhashes, match, parse_mail, 50);
         firstRun = false;
     }
 }
 
 async function parse_mail(app, killhash) {
     try {
+        let removeOne = app.db.killmails.removeOne({
+            killmail_id: killhash.killmail_id
+        });
+
         var killmail = {};
         killmail.killmail_id = killhash.killmail_id;
         killmail.hash = killhash.hash;
@@ -57,21 +66,21 @@ async function parse_mail(app, killhash) {
         killmail.epoch = Math.floor(km_date.getTime() / 1000);
         var km_date_str = app.util.price.format_date(km_date);
 
-        const involved = {};
-        await addInvolved(app, involved, rawmail.victim, true);
+        const ship_price = app.util.price.get(app, rawmail.victim.ship_type_id, km_date_str);
+        const item_prices = get_item_prices(app, rawmail.victim.items, km_date, false);
 
-        for (let inv of rawmail.attackers) {
-            await addInvolved(app, involved, inv, false);
-        }
-        killmail.involved = involved;
+        let promises = [];
+        const involved = {};
+        promises.push(addInvolved(app, involved, rawmail.victim, true));
+        for (let inv of rawmail.attackers) promises.push(addInvolved(app, involved, inv, false));
 
         const system = await app.util.entity.info(app, 'solar_system_id', rawmail.solar_system_id, true);
         const constellation = await app.util.entity.info(app, 'constellation_id', system.constellation_id, true);
         const region = await app.util.entity.info(app, 'region_id', constellation.region_id, true);
 
-        await addTypeId(app, involved, 'solar_system_id', system.id);
-        await addTypeId(app, involved, 'constellation_id', constellation.id);
-        await addTypeId(app, involved, 'region_id', region.id);
+        addTypeId(app, involved, 'solar_system_id', system.id);
+        addTypeId(app, involved, 'constellation_id', constellation.id);
+        addTypeId(app, involved, 'region_id', region.id);
 
         if (rawmail.victim.position != undefined) {
             const location_id = await app.util.info.get_location_id(app, rawmail.solar_system_id, rawmail.victim.position);
@@ -84,10 +93,10 @@ async function parse_mail(app, killhash) {
 
         if (rawmail.war_id != undefined) {
             addTypeId(app, involved, 'war_id', rawmail.war_id);
-            await app.util.entity.add(app, 'war_id', rawmail.war_id, false);
+            app.util.entity.add(app, 'war_id', rawmail.war_id);
         }
 
-        const npc = await isNPC(rawmail);
+        const npc = isNPC(rawmail);
         const labels = [];
         if (npc === true) labels.push('npc');
         else if (await isSolo(app, rawmail) === true) labels.push('solo');
@@ -99,35 +108,32 @@ async function parse_mail(app, killhash) {
         if (system.security_status < 0.05 && region.id < 11000001) labels.push('nullsec');
         if (region.id >= 11000000 && region.id < 12000000) labels.push('w-space');
         if (region.id >= 12000000 && region.id < 13000000) labels.push('abyssal');
-        const ship_price = await app.util.price.get(app, rawmail.victim.ship_type_id, km_date_str);
-        const item_prices = await get_item_prices(app, rawmail.victim.items, km_date, false);
-        killmail.total_value = Math.round(ship_price + item_prices);
 
         killmail.stats = !npc;
         killmail.labels = labels;
-        killmail.status = !npc ? 'stats' : 'processed';
         killmail.involved_cnt = rawmail.attackers.length;
 
         sequence++;
         killmail.sequence = sequence;
 
         let padhash = await get_pad_hash(app, rawmail, killmail);
-        if (padhash != undefined) {
+        let padpromise = undefined;
+        if (npc === false && padhash != undefined) {
             killmail.padhash = padhash;
-            if (await app.db.killmails.countDocuments({
-                    padhash: padhash
-                }) > 5) killmail.stats = false;
+            padpromise = app.db.killmails.countDocuments({
+                padhash: padhash
+            });
         }
 
-        await app.db.killmails.removeOne({
-            killmail_id: killmail.killmail_id
-        });
+        killmail.total_value = Math.round(await ship_price + await item_prices);
+        await app.waitfor(promises);
+        killmail.involved = involved;
+
+        if (padpromise != undefined && (await padpromise) > 5) killmail.stats = false;
+
+        await removeOne;
         await app.db.killmails.insertOne(killmail);
-        await app.db.killhashes.updateOne(killhash, {
-            $set: {
-                status: 'parsed'
-            }
-        });
+        await app.db.killhashes.updateOne(killhash, parsed);
         app.zincr('mails_parsed');
     } catch (e) {
         console.log(e);
@@ -146,23 +152,23 @@ async function addInvolved(app, object, involved, is_victim) {
         if (type == 'ship_type_id') type = 'item_id';
 
         await app.util.entity.add(app, type, id);
-        await addTypeId(app, object, type, (is_victim ? -1 * id : id));
+        addTypeId(app, object, type, (is_victim ? -1 * id : id));
 
         if (type == 'item_id') {
             var item = await app.util.entity.info(app, type, id, true);
-            await addTypeId(app, object, 'group_id', (is_victim ? -1 * item.group_id : item.group_id));
+            addTypeId(app, object, 'group_id', (is_victim ? -1 * item.group_id : item.group_id));
         }
     }
 }
 
-async function addTypeId(app, object, type, id) {
+function addTypeId(app, object, type, id) {
     if (id != 0) {
         if (object[type] == undefined) object[type] = [];
         if (object[type].indexOf(id) == -1) object[type].push(id);
     }
 }
 
-async function isNPC(rawmail) {
+function isNPC(rawmail) {
     const victim = rawmail.victim;
     if (victim.character_id == undefined && victim.corporation_id > 1 && victim.corporation_id < 1999999) return true;
 
@@ -207,13 +213,14 @@ async function isSolo(app, rawmail) {
 var added = [];
 
 async function get_item_prices(app, items, date, in_container = false) {
+    let total = 0;
     let promises = [];
+
     for (let item of items) {
         promises.push(get_item_price(app, item, date, in_container));
     }
-    let total = 0;
-    promises = await Promise.all(promises);
-    for (let p in promises) total += p;
+    for (let p of promises) total += await p;
+
     return total;
 }
 
@@ -262,16 +269,15 @@ async function check_for_padding(app, rawmail) {
 
 // https://forums.eveonline.com/default.aspx?g=posts&m=4900335#post4900335
 async function get_pad_hash(app, rawmail, killmail) {
-    if (killmail.labels.indexOf('npc') != -1) return;
     let victim = rawmail.victim;
     let victimID = (victim.character_id || 0) == 0 ? 'None' : victim.character_id;
-    if (victimID == 0) return;
+    if (victimID == 0) return undefined;
     let shipTypeID = victim.ship_type_id || 0;
-    if (shipTypeID == 0) return;
+    if (shipTypeID == 0) return undefined;
 
     let item = await app.util.entity.info(app, 'item_id', shipTypeID);
     let group = await app.util.entity.info(app, 'group_id', item.group_id);
-    if (group.category_id != 6) return;
+    if (group.category_id != 6) return undefined;
 
     let attackers = rawmail.attackers;
     let attacker = null;
@@ -283,7 +289,7 @@ async function get_pad_hash(app, rawmail, killmail) {
 
     if (attacker == null) attacker = attackers[0];
     let attackerID = attacker.character_id || 0;
-    if (attackerID == 0) return;
+    if (attackerID == 0) return undefined;
     let dttm = killmail.epoch;
     dttm = dttm - (dttm % 86400);
     return [victimID, attackerID, shipTypeID, dttm].join(':');

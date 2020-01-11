@@ -1,17 +1,21 @@
 'use strict';
 
-const info_cache = {};
+var info_cache = {};
+var wait_cache = {};
 
 const set = new Set(); // cache for keeping track of what has been inserted to information
-setInterval(function() { set.clear(); }, 900000);
+setInterval(function () {
+    set.clear();
+    info_cache = {};
+    wait_cache = {};
+}, 900000);
 
 const entity = {
-    async add(app, type, id, wait) {
+    async add(app, type, id, wait = false) {
         // check that type is string
         // check that id is numeric
         if (typeof type != 'string') throw 'type is not a string: ' + type + ' ' + id;
         if (typeof id != 'number') throw 'id is not a number: ' + type + ' ' + id;
-        if (wait == undefined) wait = false;
 
         if (id <= 0) return;
         const key = type + ':' + id;
@@ -65,13 +69,14 @@ const entity = {
         }
     },
 
-    async info(app, type, id, wait) {
-        if (wait == undefined) wait = false;
-
-        const key = type + ':' + id;
+    async info(app, type, id, wait = false) {
+        const key = type + '_' + id;
         if (info_cache[key] != undefined) return info_cache[key];
 
-        if (wait) await entity.wait(app, type, id);
+        if (wait) {
+            if (wait_cache[key] == undefined) await entity.wait(app, type, id);
+            wait_cache[key] = true;
+        }
 
         let row = await app.db.information.findOne({
             type: type,
@@ -82,7 +87,7 @@ const entity = {
     },
 
     async info_field(app, type, id, field) {
-        const row = entity.info(type, id, true);
+        const row = await entity.info(type, id, true);
         return row[field];
     }
 }

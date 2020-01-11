@@ -1,9 +1,10 @@
 var express = require('express');
-var router = express.Router();
+var router = express.Router({strict: true});
 module.exports = router;
 
-addGet('/api/information/:type/:id/', 'api/information');
-addGet('/api/statistics/:type/:id/', 'api/statistics');
+addGet('/api/information/:type/:id.json', 'api/information');
+addGet('/api/killmail/:id.json', 'api/killmail');
+addGet('/api/statistics/:type/:id.json', 'api/statistics');
 
 
 async function doStuff(req, res, next, controllerFile, pugFile) {

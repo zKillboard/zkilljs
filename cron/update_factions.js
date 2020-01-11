@@ -12,7 +12,7 @@ async function f(app) {
                 id: row.faction_id
             });
             if (infoRow != undefined && infoRow != null) {
-                row.last_updated = Math.floor(Date.now() / 1000);
+                row.last_updated = Math.floor(Date.now() / 1000) + (86400 * 7);
                 await app.db.information.updateOne(infoRow, {
                     $set: row
                 });

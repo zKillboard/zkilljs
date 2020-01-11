@@ -1,0 +1,26 @@
+
+with sequence:
+
+character_id
+corporation_id
+alliance_id
+faction_id
+
+item_id
+group_id
+category_id
+war_id
+labels
+
+location_id
+solar_system_id
+constellation_id
+region_id
+
+
+
+indexed:
+epoch
+sequence (unique)
+killmail_id (unique)
+padhash

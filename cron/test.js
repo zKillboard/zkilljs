@@ -1,15 +1,31 @@
 module.exports = f;
 
-const sw = require('../util/StreamWatcher.js');
-
 async function f(app) {
-    let match = {
-        status: 'pending'
-    };
-    sw.start(app, app.db.killhashes, match, foo, 10);
-    await app.sleep(120000);
+    let rawmail = await app.db.rawmails.findOne({
+        killmail_id: 26535526
+    });
+    await iterate(app, rawmail.victim.items, rawmail.killmail_time);
+    process.exit();
 }
 
-async function foo(app, doc) {
-    console.log(doc);
+async function iterate(app, items, date) {
+    console.log(date);
+
+    let max = 0,
+        maxItem, total = 0;
+    for (let i of items) {
+        if (i.items instanceof Array) await iterate(app, item.items, date);
+        let price = await app.util.price.get(app, i.item_type_id, date);
+        if (max < price) {
+            maxItem = i;
+            max = price;
+        }
+        i.quantity_destroyed = i.quantity_destroyed || 0;
+        i.quantity_dropped = i.quantity_dropped || 0;
+        let qty = i.quantity_destroyed + i.quantity_dropped;
+        total += qty * price;
+    }
+    console.log(maxItem);
+    console.log(max);
+    console.log(total);
 }

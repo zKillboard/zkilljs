@@ -1,19 +1,15 @@
 'use strict';
 
-async function f(app) {
+/*async function f(app) {
     let cursor = await app.db.rawmails.find({
-        //killmail_id: 21112472
     }).sort({
-        killmail_id: 1
+        sequence: -1
     });
     while (await cursor.hasNext()) {
+        if (killmail.sequence < 55000000) break;
         let rawmail = await cursor.next();
-        if (rawmail.victim == undefined) continue;
-        var km_date = new Date(rawmail.killmail_time);
-        let items = rawmail.victim.items;
-        //console.log('checking ' + rawmail.killmail_id);
+
         if (await get_item_prices(app, items, km_date, false)) {
-            console.log('resetting ' + rawmail.killmail_id);
             await app.db.killhashes.updateOne({
                 killmail_id: rawmail.killmail_id
             }, {
@@ -21,26 +17,27 @@ async function f(app) {
                     status: 'fetched'
                 }
             });
-
         }
     }
+}*/
 
 
-
-}
-
-/*
 async function f(app) {
-    await app.db.killmails.removeMany({});
-    await app.db.statistics.removeMany({});
-    await app.db.killhashes.updateMany({}, {
+    let a = app.db.killmails.removeMany({});
+    let b = app.db.statistics.removeMany({});
+    let c = app.db.killhashes.updateMany({status: {$ne: {status: 'fetched'}}}, {
         $set: {
-            status: 'pending'
+            status: 'fetched'
         }
     }, {
         multi: true
     });
-}*/
+    await a;
+    await b;
+    await c;
+    console.log('fin done');
+    process.exit();
+}
 
 async function get_item_prices(app, items, date, in_container) {
     let ret = false;

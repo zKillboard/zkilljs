@@ -79,14 +79,17 @@ async function f() {
     const dbName = 'zkillboard';
     const client = new MongoClient(url, {
         useNewUrlParser: true,
-        useUnifiedTopology: true
+        useUnifiedTopology: true,
+        keepalive: true,
+        connectTimeoutMS: 3600000,    
+        socketTimeoutMS: 3600000, 
     });
 
     try {
         await client.connect();
     } catch (e) {
-        // server not up? wait 15 seconds and exit, let the daemon restart us
-        await app.sleep(15);
+        // server not up? wait 30 seconds and exit, let the daemon restart us
+        await app.sleep(30);
         process.exit();
     }
     app.db = client.db(dbName);
@@ -97,12 +100,43 @@ async function f() {
     }
 
     app.zincr = function (key) {
-        app.redis.hincrby('ztop', key, 1);
-        setTimeout(function () {
-            app.redis.hincrby('ztop', key, -1);
-        }, 300000);
+        let now = Math.floor(Date.now() / 1000) * 1000;
+        if (lastsecond != now) {
+            lastsecond = now;
+            zincrcount = 0;
+        }
+        if (ztopindexes.indexOf(key) == -1) ztopindexes.push(key);
+        zincrcount++;
+        let z = now + zincrcount;
+        app.redis.zadd('zkb:ztop:' + key, z, z);
     };
-    await app.redis.del('ztop');
 
+    globalapp = app;
     return app;
+}
+
+let lastsecond = 0;
+let zincrcount = 0;
+let ztopindexes = [];
+let globalapp = undefined;
+
+setTimeout(clearIndexes, 1001);
+
+async function clearIndexes() {
+    try {
+        if (globalapp == undefined) return;
+        let app = globalapp;
+
+        let now = Math.floor(Date.now() / 1000) * 1000;
+
+        for (let i of ztopindexes) {
+            let key = 'zkb:ztop:' + i;
+            await app.redis.zremrangebyscore(key, '-inf', now - 300000);
+            let size = await app.redis.zcard('zkb:ztop:' + i);
+            await app.redis.hset('ztop', i, size);
+        }
+    } catch (e) {
+        console.log(e);
+    }
+    setTimeout(clearIndexes, 1001);
 }

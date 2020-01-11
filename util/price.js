@@ -1,21 +1,38 @@
+let price_cache = {};
+
 const price = {
     async get(app, item_id, date) {
         if (date == undefined) throw "Must provide date";
 
+        if (typeof date == 'string') date = date.substr(0, 10);
+        else date = this.format_date(date);
+        let rkey = date + ':' + item_id;
+        let cached = await app.redis.get(rkey);
+        if (cached != null) {
+            return parseFloat(cached);
+        }
+
         const fixed_price = await price.get_fixed_price(app, item_id);
-        if (fixed_price != undefined) return fixed_price;
+        if (fixed_price != undefined) return this.cacheIt(app, rkey, fixed_price);
 
         let info = await app.util.entity.info(app, 'item_id', item_id, true);
         if (info.category_id == 66) {
             const build_price = await get_build_price(app, item_id, date);
-            if (build_price != undefined && build_price > 0.01) return build_price;
+            if (build_price != undefined && build_price > 0.01) return this.cacheIt(app, rkey, build_price);
         }
 
-        return await fetch(app, item_id, date);
+        return this.cacheIt(app, rkey, await fetch(app, item_id, date));
+    },
 
+    cacheIt(app, rkey, price) {
+        //price_cache[rkey] = price;
+        app.redis.setex(rkey, 3600, price);
+
+        return price;
     },
 
     format_date(date) {
+        if (date instanceof String) return (date.length > 10 ? date.substr(0, 10) : date);
         var year = date.getFullYear();
         var month = date.getMonth() + 1;
         var day = date.getDate();
@@ -128,12 +145,20 @@ async function fetch(app, item_id, date) {
             try {
                 await app.db.prices.insertOne({
                     item_id: item_id,
-                    last_fetched: ''
+                    last_fetched: '',
+                    waiting: true
                 });
             } catch (e) {}
             marketHistory = {};
         }
         if (marketHistory.last_fetched != todays_key) {
+            await app.db.prices.updateOne({
+                item_id: item_id,
+            }, {
+                $set: {
+                    waiting: true
+                }
+            });
             count++;
             if (app.bailout) throw 'Price check bailing';
             //console.log('Waiting on price fetch for: ', item_id);
@@ -170,7 +195,6 @@ async function fetch(app, item_id, date) {
         total += priceList[i];
     }
     let avgPrice = Math.round(((total / priceList.length) + Number.EPSILON) * 100) / 100;
-    //console.log(item_id + ' ' + avgPrice);
 
     // Don't have a decent price? Let's try to build it!
     if (avgPrice <= 0.01) {
