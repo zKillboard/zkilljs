@@ -10,5 +10,4 @@ function loadCheck() {
 }
 
 function documentReady() {
-
 }
