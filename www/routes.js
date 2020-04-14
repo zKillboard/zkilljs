@@ -2,11 +2,11 @@ var express = require('express');
 var router = express.Router({strict: true});
 module.exports = router;
 
-addGet('/api/information/:type/:id.json', 'api/information');
-addGet('/api/killmail/:id.json', 'api/killmail');
-addGet('/api/statistics/:type/:id.json', 'api/statistics');
-addGet('/api/killmails/recent/:type/:id.json', 'api/killmails');
-addGet('/api/killmails/:date/:type/:id.json', 'api/killmails-daily');
+addGet('/api/1hour/information/:type/:id.json', 'api/information');
+addGet('/api/1hour/killmail/:id.json', 'api/killmail');
+addGet('/api/1hour/statistics/:type/:id.json', 'api/statistics');
+addGet('/api/1hour/killmails/recent/:type/:id.json', 'api/killmails');
+addGet('/api/1hour/killmails/:date/:type/:id.json', 'api/killmails-daily');
 
 async function doStuff(req, res, next, controllerFile, pugFile) {
     try {
