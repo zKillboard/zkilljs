@@ -76,11 +76,10 @@ async function f() {
 
     const MongoClient = require('mongodb').MongoClient;
     const url = 'mongodb://localhost:27017?maxPoolSize=500';
-    const dbName = 'zkillboard';
+    const dbName = 'zkilljs';
     const client = new MongoClient(url, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
-        keepalive: true,
         connectTimeoutMS: 3600000,    
         socketTimeoutMS: 3600000, 
     });
@@ -110,6 +109,11 @@ async function f() {
         let z = now + zincrcount;
         app.redis.zadd('zkb:ztop:' + key, z, z);
     };
+
+    // Special case, killhashes will be mapped to original zkillboard's esimails collection
+    // We don't need to double this data set on the server.... 
+    var zdb = client.db('zkillboard');
+    app.db.rawmails = zdb.collection('esimails');
 
     globalapp = app;
     return app;
