@@ -1,6 +1,9 @@
 'use strict';
 
 async function f(app) {
+    var factionCount = await app.db.information.countDocuments({type: 'faction_id', last_updated: {'$lt': (Date.now() / 1000)}});
+    if (factionCount == 0) return;
+    
     console.log('Updating factions');
     let res = await app.phin(app.esi + '/latest/universe/factions/');
     if (res.statusCode == 200) {
