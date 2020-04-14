@@ -282,11 +282,9 @@ const stats = {
                 'months': [{
                     $group: {
                         _id: {
-                            '$concat': [{
-                                $toString: '$year'
-                            }, '-', {
-                                $toString: '$month'
-                            }]
+                            '$add': [{
+                                '$multiply': ['$year', 100]
+                            }, '$month']
                         },
                         count: {
                             $sum: 1
