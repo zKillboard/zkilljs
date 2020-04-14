@@ -20,6 +20,10 @@ async function f(app) {
         await app.redis.setex(todaysKey, 86400, "true");
     }
 
+    let count = await app.db.killhashes.countDocuments();
+    count = count - await app.db.killhashes.countDocuments({status: 'done'});
+    if (count != 0) return;
+
     let key = await app.redis.spop("zkb:dailies");
     if (key == undefined || key == null) return;
 
