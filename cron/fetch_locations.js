@@ -11,7 +11,7 @@ async function f(app) {
 
     for (let i = 0; i < rows.length; i++) {
         promises.push(fetch_locations(app, rows[i], rows[i].id));
-        await app.sleep(100);
+        await app.sleep(10);
     }
 
     await app.waitfor(promises);
@@ -22,13 +22,11 @@ async function fetch_locations(app, row, solar_system_id) {
     let res = await app.phin('https://www.fuzzwork.co.uk/api/mapdata.php?solarsystemid=' + solar_system_id + '&format=json');
     if (res.statusCode == 200) {
         let body = JSON.parse(res.body);
-        if (body.length > 0) {
-            await app.db.information.updateOne(row, {
-                $set: {
-                    locations: body,
-                    last_updated: 5570334857
-                }
-            });
-        }
-    }
+        await app.db.information.updateOne(row, {
+            $set: {
+                locations: body,
+                last_updated: 5570334857
+            }
+        });
+    } else console.log('Fuzzmap for ' + solar_system_id + ' has HTTP code: ' + res.statusCode);
 }
