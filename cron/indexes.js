@@ -19,8 +19,8 @@ async function applyIndexes(app) {
     await createIndex(app.db.killhashes, {status: 1}, {});
 
     await app.db.createCollection('statistics');
-    await createIndex(app.db.information, {type: 1, id: 1}, {unique: true});
-    await createIndex(app.db.information, {update: 1}, {});
+    await createIndex(app.db.statistics, {type: 1, id: 1}, {unique: true});
+    await createIndex(app.db.statistics, {update: 1}, {});
 
     await app.db.createCollection('prices');
     await createIndex(app.db.prices, {item_id: 1}, {unique: true});
@@ -38,6 +38,7 @@ async function applyIndexes(app) {
     };
 
     await app.db.createCollection('killmails');
+    await createIndex(app.db.killmails, {padhash: 1}, {});
     await createIndex(app.db.killmails, {killmail_id: 1}, {unique: true});
     await createIndex(app.db.killmails, {sequence: 1}, {unique: true});
     await createIndex(app.db.killmails, index, bg);

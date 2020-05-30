@@ -43,6 +43,6 @@ async function getData(req, res) {
         }).toArray();
 
     return {
-        json: result
+        json: result, maxAge: 86400
     };
 }

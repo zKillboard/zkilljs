@@ -28,20 +28,21 @@ async function startWebListener() {
     www.set('views', path.join(__dirname, '../www/views'));
     www.set('view engine', 'pug');
 
-    www.enable('etag');
+    //www.enable('etag');
 
     const server_started = Date.now();
     www.use((req, res, next) => {
         res.locals.server_started = server_started;
         res.locals.googleua = process.env.googleua;
+        res.locals.app = www.app;
         next();
     });
 
     www.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
-    www.use(express.static('www/public'))
+    www.use(express.static('www/public', { maxAge: '3600000' })); // Client-side file caching
 
     www.disable('x-powered-by');
-    www.use('/api/', require('cors')());
+    //www.use('/api/', require('cors')());
 
     var indexRouter = require('../www/routes.js');
     www.use('/', indexRouter);
@@ -51,7 +52,7 @@ async function startWebListener() {
     server.on('error', onError);
     server.on('listening', onListening);
 
-    console.log('Listening...');
+    console.log('Listening on port ' + (process.env.PORT || '3000'));
 }
 
 function onError(error) {

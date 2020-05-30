@@ -1,0 +1,50 @@
+mixin char_id_link(tag, id, name)
+	+type_id_link(tag, 'character', id, name)
+
+mixin corp_id_link(tag, id, name)
+	+type_id_link(tag, 'corporation', id, name)
+
+mixin alli_id_link(tag, id, name)
+	+type_id_link(tag, 'alliance', id, name)
+
+
+mixin type_id_link(tag, type, id, name)
+	if id != undefined
+		-var url = '/' + type + '/' + id
+		-var name = (name == null || name == undefined || name == '' ? type + ' ' + id : name)
+		#{tag}
+			a(href=url alt=name)= name
+
+mixin tag_image(tag, url, src, name)
+	#{tag}
+		a(href=url)
+			img.image(src=src alt=name)
+
+mixin type_image(tag, id, name, size)
+	if id != undefined
+		-var url = '/type/' + id
+		-var image = 'https://images.evetech.net/types/' + id + '/icon?size=' + size
+		-var name = (name == null || name == undefined || name == '' ? type + ' ' + id : name)
+		+tag_image(tag, url, image, name)
+
+
+mixin alli_image(tag, id, name, size)
+	if id != undefined
+		-var url = '/alliance/' + id
+		-var image = 'https://images.evetech.net/alliances/' + id + '/logo?size=' + size
+		-var name = (name == null || name == undefined || name == '' ? type + ' ' + id : name)
+		+tag_image(tag, url, image, name)
+
+mixin corp_image(tag, id, name, size)
+	if id != undefined
+		-var url = '/alliance/' + id
+		-var image = 'https://images.evetech.net/corporations/' + id + '/logo?size=' + size
+		-var name = (name == null || name == undefined || name == '' ? type + ' ' + id : name)
+		+tag_image(tag, url, image, name)
+
+mixin char_image(tag, id, name, size)
+	if id != undefined
+		-var url = '/alliance/' + id
+		-var image = 'https://images.evetech.net/characters/' + id + '/portrait?size=' + size
+		-var name = (name == null || name == undefined || name == '' ? type + ' ' + id : name)
+		+tag_image(tag, url, image, name)

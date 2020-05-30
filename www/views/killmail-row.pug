@@ -1,0 +1,41 @@
+include mixins.pug
+
+-var rowid = 'killmail-' + json.rawmail.killmail_id
+-var time = json.rawmail.killmail_time.replace("T", "<br/>").replace("Z", "");
+
+div.killrow(id=rowid)
+	ul.info1
+		li
+			| !{time}
+		li.number= json.zmail.total_value
+	ul.image
+		+type_image('li', json.rawmail.victim.ship_type_id, json.rawmail.victim.ship_type_name, 64)
+	ul.info2
+		+type_id_link('li', 'system', json.rawmail.solar_system_id, json.rawmail.solar_system_name)
+		+type_id_link('li', 'constellation', json.zmail.involved.constellation_id,json.zmail.involved.constellation_name)
+		+type_id_link('li', 'region', json.zmail.involved.region_id, json.zmail.involved.region_name)
+	ul.image
+		if json.rawmail.victim.alliance_id > 0
+			+alli_image('li', json.rawmail.victim.alliance_id, json.rawmail.victim.alliance_name, 64)
+		else if json.rawmail.victim.corporation_id > 1999999
+			+corp_image('li', json.rawmail.victim.corporation_id, json.rawmail.victim.corporation_name, 64)
+		else
+			+char_image('li', json.rawmail.victim.character_id, json.rawmail.victim.character_name, 64)
+	ul.victim
+		li
+			+char_id_link('span', json.rawmail.victim.character_id, json.rawmail.victim.character_name)
+			- var text = ' (' + json.rawmail.victim.ship_type_name + ')'
+			span= text
+		+corp_id_link('li', json.rawmail.victim.corporation_id, json.rawmail.victim.corporation_name)
+		+alli_id_link('li', json.rawmail.victim.alliance_id, json.rawmail.victim.alliance_name)
+	ul.image
+		if json.rawmail.final_blow.alliance_id > 0
+			+alli_image('li', json.rawmail.final_blow.alliance_id, json.rawmail.final_blow.alliance_name, 64)
+		else if json.rawmail.final_blow.corporation_id > 1999999
+			+corp_image('li', json.rawmail.final_blow.corporation_id, json.rawmail.final_blow.corporation_name, 64)
+		else
+			+char_image('li', json.rawmail.final_blow.character_id, json.rawmail.final_blow.character_name, 64)
+	ul.finalblow
+		+char_id_link('li', json.rawmail.final_blow.character_id, json.rawmail.final_blow.character_name)
+		+corp_id_link('li', json.rawmail.final_blow.corporation_id, json.rawmail.final_blow.corporation_name)
+		+alli_id_link('li', json.rawmail.final_blow.alliance_id, json.rawmail.final_blow.alliance_name)

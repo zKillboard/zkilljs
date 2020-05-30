@@ -20,24 +20,22 @@ async function f(app) {
         await app.redis.setex(todaysKey, 86400, "true");
     }
 
-    let count = await app.db.killhashes.countDocuments();
-    count = count - await app.db.killhashes.countDocuments({status: 'done'});
-    if (count != 0) return;
+    while (await app.redis.scard("zkb:dailies") > 0) {
+        let key = await app.redis.spop("zkb:dailies");
+        if (key == undefined || key == null) return;
 
-    let key = await app.redis.spop("zkb:dailies");
-    if (key == undefined || key == null) return;
+        let currentCount = await app.redis.hget("zkb:dailies_count", key);
+        if (parseInt(await app.redis.hget("zkb:dailies_lastcount", key)) == currentCount) return;
+        console.log('Fetching daily: ' + key);
 
-    let currentCount = await app.redis.hget("zkb:dailies_count", key);
-    if (parseInt(await app.redis.hget("zkb:dailies_lastcount", key)) == currentCount) return;
-    console.log('Fetching daily: ' + key);
-
-    let res = await app.phin('https://zkillboard.com/api/history/' + key + '.json');
-    if (res.statusCode == 200) {
-        for (const [id, hash] of Object.entries(JSON.parse(res.body))) {
-            await app.util.killmails.add(app, parseInt(id), hash);
+        let res = await app.phin('https://zkillboard.com/api/history/' + key + '.json');
+        if (res.statusCode == 200) {
+            for (const [id, hash] of Object.entries(JSON.parse(res.body))) {
+                await app.util.killmails.add(app, parseInt(id), hash);
+            }
         }
+        await app.redis.hset("zkb:dailies_lastcount", key, currentCount); 
     }
-    await app.redis.hset("zkb:dailies_lastcount", key, currentCount);
 }
 
 module.exports = f;

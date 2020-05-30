@@ -12,6 +12,6 @@ async function getData(req, res) {
         last_updated: 0,
     }).toArray();
     return {
-        json: (result.length == 1 ? result[0] : null)
+        json: (result.length == 1 ? result[0] : null), maxAge: 3600
     };
 }

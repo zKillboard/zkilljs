@@ -34,7 +34,7 @@ async function populateSet(app) {
             await app.sleep(1);
         }
 
- await update_stats(app);
+        await update_stats(app);
     } catch (e) {
         console.log(e);
     } finally {
@@ -193,7 +193,7 @@ async function update_stats(app) {
                 },
             };
 
-            while (updateSet.size > 12) await app.sleep(1);
+            while (updateSet.size >= 10) await app.sleep(1);
             promises.push(update_stat_record(app, record, match, max));
             await app.sleep(1);
 

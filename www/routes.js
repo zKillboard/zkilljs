@@ -2,6 +2,11 @@ var express = require('express');
 var router = express.Router({strict: true});
 module.exports = router;
 
+addGet('/site/killmails/:type/:id.html', 'site/killmails', 'kill-list.pug');
+addGet('/cache/1hour/site/killmail/row/:id.html', 'site/killmail', 'killmail-row.pug');
+
+addGet('/cache/1hour/api/information/:type/:id/:field.html', 'site/information', 'raw.pug');
+
 addGet('/api/1hour/information/:type/:id.json', 'api/information');
 addGet('/api/1hour/killmail/:id.json', 'api/killmail');
 addGet('/api/1hour/statistics/:type/:id.json', 'api/statistics');
@@ -15,11 +20,13 @@ async function doStuff(req, res, next, controllerFile, pugFile) {
 
         let result = await controller(req, res);
 
-        if (result === null || result === undefined) {
+        res.set('Cache-Control', 'public, max-age=' + (result.maxAge || 0));
+
+        if (result === null || result === undefined) { 
             res.sendStatus(404);
         } else if (typeof result === "object") {
-            if (result.json !== undefined) res.json(result.json);
-            else res.render(pugFile, result);
+            if (pugFile !== undefined) res.render(pugFile, result);
+            else if (result.json !== undefined) res.json(result.json);
         } else if (typeof result == "string") {
             res.redirect(result);
         }

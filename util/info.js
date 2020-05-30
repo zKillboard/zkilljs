@@ -1,8 +1,24 @@
 'use strict';
 
 const entity = require('../util/entity.js');
+const fill = require('./info_fill.js');
 
 const info = {
+    async fill(app, o) {
+        return await fill.fill(app, o);
+    },
+
+    async get_info(app, type, id) {
+        if (type != 'label') id = parseInt(id);
+        let record = await app.db.information.findOne({type: type, id: id});
+        return record;
+    },
+
+    async get_info_field(app, type, id, field) {
+        let record = await app.util.info.get_info(app, type, id);
+        return (record === undefined ? undefined : record[field]);
+    },
+
     async get_locations(app, solar_system_id) {
         await entity.add(app, 'location_id', solar_system_id, true);
         return await app.db.information.findOne({
@@ -76,7 +92,6 @@ const info = {
         return undefined;
     }
 }
-
 
 const infernoFlags = {
     4: [116, 121], // ???

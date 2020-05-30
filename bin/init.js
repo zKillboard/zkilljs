@@ -1,5 +1,12 @@
 module.exports = f;
 
+/*const originalLogger = console.log;
+console.log = function(text) {
+    var d = new Date();
+    var time = ("" + d.getHours()).padStart(2, '0') + ":" + ("" + d.getMinutes()).padStart(2, '0') + ":" + ("" + d.getSeconds()).padStart(2, '0');
+    originalLogger(time , " > ", text);
+}*/
+
 const redis = require('async-redis').createClient({
     retry_strategy: redis_retry_strategy
 });

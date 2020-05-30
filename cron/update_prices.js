@@ -19,7 +19,7 @@ async function f(app) {
         let row = await prices_cursor.next();
         promises.push(update_price(app, row, todays_price_key));
         await app.sleep(1);
-        while (set.size > 10) await app.sleep(1);
+        while (set.size > 50) await app.sleep(1);
     }
     await app.waitfor(promises, 'update_prices');
 }
@@ -48,7 +48,7 @@ async function update_price(app, row, todays_price_key) {
             } else if (res.statusCode == 404) {
                 updates.zkill = true;
             } else {
-                console.log('unable to fetch zkill for ', item_id, ' statusCode: ', res.statusCode);
+                //console.log('unable to fetch zkill for ', item_id, ' statusCode: ', res.statusCode);
                 return;
             }
         }
@@ -80,7 +80,7 @@ async function update_price(app, row, todays_price_key) {
                 '$set': updates
             });
             //console.log('Marking price check for ' + item_id + ' as no_fetch');
-            await app.sleep(10000);
+            await app.sleep(1000);
         } else {
             console.log('Price fetch ended in error: ' + res.statusCode);
         }

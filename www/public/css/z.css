@@ -1,0 +1,34 @@
+img.image {
+	background-color: #111;
+	margin-top: 5px;
+}
+
+div.killrow ul {
+    display: inline;
+	float: left;
+	white-space: nowrap;
+    overflow: hidden;
+	padding: 5px;
+	margin: 0px;
+}
+
+div.killrow ul li {
+    list-style: none;
+    margin: 0px;
+}
+
+div.killrow ul.info1 {
+	width: 6em;
+}
+
+div.killrow ul.info2 {
+    width: 6.5em;	
+}
+
+div.killrow ul.victim, div.killrow ul.finalblow {
+	width: 18em;
+}
+
+div.killrow {
+	clear: both;
+}

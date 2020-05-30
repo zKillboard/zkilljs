@@ -10,6 +10,6 @@ async function getData(req, res) {
         sequence: 0
     }).toArray();
     return {
-        json: (result.length == 1 ? result[0] : null)
+        json: (result.length == 1 ? result[0] : null), magAge: 1
     };
 }

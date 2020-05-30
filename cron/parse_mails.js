@@ -28,7 +28,7 @@ async function f(app) {
     }
 
     if (firstRun) {
-        sw.start(app, app.db.killhashes, match, parse_mail, 50);
+        sw.start(app, app.db.killhashes, match, parse_mail, 10);
         firstRun = false;
     }
 }

@@ -1,0 +1,5 @@
+div.killmails
+	each val in json
+		- var url = '/cache/1hour/site/killmail/row/' + val.killmail_id + '.html';
+		- var divid = 'kill-' + val.killmail_id
+		div(fetch=url unfetched="true" id=divid)

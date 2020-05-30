@@ -35,14 +35,14 @@ let esi_error = 0;
 async function f(app) {
     if (firstRun) {
         firstRun = false;
-        populateSet(app);
+        for (const typeValue of types) populateSet(app, typeValue);
     }
 
     await app.sleep(1000);
     while (app.bailout && set.size > 0) await app.sleep(1000);
 }
 
-async function populateSet(app) {
+async function populateSet(app, typeValue) {
     let fetched = 0;
     try {
         const fullStop = app.bailout || app.no_parsing || app.no_stats;
@@ -51,17 +51,17 @@ async function populateSet(app) {
         let rows = await app.db.information.find({
             last_updated: {
                 $lt: dayAgo
-            }
+            }, type: typeValue
         }).sort({
             last_updated: 1
-        }).limit(1000); // Limit so we reset this query often
+        }).limit(100); // Limit so we reset this query often
 
         while (await rows.hasNext()) {
             if (app.bailout == true) break;
 
             fetch(app, await rows.next());
             let wait = 20;
-            while (set.size > 10) {
+            while (set.size > 100) {
                 wait--;
                 await app.sleep(1);
             }
@@ -69,25 +69,24 @@ async function populateSet(app) {
             if (esi_error > 0) await app.sleep(1000);
             fetched++;
         }
+
+        // Wait for all calls to finish and return
         while (set.size > 0) {
             await app.sleep(1);
         }
     } catch (e) {
         console.log(e);
+        console.log('dropped on ' + typeValue);
     } finally {
         if (fetched == 0) await app.sleep(1000);
-        populateSet(app);
+        populateSet(app, typeValue);
     }
 }
 
 async function fetch(app, row) {
     try {
+        const orow = row;
         set.add(row);
-
-        if (urls[row.type] == undefined) {
-            console.log('Unmatched information: ', row);
-            return;
-        }
 
         let url = app.esi + urls[row.type].replace(':id', row.id);
         let res = await app.phin({
@@ -168,7 +167,12 @@ async function fetch(app, row) {
 
         return false;
     } catch (e) {
-        console.log(e)
+        console.log(e);
+       await app.db.information.updateOne(row, {
+                $set: {
+                    last_updated: (Math.floor(Date.now() / 1000) - 86100)
+                }
+            });
     } finally {
         set.delete(row);
     }

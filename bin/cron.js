@@ -25,7 +25,7 @@ function createTaskSettings(span = 1, iterations = 0, offset = 0) {
 const tasks = {
     // maintenance fun
     'update_prices': createTaskSettings(1),
-    'update_factions.js': createTaskSettings(86400),
+    'update_factions.js': createTaskSettings(60),
     'update_information.js': createTaskSettings(1),
     'fetch_locations.js': createTaskSettings(1),
     
@@ -33,7 +33,7 @@ const tasks = {
     'listen_redisq.js': createTaskSettings(15),
     'fetch_wars.js': createTaskSettings(9600),
     'fetch_warmails': createTaskSettings(1),
-    'fetch_dailies': createTaskSettings(1, 0, -43200),
+    'fetch_dailies': createTaskSettings(86400, 0, -43200),
 
     // killmail consumers
     'fetch_mails.js': createTaskSettings(1),
@@ -59,50 +59,52 @@ async function clearRunKeys() {
 }
 
 async function runTasks(app, tasks) {
-    if (await app.redis.get("STOP") != null || await app.redis.get("RESTART") != null) {
-        console.log("STOPPING");
-        app.bailout = true;
-        app.no_parsing = true;
-        app.no_stats = true;
-        while ((await app.redis.keys("crin:running:*")).length > 0) {
-            console.log('Running: ', await app.redis.keys("crin:running:*"));
-            await app.sleep(1000);
+    try {
+        if (await app.redis.get("STOP") != null || await app.redis.get("RESTART") != null) {
+            console.log("STOPPING");
+            app.bailout = true;
+            app.no_parsing = true;
+            app.no_stats = true;
+            while ((await app.redis.keys("crin:running:*")).length > 0) {
+                console.log('Running: ', await app.redis.keys("crin:running:*"));
+                await app.sleep(1000);
+            }
+            if (await app.redis.get("RESTART") != null) {
+                await app.redis.del("RESTART");
+                console.log("Restarting...");
+                process.exit();
+            }
+            console.log("STOPPED");
+            return;
         }
-        if (await app.redis.get("RESTART") != null) {
-            await app.redis.del("RESTART");
-            console.log("Restarting...");
-            process.exit();
-        }
-        console.log("STOPPED");
-        return;
-    }
 
-    let now = Date.now();
-    now = Math.floor(now / 1000);
+        let now = Date.now();
+        now = Math.floor(now / 1000);
 
-    let arr = Object.keys(tasks);
-    for (let i = 0; i < arr.length; i++) {
-        let task = arr[i];
-        let taskConfig = tasks[task] || {};
-        let currentSpan = now - (now % (taskConfig.span || 1)) + (taskConfig.offset || 0);
-        let iterations = taskConfig.iterations || 1;
+        let arr = Object.keys(tasks);
+        for (let i = 0; i < arr.length; i++) {
+            let task = arr[i];
+            let taskConfig = tasks[task] || {};
+            let currentSpan = now - (now % (taskConfig.span || 1)) + (taskConfig.offset || 0);
+            let iterations = taskConfig.iterations || 1;
 
-        for (let j = 0; j < iterations; j++) {
-            let curKey = 'crin:current:' + j + ':' + task + ':' + currentSpan;
-            let runKey = 'crin:running:' + j + ':' + task;
+            for (let j = 0; j < iterations; j++) {
+                let curKey = 'crin:current:' + j + ':' + task + ':' + currentSpan;
+                let runKey = 'crin:running:' + j + ':' + task;
 
-            if (await app.redis.get(curKey) != 'true' && await app.redis.get(runKey) != 'true') {
-                await app.redis.setex(curKey, taskConfig.span || 3600, 'true');
-                await app.redis.setex(runKey, 3600, 'true');
+                if (await app.redis.get(curKey) != 'true' && await app.redis.get(runKey) != 'true') {
+                    await app.redis.setex(curKey, taskConfig.span || 3600, 'true');
+                    await app.redis.setex(runKey, 3600, 'true');
 
-                f = require('../cron/' + task);
-                runTask(task, f, app, curKey, runKey, j);
+                    f = require('../cron/' + task);
+                    runTask(task, f, app, curKey, runKey, j);
+                }
             }
         }
+    } finally {
+        await app.sleep(Math.max(1, 1 + (Date.now() % 1000)));
+        runTasks(app, tasks);
     }
-
-    await app.sleep(Math.max(1, 1 + (Date.now() % 1000)));
-    runTasks(app, tasks);
 }
 
 async function runTask(task, f, app, curKey, runKey, iteration) {
