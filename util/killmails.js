@@ -18,5 +18,38 @@ module.exports = {
                 console.log(e);
             }
         }
+    },
+
+    async prepKillmailRow(app, killmail_id) {
+        var redisKey = 'killmail_row:' + killmail_id;
+        var ret = await app.redis.get(redisKey);
+        if (ret != undefined) {
+            return JSON.parse(ret);
+        }
+
+        let zmail = await app.db.killmails.findOne({
+            killmail_id: killmail_id
+        });
+        let rawmail = await app.db.rawmails.findOne({
+            killmail_id: killmail_id
+        });
+
+        for (const inv of rawmail.attackers) {
+            if (inv.final_blow == true) {
+                rawmail.final_blow = inv;
+                break;
+            }
+        }
+
+        ret = {
+            json: {
+                zmail: zmail,
+                rawmail: rawmail
+            },
+            maxAge: 3600
+        };
+        ret.json = await app.util.info.fill(app, ret.json);
+        await app.redis.setex(redisKey, 3600, JSON.stringify(ret));
+        return ret;
     }
 }

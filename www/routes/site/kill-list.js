@@ -3,6 +3,8 @@
 module.exports = getData;
 
 async function getData(req, res) {
+     const app = req.app.app;
+
     if (req.params.type == 'system') {
         req.params.type = 'solar_system';
     } else if (req.params.type == 'type') {
@@ -25,7 +27,7 @@ async function getData(req, res) {
         }];
     };
 
-    let result = await req.app.app.db.killmails.find(query)
+    let result = await app.db.killmails.find(query)
         .sort({
             killmail_id: -1
         })
@@ -35,6 +37,13 @@ async function getData(req, res) {
             killmail_id: 1,
             hash: 1
         }).toArray();
+
+    // Prep the killmail rows
+    let promises = [];
+    for (let kill of result) {
+        promises.push(app.util.killmails.prepKillmailRow(app, kill.killmail_id));
+    }
+    await app.waitfor(promises);
 
     return {
         json: result,
