@@ -3,20 +3,18 @@ var router = express.Router({strict: true});
 module.exports = router;
 
 // Overview
-addGet('/site/information/:type/:id.html', 'site/information', 'information.pug');
-addGet('/site/killmails/:type/:id.html', 'site/killmails', 'kill-list.pug');
-addGet('/site/killmail/row/:id.html', 'site/killmail', 'killmail-row.pug');
-
-//addGet('/site/killmail/:id', 'site/detail', 'detail.pug');
+addGet('/site/information/:type/:id.html', 'site/information.js', 'information.pug');
+addGet('/site/killmails/:type/:id.html', 'site/kill-list.js', 'kill-list.pug');
+addGet('/site/killmail/row/:id.html', 'site/killmail-row.js', 'killmail-row.pug');
 
 
 addGet('/cache/1hour/api/information/:type/:id/:field.html', 'site/information', 'raw.pug');
 
-addGet('/api/1hour/information/:type/:id.json', 'api/information');
-addGet('/api/1hour/killmail/:id.json', 'api/killmail');
-addGet('/api/1hour/statistics/:type/:id.json', 'api/statistics');
-addGet('/api/1hour/killmails/recent/:type/:id.json', 'api/killmails');
-addGet('/api/1hour/killmails/:date/:type/:id.json', 'api/killmails-daily');
+addGet('/api/1hour/information/:type/:id.json', 'api/information.js');
+addGet('/api/1hour/killmail/:id.json', 'api/killmail.js');
+addGet('/api/1hour/statistics/:type/:id.json', 'api/statistics.js');
+addGet('/api/1hour/killmails/recent/:type/:id.json', 'api/killmails.js');
+addGet('/api/1hour/killmails/:date/:type/:id.json', 'api/killmails-daily.js');
 
 router.get('/*', (req, res) => {
     res.sendFile(__dirname + '/public/index.html');
@@ -24,7 +22,7 @@ router.get('/*', (req, res) => {
 
 async function doStuff(req, res, next, controllerFile, pugFile) {
     try {
-        const file = res.app.root + '/www/routes/' + controllerFile + '.js';
+        const file = res.app.root + '/www/routes/' + controllerFile;
         const controller = require(file);
 
         let result = await controller(req, res);
