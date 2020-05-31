@@ -34,8 +34,6 @@ async function doStuff(req, res, next, controllerFile, pugFile) {
         if (result === null || result === undefined) { 
             res.sendStatus(404);
         } else if (typeof result === "object") {
-            console.log('object');
-            console.log(result, pugFile);
             if (pugFile !== undefined) res.render(pugFile, result);
             else if (result.json !== undefined) res.json(result.json);
         } else if (typeof result == "string") {
