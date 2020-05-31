@@ -10,28 +10,50 @@ function loadCheck() {
 }
 
 function documentReady() {
-	
-	// Is the URL not root? Redirect to root
-
-
-	// Load the nav bar for the current user
-
-	// Load the content based on the URL
-
-	// if a killmail
-
-	// else its an overview page
-	var path = window.location.pathname;
-	if (path == '/') path = '/site/killmails/all/all.html';
-	else path = 'site/' + path;
-
-	apply("content", path);
-
+	// Prep any tooltips
 	$('[data-toggle="tooltip"]').tooltip({trigger: 'click', title: 'data', placement: 'top'});
+
+	var path = window.location.pathname;
+	var fetch;
+
+	// if a user page...
+	if (path.substring(0, 6) == '/user/') {
+		console.log('user page');
+	}
+	// if a killmail
+	else if (window.location.pathname.substring(0, 10) == '/killmail/') {
+		fetch = '/site' + path;
+		console.log('killmail! ' + fetch);
+	} else { // overview page
+		loadOverview(path);
+	}
+}
+
+function loadOverview(path) {
+	if (path == '/') {
+		apply('overview-information', null);
+		apply('overview-killmails', '/site/killmails/all/all.html');
+	} else {
+		path = path.replace('/system/', '/solar_system/').replace('/type/', '/item/');
+		apply('overview-information', '/site/information' + path + '.html');
+		apply('overview-killmails', '/site/killmails' + path + '.html');
+	}
+	                /*<div id="overview-information"></div>
+                <div id="overview-statistics"></div>
+                <div id="overview-menu"></div>
+                <div id="overview-killmails"></div>
+                <div id="overview-weekly"></div>*/
 }
 
 function apply(element, path) {
-	fetch(path).then(response => response.text()).then(html => applyHTML(element, html)).then(() => { console.log('Fetched ' + path); });
+	if (typeof element == 'string') element = document.getElementById(element);
+	// Clear the element
+	$(element).html("");
+
+	if (path != null) {
+		// Load the content into the element
+		fetch(path).then(response => response.text()).then(html => applyHTML(element, html)).then(() => { console.log('Fetched ' + path); });
+	}
 }
 
 
@@ -55,8 +77,8 @@ function loadUnfetched(element) {
 	setTimeout(updateNumbers, 1);
 }
 
-// Iterates any elements with the number class and converts it to an xxx.xx[k,m,t,...] format
-function updateNumbers() {
+// Iterates any elements with the number class and calls intToString to convert it
+function updateNumbers() { 
 	$.each($('.number'), function(index, element) {
 		element = $(element);
 		var value = element.text();

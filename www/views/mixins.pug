@@ -44,7 +44,7 @@ mixin corp_image(tag, id, name, size)
 
 mixin char_image(tag, id, name, size)
 	if id != undefined
-		-var url = '/alliance/' + id
+		-var url = '/character/' + id
 		-var image = 'https://images.evetech.net/characters/' + id + '/portrait?size=' + size
 		-var name = (name == null || name == undefined || name == '' ? type + ' ' + id : name)
 		+tag_image(tag, url, image, name)

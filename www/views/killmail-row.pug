@@ -36,13 +36,17 @@ div.killrow(id=rowid)
 	ul.image
 		if json.rawmail.final_blow.alliance_id > 0
 			+alli_image('li', json.rawmail.final_blow.alliance_id, json.rawmail.final_blow.alliance_name, 64)
-		else if json.rawmail.final_blow.corporation_id > 1999999 || parseInt(json.rawmail.final_blow.character_id) == 0
+		else if json.rawmail.final_blow.corporation_id > 0
 			+corp_image('li', json.rawmail.final_blow.corporation_id, json.rawmail.final_blow.corporation_name, 64)
-		else
+		else if json.rawmail.final_blow.character_id > 0
 			+char_image('li', json.rawmail.final_blow.character_id, json.rawmail.final_blow.character_name, 64)
+		else
+			+type_image('li', json.rawmail.final_blow.ship_type_id, json.rawmail.final_blow.ship_type_name, 64)
 	ul.finalblow
 		+char_id_link('li', json.rawmail.final_blow.character_id, json.rawmail.final_blow.character_name)
 		+corp_id_link('li', json.rawmail.final_blow.corporation_id, json.rawmail.final_blow.corporation_name)
 		+alli_id_link('li', json.rawmail.final_blow.alliance_id, json.rawmail.final_blow.alliance_name)
+		if (!(json.rawmail.final_blow.character_id > 0 || json.rawmail.final_blow.corporation_id > 0 || json.rawmail.final_blow.alliance_id > 0)) 
+			+type_id_link('li', 'type', json.rawmail.final_blow.ship_type_id, json.rawmail.final_blow.ship_type_name)
 	div.clearfix
 	hr.d-block.d-lg-none

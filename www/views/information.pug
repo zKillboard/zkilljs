@@ -1,0 +1,31 @@
+include mixins.pug
+
+mixin info_row(label, value, classes)
+	if value != undefined
+		- value = '' + value
+		if value.length > 0
+			tr
+				td= label
+				td(class=classes)= value
+
+ul
+	if json.type == 'character_id'
+		+char_image('li', json.id, json.name, 128)
+	else if json.type == 'corporation_id'
+		+corp_image('li', json.id, json.name, 128)
+	else if json.type == 'alliance_id'
+		+alli_image('li', json.id, json.name, 128)
+
+	li
+		table
+			-var founded = (json.founded == undefined ? '' : ('' + json.date_founded).replace('T', ' ').replace('Z', ''))
+			+info_row('Character:', json.character_name)
+			+info_row('Corporation:', json.corporation_name)
+			+info_row('Alliance:', json.alliance_name)
+			+info_row('Ticker:', json.ticker)
+			+info_row('Members:', json.member_count)
+			+info_row('Founded:', founded)
+			+info_row('System:', json.solar_system_name)
+			+info_row('Constellation:', json.constellation_name)
+			+info_row('Region:', json.region_name)
+
