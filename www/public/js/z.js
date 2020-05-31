@@ -86,14 +86,15 @@ function updateNumbers() {
 	});
 }
 
+var suffixes = ["", "k", "m", "b", "t", "tt", "ttt"];
 // Converts a number into a smaller quickly readable format
 function intToString (value) {
 	value = parseInt(value);
-	var suffixes = ["", "k", "m", "b", "t", "tt", "ttt"];
+	var index = 0;	
 
-	while (value > 999) {
+	while (value > 999.9999) {
 		value = value / 1000;
-		suffixes.shift();
+		index++;
 	}
-	return value.toFixed(2) + suffixes[0];
+	return value.toLocaleString(undefined,  {'minimumFractionDigits': 2,'maximumFractionDigits': 2}) + suffixes[index];
 }
