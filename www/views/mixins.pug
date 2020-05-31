@@ -18,7 +18,7 @@ mixin type_id_link(tag, type, id, name)
 mixin tag_image(tag, url, src, name)
 	#{tag}
 		a(href=url)
-			img.image(src=src alt=name)
+			img.lazy.image(src=src alt=name)
 
 mixin type_image(tag, id, name, size)
 	if id != undefined

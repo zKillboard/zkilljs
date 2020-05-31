@@ -2,7 +2,7 @@ loadCheck();
 
 // with async js loading, let's make sure umbrella is loaded before we're "document ready"
 function loadCheck() {
-	if (typeof u != 'function') {
+	if (typeof $ != 'function') {
 		setTimeout(loadCheck, 1);
 	} else {
 		documentReady();
@@ -26,6 +26,8 @@ function documentReady() {
 	else path = 'site/' + path;
 
 	apply("content", path);
+
+	$('[data-toggle="tooltip"]').tooltip({trigger: 'click', title: 'data', placement: 'top'});
 }
 
 function apply(element, path) {
@@ -35,7 +37,7 @@ function apply(element, path) {
 
 function applyHTML(element, html) {
 	if (typeof element == 'string') element = document.getElementById(element);
-	u(element).html(html);
+	$(element).html(html);
 	loadUnfetched(element);
 }
 
@@ -47,7 +49,29 @@ function loadUnfetched(element) {
   		tofetch.removeAttribute('unfetched');
   		tofetch.removeAttribute('fetch');
   		apply(id, path);
- 		setTimeout(function() { loadUnfetched(element)}, 100);
+ 		setTimeout(function() { loadUnfetched(element)}, 1);
  		return;
 	}
+	setTimeout(updateNumbers, 1);
+}
+
+// Iterates any elements with the number class and converts it to an xxx.xx[k,m,t,...] format
+function updateNumbers() {
+	$.each($('.number'), function(index, element) {
+		element = $(element);
+		var value = element.text();
+		element.text(intToString(value)).removeClass('number');
+	});
+}
+
+// Converts a number into a smaller quickly readable format
+function intToString (value) {
+	value = parseInt(value);
+	var suffixes = ["", "k", "m", "b", "t", "tt", "ttt"];
+
+	while (value > 999) {
+		value = value / 1000;
+		suffixes.shift();
+	}
+	return value.toFixed(2) + suffixes[0];
 }

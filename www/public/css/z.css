@@ -1,3 +1,30 @@
+* {
+    margin: 0;
+}
+html, body {
+    height: 100%;
+}
+
+html {
+  overflow-y: scroll;
+}
+
+.wrapper {
+    min-height: 100%;
+    height: auto !important;
+    height: 100%;
+    margin: 0 auto -100px; /* the bottom margin is the negative value of the footer's height */
+}
+.footer, .push {
+    height: 50px; /* .push must be the same height as .footer */
+}
+.footer {
+}
+
+.tiny { 
+    font-size: 1%;
+}
+
 img.image {
 	background-color: #111;
 	margin-top: 5px;
@@ -29,6 +56,27 @@ div.killrow ul.victim, div.killrow ul.finalblow {
 	width: 18em;
 }
 
-div.killrow {
-	clear: both;
+div.killrow ul.image {
+	width: 70px;
+}
+
+.autocomplete-suggestions { border: 1px solid #999; background: #FFF; overflow: auto; }
+.autocomplete-suggestion { padding: 2px 5px; white-space: nowrap; overflow: hidden; }
+.autocomplete-selected { background: #F0F0F0; }
+.autocomplete-suggestions strong { font-weight: normal; color: #3399FF; }
+.autocomplete-group { padding: 2px 5px; text-transform: capitalize; font-weight: bold; }
+.autocomplete-group strong { display: block; border-bottom: 1px solid #000; }
+
+/* invert filter based dark mode */
+body.dark{
+    background-color: black;
+    filter: invert(1);
+}
+
+body.dark img, body.dark iframe {
+    filter: invert(1);
+}
+
+.eveimage {
+    background-color: #222;
 }
