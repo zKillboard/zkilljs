@@ -53,6 +53,8 @@ async function startWebListener() {
     server.on('listening', onListening);
 
     console.log('Listening on port ' + (process.env.PORT || '3000'));
+    // Start the websocket
+    www.app.ws = require(__dirname + '/websocket');
 }
 
 function onError(error) {
