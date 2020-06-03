@@ -1,5 +1,15 @@
 include mixins.pug
 
+mixin info_row_a(label, type, id, value, classes)
+	-var href= '/' + type.replace('_id', '') + '/' + id
+	if value != undefined
+		- value = '' + value
+		if value.length > 0
+			tr
+				td= label
+				td(class=classes)
+					a(href=href)= value
+
 mixin info_row(label, value, classes)
 	if value != undefined
 		- value = '' + value
@@ -15,17 +25,22 @@ ul
 		+corp_image('li', json.id, json.name, 128)
 	else if json.type == 'alliance_id'
 		+alli_image('li', json.id, json.name, 128)
+	else if json.type == 'item_id' 
+		+type_image('li', json.item_id, json.item_name, 128)
 
 	li
-		table
+		table.table.table-striped.table-borderless.table-hover.table-sm
 			-var founded = (json.founded == undefined ? '' : ('' + json.date_founded).replace('T', ' ').replace('Z', ''))
-			+info_row('Character:', json.character_name)
-			+info_row('Corporation:', json.corporation_name)
-			+info_row('Alliance:', json.alliance_name)
+			+info_row_a('Character:', 'character', json.character_id, json.character_name)
+			+info_row_a('Corporation:', 'corporation', json.corporation_id, json.corporation_name)
+			+info_row_a('Alliance:', 'alliance', json.alliance_id, json.alliance_name)
 			+info_row('Ticker:', json.ticker)
+			+info_row('Item:', json.item_name)
+			+info_row('Group:', json.group_name)
 			+info_row('Members:', json.member_count)
 			+info_row('Founded:', founded)
-			+info_row('System:', json.solar_system_name)
-			+info_row('Constellation:', json.constellation_name)
-			+info_row('Region:', json.region_name)
+			+info_row_a('System:', 'system', json.solar_system_id, json.solar_system_name)
+			+info_row_a('Constellation:', 'constellation', json.constellation_id, json.constellation_name)
+			+info_row_a('Region:', 'region', json.region_id, json.region_name)
+			+info_row('Security:', json.security_status, 'fnumber')
 

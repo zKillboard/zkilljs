@@ -38,6 +38,8 @@ const info_fill = {
     				case 'constellation_id':
     				case 'region_id':
     				case 'item_id':
+                    case 'group_id':
+                    case 'category_id':
                         var record = await this.getInfo(app, key, o);
     					if (record != null && record.name != undefined) {
                             object[key.replace('_id', '_name')] = record.name;
