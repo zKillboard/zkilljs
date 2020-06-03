@@ -38,13 +38,6 @@ async function getData(req, res) {
             hash: 1
         }).toArray();
 
-    // Prep the killmail rows
-    let promises = [];
-    for (let kill of result) {
-        promises.push(app.util.killmails.prepKillmailRow(app, kill.killmail_id));
-    }
-    //await app.waitfor(promises);
-
     return {
         json: result,
         maxAge: 60

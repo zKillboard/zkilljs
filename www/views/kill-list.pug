@@ -1,4 +1,4 @@
-div.killmails
+div#killlist
 	each val in json
 		- var url = '/site/killmail/row/' + val.killmail_id + '.html';
 		- var divid = 'kill-' + val.killmail_id

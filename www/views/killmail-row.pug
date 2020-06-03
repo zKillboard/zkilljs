@@ -3,7 +3,7 @@ include mixins.pug
 -var rowid = 'killmail-' + json.rawmail.killmail_id
 -var time = json.rawmail.killmail_time.replace("T", "<br/>").replace("Z", "");
 
-div.killrow(id=rowid)
+div.killrow
 	ul.image
 		-var url = '/killmail/' + json.rawmail.killmail_id
 		-var image = 'https://images.evetech.net/types/' + json.rawmail.victim.ship_type_id + '/icon?size=' + 64

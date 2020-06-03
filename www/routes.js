@@ -26,13 +26,16 @@ async function doStuff(req, res, next, controllerFile, pugFile) {
         const controller = require(file);
 
         let result = await controller(req, res);
+        var maxAge = (result.maxAge || 0);
 
         res.set('Cache-Control', 'public, max-age=' + (result.maxAge || 0));
 
         if (result === null || result === undefined) { 
             res.sendStatus(404);
         } else if (typeof result === "object") {
-            if (pugFile !== undefined) res.render(pugFile, result);
+            if (pugFile !== undefined) {
+                res.render(pugFile, result);
+            }
             else if (result.json !== undefined) res.json(result.json);
         } else if (typeof result == "string") {
             res.redirect(result);
