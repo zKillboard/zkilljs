@@ -43,7 +43,7 @@ async function getData(req, res) {
     for (let kill of result) {
         promises.push(app.util.killmails.prepKillmailRow(app, kill.killmail_id));
     }
-    await app.waitfor(promises);
+    //await app.waitfor(promises);
 
     return {
         json: result,

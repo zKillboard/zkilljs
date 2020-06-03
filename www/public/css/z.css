@@ -80,3 +80,17 @@ body.dark img, body.dark iframe {
 .eveimage {
     background-color: #222;
 }
+
+
+div#overview-information ul  {
+    white-space: nowrap;
+    overflow: hidden;
+    padding: 5px;
+    margin: 0px;
+}
+
+div#overview-information ul li {
+    float: left;
+    list-style: none;
+    margin: 0px;
+}

@@ -15,17 +15,18 @@ mixin type_id_link(tag, type, id, name)
 		#{tag}
 			a(href=url alt=name)= name
 
-mixin tag_image(tag, url, src, name)
+mixin tag_image(tag, url, src, name, size)
 	#{tag}
+		-var imageHolder = 'width: ' + size + 'px; height: ' + size + 'px;'
 		a(href=url)
-			img.lazy.image(src=src alt=name)
+			img.image(src=src alt=name style=imageHolder)
 
 mixin type_image(tag, id, name, size)
 	if id != undefined
 		-var url = '/type/' + id
 		-var image = 'https://images.evetech.net/types/' + id + '/icon?size=' + size
 		-var name = (name == null || name == undefined || name == '' ? type + ' ' + id : name)
-		+tag_image(tag, url, image, name)
+		+tag_image(tag, url, image, name, size)
 
 
 mixin alli_image(tag, id, name, size)
@@ -33,18 +34,18 @@ mixin alli_image(tag, id, name, size)
 		-var url = '/alliance/' + id
 		-var image = 'https://images.evetech.net/alliances/' + id + '/logo?size=' + size
 		-var name = (name == null || name == undefined || name == '' ? type + ' ' + id : name)
-		+tag_image(tag, url, image, name)
+		+tag_image(tag, url, image, name, size)
 
 mixin corp_image(tag, id, name, size)
 	if id != undefined
 		-var url = '/alliance/' + id
 		-var image = 'https://images.evetech.net/corporations/' + id + '/logo?size=' + size
 		-var name = (name == null || name == undefined || name == '' ? type + ' ' + id : name)
-		+tag_image(tag, url, image, name)
+		+tag_image(tag, url, image, name, size)
 
 mixin char_image(tag, id, name, size)
 	if id != undefined
 		-var url = '/character/' + id
 		-var image = 'https://images.evetech.net/characters/' + id + '/portrait?size=' + size
 		-var name = (name == null || name == undefined || name == '' ? type + ' ' + id : name)
-		+tag_image(tag, url, image, name)
+		+tag_image(tag, url, image, name, size)
