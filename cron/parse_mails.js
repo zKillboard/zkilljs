@@ -135,8 +135,31 @@ async function parse_mail(app, killhash) {
         await app.db.killmails.insertOne(killmail);
         await app.db.killhashes.updateOne(killhash, parsed);
         app.zincr('mails_parsed');
+
+        publishToKillFeed(app, killmail);
     } catch (e) {
         console.log(e);
+    }
+}
+
+async function publishToKillFeed(app, killmail) {
+    var sent = [];
+    var msg = JSON.stringify({'action': 'killlistfeed', 'killmail_id': killmail.killmail_id});
+    var keys = Object.keys(killmail.involved);
+    var keybase, type, ids, entity_id, key;
+
+    app.redis.publish('killlistfeed:all', msg);
+    for (var i = 0; i < keys.length; i++) {
+        type = keys[i];
+        keybase = type.replace('_id', '');
+        ids = killmail.involved[type];
+        for (entity_id of ids) {
+            entity_id = Math.abs(entity_id);
+            key = '/' + keybase + '/' + entity_id;
+            if (sent.indexOf(key) != -1) continue;
+            await app.redis.publish('killlistfeed:' + key, msg);
+            sent.push(key);
+        }
     }
 }
 
@@ -205,6 +228,7 @@ async function isSolo(app, rawmail) {
 
         let group = await app.util.entity.info(app, 'group_id', item.group_id);
         if (group.id == 65) return false;
+
     }
     // Ensure that at least 1 player is on the kill so as not to count losses against NPC's
     return (numPlayers == 1);
