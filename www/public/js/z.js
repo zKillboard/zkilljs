@@ -1,6 +1,8 @@
+var ws;
+const subscribed_channels = [];
 loadCheck();
 
-// with async js loading, let's make sure umbrella is loaded before we're "document ready"
+// loop while async js loading
 function loadCheck() {
 	if (typeof $ != 'function') {
 		setTimeout(loadCheck, 1);
@@ -27,22 +29,29 @@ function documentReady() {
 	} else { // overview page
 		loadOverview(path);
 	}
+
+	ws_connect();
 }
 
 function loadOverview(path) {
+    ws_clear_subs();
 	if (path == '/') {
 		apply('overview-information', null);
+		apply('overview-statistics', null);
 		apply('overview-killmails', '/site/killmails/all/all.html');
+		ws_action('sub', 'killlistfeed:all', true);
 	} else {
 		path = path.replace('/system/', '/solar_system/').replace('/type/', '/item/');
 		apply('overview-information', '/site/information' + path + '.html');
+		apply('overview-statistics', '/site/statistics' + path + '.html');
 		apply('overview-killmails', '/site/killmails' + path + '.html');
+		ws_action('sub', 'killlistfeed:' + path, true);
 	}
-	                /*<div id="overview-information"></div>
-                <div id="overview-statistics"></div>
-                <div id="overview-menu"></div>
-                <div id="overview-killmails"></div>
-                <div id="overview-weekly"></div>*/
+	/*<div id="overview-information"></div>
+		<div id="overview-statistics"></div>
+		<div id="overview-menu"></div>
+		<div id="overview-killmails"></div>
+		<div id="overview-weekly"></div>*/
 }
 
 function apply(element, path) {
@@ -52,7 +61,7 @@ function apply(element, path) {
 
 	if (path != null) {
 		// Load the content into the element
-		fetch(path).then(response => response.text()).then(html => applyHTML(element, html)).then(() => { console.log('Fetched ' + path); });
+		fetch(path).then(response => response.text()).then(html => applyHTML(element, html)).then(() => { /*console.log('Fetched ' + path);*/ });
 	}
 }
 
@@ -68,11 +77,11 @@ function loadUnfetched(element) {
 	for (const tofetch of unfeteched) {
 		const path = tofetch.getAttribute('fetch');
 		const id = tofetch.getAttribute('id');
-  		tofetch.removeAttribute('unfetched');
-  		tofetch.removeAttribute('fetch');
-  		apply(id, path);
- 		setTimeout(function() { loadUnfetched(element)}, 1);
- 		return;
+		tofetch.removeAttribute('unfetched');
+		tofetch.removeAttribute('fetch');
+		apply(id, path);
+		setTimeout(function() { loadUnfetched(element)}, 1);
+		return;
 	}
 	setTimeout(updateNumbers, 1);
 }
@@ -97,4 +106,52 @@ function intToString (value) {
 		index++;
 	}
 	return value.toLocaleString(undefined,  {'minimumFractionDigits': 2,'maximumFractionDigits': 2}) + suffixes[index];
+}
+
+function ws_connect() {
+	ws = new ReconnectingWebSocket('wss://zkillboard.com:2096/', '', {maxReconnectAttempts: 15});
+	ws.onmessage = function(event) {
+		ws_log(event.data);
+	};
+	ws.onopen = function(event) {
+        console.log('Websocket connected');
+	}
+}
+
+function ws_clear_subs() {
+    while (subscribed_channels.length > 0) {
+        text = JSON.stringify({'action': 'unsub', 'channel': subscribed_channels.shift()});
+        ws.send(text);
+    }
+}
+
+// Send an action through the websocket
+function ws_action(action, msg, iteration)
+{
+    try {
+        var text = JSON.stringify({'action': action, 'channel': msg});
+        ws.send(text);
+        if (action == 'sub') subscribed_channels.push(msg);
+    } catch (e) {
+        iteration = (iteration || 0) + 1;
+        if (iteration > 16) return;
+        var wait = 10 * Math.pow(2, iteration);
+        setTimeout(function() { ws_action(action, msg, iteration); }, wait);
+    }
+}
+
+function ws_log(msg)
+{
+    if (msg === 'ping' || msg === 'pong') return;
+    json = JSON.parse(msg);
+    if (json.action == 'killlistfeed') {
+        var killmail_id = json.killmail_id;
+        // Don't load the same kill twice
+        if ($(".kill-" + killmail_id).length > 0) return;
+
+        var url = '/site/killmail/row/' + killmail_id + '.html';
+        var divraw = '<div fetch="' + url + '" unfetched="true" id="kill-' + killmail_id + '"></div>';
+        $(".killmails").prepend(divraw);
+        loadUnfetched(document);
+    }
 }
