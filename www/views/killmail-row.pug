@@ -29,7 +29,7 @@ div.killrow(id=rowid)
 		li
 			+char_id_link('span', json.rawmail.victim.character_id, json.rawmail.victim.character_name)
 			span
-				| &nbsp;(
+				|  (
 				+type_id_link('span', 'item', json.rawmail.victim.ship_type_id, json.rawmail.victim.ship_type_name)
 				| )
 		+corp_id_link('li', json.rawmail.victim.corporation_id, json.rawmail.victim.corporation_name)
