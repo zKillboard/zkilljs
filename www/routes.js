@@ -2,7 +2,8 @@ var express = require('express');
 var router = express.Router({strict: true});
 module.exports = router;
 
-// Overview
+// Site
+addGet('/index.html', 'site/index', 'index.pug');
 addGet('/site/information/:type/:id.html', 'site/information.js', 'information.pug');
 addGet('/site/killmails/:type/:id.html', 'site/kill-list.js', 'kill-list.pug');
 addGet('/site/killmail/row/:id.html', 'site/killmail-row.js', 'killmail-row.pug');
@@ -16,9 +17,10 @@ addGet('/api/1hour/statistics/:type/:id.json', 'api/statistics.js');
 addGet('/api/1hour/killmails/recent/:type/:id.json', 'api/killmails.js');
 addGet('/api/1hour/killmails/:date/:type/:id.json', 'api/killmails-daily.js');
 
-router.get('/*', (req, res) => {
+/*router.get('/*', (req, res) => {
     res.sendFile(__dirname + '/public/index.html');
-});
+});*/
+addGet('/*', 'site/index', 'index.pug');
 
 async function doStuff(req, res, next, controllerFile, pugFile) {
     try {
@@ -26,9 +28,9 @@ async function doStuff(req, res, next, controllerFile, pugFile) {
         const controller = require(file);
 
         let result = await controller(req, res);
-        var maxAge = (result.maxAge || 0);
+        var maxAge = (result == null ? 0 : (result.maxAge || 0));
 
-        res.set('Cache-Control', 'public, max-age=' + (result.maxAge || 0));
+        res.set('Cache-Control', 'public, max-age=' + maxAge);
 
         if (result === null || result === undefined) { 
             res.sendStatus(404);

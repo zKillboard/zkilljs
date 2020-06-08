@@ -84,7 +84,7 @@ async function prepStats(app, killhash) {
             _id: killhash._id
         }, {
             $set: {
-                status: 'done'
+                status: 'activity'
             }
         });
     } catch (e) {

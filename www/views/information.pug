@@ -8,7 +8,7 @@ mixin info_row_a(label, type, id, value, classes)
 			tr
 				td= label
 				td(class=classes)
-					a(href=href)= value
+					a(href=href class='override')= value
 
 mixin info_row(label, value, classes)
 	if value != undefined
@@ -18,7 +18,7 @@ mixin info_row(label, value, classes)
 				td= label
 				td(class=classes)= value
 
-ul
+ul#info-box
 	if json.type == 'character_id'
 		+char_image('li', json.id, json.name, 128)
 	else if json.type == 'corporation_id'
@@ -29,15 +29,15 @@ ul
 		+type_image('li', json.item_id, json.item_name, 128)
 
 	li
-		table.table.table-striped.table-borderless.table-hover.table-sm
+		table#info-table.table.table-borderless.table-hover.table-sm
 			-var founded = (json.founded == undefined ? '' : ('' + json.date_founded).replace('T', ' ').replace('Z', ''))
 			+info_row_a('Character:', 'character', json.character_id, json.character_name)
 			+info_row_a('Corporation:', 'corporation', json.corporation_id, json.corporation_name)
 			+info_row_a('Alliance:', 'alliance', json.alliance_id, json.alliance_name)
 			+info_row('Ticker:', json.ticker)
-			+info_row('Item:', json.item_name)
-			+info_row('Group:', json.group_name)
-			+info_row('Members:', json.member_count)
+			+info_row_a('Item:', 'item', json.item_id, json.item_name)
+			+info_row_a('Group:', 'group', json.group_id, json.group_name)
+			+info_row('Members:', json.member_count, 'fnumber')
 			+info_row('Founded:', founded)
 			+info_row_a('System:', 'system', json.solar_system_id, json.solar_system_name)
 			+info_row_a('Constellation:', 'constellation', json.constellation_id, json.constellation_name)

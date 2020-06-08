@@ -27,9 +27,12 @@ async function applyIndexes(app) {
     await createIndex(app.db.prices, {waiting: 1}, {});
 
     await app.db.createCollection('information');
+    await createIndex(app.db.information, {type: 1});
+    await createIndex(app.db.information, {id: 1}); 
     await createIndex(app.db.information, {type: 1, id: 1}, {unique: true});
     await createIndex(app.db.information, {type: 1, last_updated: 1}, {});
     await createIndex(app.db.information, {last_updated: 1}, {});
+    await createIndex(app.db.information, {type: 1, alliance_id: 1}, {sparse: true}); // For determining alliance member counts
 
     var index = {
         sequence: 1,

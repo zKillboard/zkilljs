@@ -18,8 +18,6 @@ html {
 .footer, .push {
     height: 50px; /* .push must be the same height as .footer */
 }
-.footer {
-}
 
 .tiny { 
     font-size: 1%;
@@ -49,11 +47,11 @@ div.killrow ul.info1 {
 }
 
 div.killrow ul.info2 {
-    width: 6.5em;	
+    width: 6em;	
 }
 
 div.killrow ul.victim, div.killrow ul.finalblow {
-	width: 18em;
+	width: 14em;
 }
 
 div.killrow ul.image {

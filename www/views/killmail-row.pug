@@ -8,7 +8,7 @@ div.killrow
 		-var url = '/killmail/' + json.rawmail.killmail_id
 		-var image = 'https://images.evetech.net/types/' + json.rawmail.victim.ship_type_id + '/icon?size=' + 64
 		-var name = 'Killmail ' + json.rawmail.killmail_id
-		+tag_image(tag, url, image, name)
+		+tag_image('span', url, image, name, 64)
 	ul.info1
 		li
 			| !{time}

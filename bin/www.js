@@ -17,6 +17,8 @@ async function getApp() {
     return app;
 }
 
+const server_started = Date.now();
+
 startWebListener();
 
 async function startWebListener() {
@@ -30,7 +32,7 @@ async function startWebListener() {
 
     //www.enable('etag');
 
-    const server_started = Date.now();
+    
     www.use((req, res, next) => {
         res.locals.server_started = server_started;
         res.locals.googleua = process.env.googleua;
@@ -55,6 +57,15 @@ async function startWebListener() {
     console.log('Listening on port ' + (process.env.PORT || '3000'));
     // Start the websocket
     www.app.ws = require(__dirname + '/websocket');
+
+    wsServerStarted(app);
+}
+
+async function wsServerStarted() {
+    var msg = JSON.stringify({'action': 'server_started', 'server_started': server_started});
+    await app.redis.publish('zkilljs:public', msg);
+
+    setTimeout(wsServerStarted, 1000);
 }
 
 function onError(error) {

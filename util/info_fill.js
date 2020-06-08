@@ -10,6 +10,8 @@ clearCache();
 
 const info_fill = {
     async fill(app, object) {
+        if (object == undefined) return object;
+        
         // Check for solar system and pre-fill const and region ID's
         if (object.solar_system_id !== undefined) {
             var constellation = await this.getInfo(app, 'constellation_id', object.constellation_id);
@@ -72,7 +74,11 @@ const info_fill = {
     	if (cache[key] != undefined) {
     		record = cache[key];
     	} else {
-    		record = await app.db.information.findOne({type: type, id: parseInt(id)});
+            id = parseInt(id || 0);
+            if (id == 0) return {};
+
+            await app.util.entity.wait(app, type, id);
+    		record = await app.db.information.findOne({type: type, id: id});
     		if (record != null) cache[key] = record;
     	}
 

@@ -1,16 +1,10 @@
-var ws;
+var ws
+var pageActive = Date.now();
 const subscribed_channels = [];
-loadCheck();
+const browserHistory = History.createBrowserHistory();
+var server_started = 0;
 
-// loop while async js loading
-function loadCheck() {
-    if (typeof $ != 'function') {
-        setTimeout(loadCheck, 1);
-    } else {
-        documentReady();
-    }
-}
-
+// Called at the end of this document since all js libraries are deferred
 function documentReady() {
     // Prep any tooltips
     $('[data-toggle="tooltip"]').tooltip({
@@ -19,8 +13,18 @@ function documentReady() {
         placement: 'top'
     });
 
+    loadPage();
+
+    ws_connect();
+    setInterval(pageTimer, 1000);
+}
+
+function loadPage() {
     var path = window.location.pathname;
     var fetch;
+
+    $(window).scrollTop(0);
+    ws_clear_subs();
 
     // if a user page...
     if (path.substring(0, 6) == '/user/') {
@@ -33,29 +37,35 @@ function documentReady() {
     } else { // overview page
         loadOverview(path);
     }
+}
 
-    ws_connect();
+const contentSection = ['overview', 'killmail', 'user', 'other'];
+
+function showSection(section) {
+    for (var s of contentSection) {
+        var elem = $("div#" + s);
+        if (section != s) elem.hide();
+        else elem.show();
+    }
 }
 
 function loadOverview(path) {
-    ws_clear_subs();
     if (path == '/') {
         apply('overview-information', null);
         apply('overview-statistics', null);
-        apply('overview-killmails', '/site/killmails/all/all.html');
-        ws_action('sub', 'killlistfeed:all', true);
+        apply('overview-killmails', '/site/killmails/all/all.html', 'killlistfeed:all');
     } else {
         path = path.replace('/system/', '/solar_system/').replace('/type/', '/item/');
         apply('overview-information', '/site/information' + path + '.html');
         apply('overview-statistics', '/site/statistics' + path + '.html');
-        apply('overview-killmails', '/site/killmails' + path + '.html');
-        ws_action('sub', 'killlistfeed:' + path, true);
+        apply('overview-killmails', '/site/killmails' + path + '.html', 'killlistfeed:' + path);
     }
+    showSection('overview');
     /*<div id="overview-information"></div>
-    	<div id="overview-statistics"></div>
-    	<div id="overview-menu"></div>
-    	<div id="overview-killmails"></div>
-    	<div id="overview-weekly"></div>*/
+        <div id="overview-statistics"></div>
+        <div id="overview-menu"></div>
+        <div id="overview-killmails"></div>
+        <div id="overview-weekly"></div>*/
 }
 
 // Prevents the kill list from becoming too large and causing the browser to eat up too much memory
@@ -63,21 +73,26 @@ function killlistCleanup() {
     while ($(".killrow").length > 50) $(".killrow").last().parent().remove();
 }
 
-function apply(element, path) {
+function apply(element, path, subscribe) {
     if (typeof element == 'string') element = document.getElementById(element);
     // Clear the element
     $(element).html("");
 
     if (path != null) {
-        fetch(path).then(function(res) { handleResponse(res, element, path); });
+        fetch(path).then(function (res) {
+            handleResponse(res, element, path, subscribe);
+        });
     }
 }
 
-function handleResponse(res, element, path) {
+function handleResponse(res, element, path, subscribe) {
 
-	if (res.ok) {
-		res.text().then(function(html) { applyHTML(element, html); });
-	}
+    if (res.ok) {
+        res.text().then(function (html) {
+            applyHTML(element, html);
+            if (subscribe) ws_action('sub', subscribe);
+        });
+    }
 }
 
 function applyHTML(element, html) {
@@ -85,6 +100,7 @@ function applyHTML(element, html) {
     $(element).html(html);
     loadUnfetched(element);
     killlistCleanup();
+    spaTheLinks();
 }
 
 function loadUnfetched(element) {
@@ -110,6 +126,11 @@ function updateNumbers() {
         var value = element.text();
         element.text(intToString(value)).removeClass('number');
     });
+    $(".fnumber").each(function (index, elem) {
+        elem = $(elem);
+        var value = Number.parseFloat(elem.html()).toLocaleString();
+        elem.removeClass('fnumber').html(value);
+    });
 }
 
 var suffixes = ["", "k", "m", "b", "t", "tt", "ttt"];
@@ -133,21 +154,29 @@ function ws_connect() {
         maxReconnectAttempts: 15
     });
     ws.onmessage = function (event) {
-        ws_log(event.data);
+        ws_message(event.data);
     };
     ws.onopen = function (event) {
         console.log('Websocket connected');
+        ws_action('sub', 'zkilljs:public');
     }
 }
 
 function ws_clear_subs() {
+    console.log('Clearing subscriptions');
     while (subscribed_channels.length > 0) {
-        text = JSON.stringify({
-            'action': 'unsub',
-            'channel': subscribed_channels.shift()
-        });
-        ws.send(text);
+        var channel = subscribed_channels.shift();
+        
+        if (channel != 'zkilljs:public') {
+            console.log('clearing', channel);
+            text = JSON.stringify({
+                'action': 'unsub',
+                'channel': channel
+            });
+            ws.send(text);
+        }
     }
+    console.log(subscribed_channels);
 }
 
 // Send an action through the websocket
@@ -158,7 +187,10 @@ function ws_action(action, msg, iteration) {
             'channel': msg
         });
         ws.send(text);
-        if (action == 'sub') subscribed_channels.push(msg);
+        if (action == 'sub') {
+            subscribed_channels.push(msg);
+        }
+        console.log('ws_action: ', action, msg);
     } catch (e) {
         iteration = (iteration || 0) + 1;
         if (iteration > 16) return;
@@ -169,10 +201,11 @@ function ws_action(action, msg, iteration) {
     }
 }
 
-function ws_log(msg) {
+function ws_message(msg) {
     if (msg === 'ping' || msg === 'pong') return;
     json = JSON.parse(msg);
-    if (json.action == 'killlistfeed') {
+    switch (json.action) {
+    case 'killlistfeed':
         var killmail_id = json.killmail_id;
         // Don't load the same kill twice
         if ($(".kill-" + killmail_id).length > 0) return;
@@ -181,5 +214,50 @@ function ws_log(msg) {
         var divraw = '<div fetch="' + url + '" unfetched="true" id="kill-' + killmail_id + '"></div>';
         $("#killlist").prepend(divraw);
         loadUnfetched(document);
+        break;
+    case 'server_started':
+        var started = json.server_started;
+        if (server_started == 0) server_started = started;
+        else if (started != server_started) {
+            console.log('reloading');
+            location.reload(true);
+        }
+        break;
     }
 }
+
+function pageTimer() {
+    let now = Date.now();
+    let delta = now - pageActive;
+    if (delta > 300000) {
+        location.reload(true);
+    }
+    pageActive = now;
+}
+
+function spaTheLinks() {
+    $('.override').removeClass('override').each(spaTheLink);
+}
+
+function spaTheLink(index, elem) {
+    elem = $(elem);
+
+    elem.on('click', function (e) {
+        e.preventDefault();
+        linkClicked(this.href);
+
+        return false;
+    });
+}
+
+function linkClicked(href) {
+    href = href.replace(window.location.origin, '');
+    browserHistory.push(href);
+}
+
+browserHistory.listen((location, action) => {
+    loadPage();
+});
+
+// Everything has loaded, let's go!
+documentReady();

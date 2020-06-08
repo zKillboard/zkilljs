@@ -1,0 +1,50 @@
+doctype html
+html
+	head
+		meta(charset='UTF-8')
+		meta(name='viewport' content='width=device-width, initial-scale=1')
+		title= json.title
+		link(rel='stylesheet' href='/css/cyborg.css')
+		script(src='https://cdn.jsdelivr.net/npm/vanilla-lazyload@12.0.0/dist/lazyload.min.js')
+		link(rel='stylesheet' href='/css/z.css?v=' + server_started)
+
+	body
+		div.wrapper.container-fluid
+			nav.navbar.navbar-expand-lg
+				a.navbar-brand.override(href='/') zKillboard
+				ul.navbar-nav.mr-auto
+				form.form-inline.my-2.my-lg-0
+					input.form-control.mr-sm-2(type='search' placeholder='Search' aria-label='Search')
+			div#content
+				div#overview
+					div.row
+						div#overview-information.float-left.col-sm-6
+						div#overview-statistics.float-right.col-sm-6
+					div#overview-menu
+					div#overview-killmails.col
+					div#overview-weekly
+				div#details
+					div#details-fitting-wheel
+					div#details-information
+					div#details-cargo
+					div#details-top-stats
+					div#details-involved-top10
+					div#details-involved-therest
+					div#details-comments
+				div#other
+		div.clearfix.push
+		div#footer
+			footer.footer
+				small
+					center
+						| Brought to you by 
+						a.override(href='/character/1633218082') Squizz Caphinator
+					center(data-toggle='tooltip' style='cursor: pointer; text-decoration: underline' title='EVE Online and the EVE logo are the registered trademarks of CCP hf. All rights are reserved worldwide. All other trademarks are the property of their respective owners. EVE Online, the EVE logo, EVE and all associated logos and designs are the intellectual property of CCP hf. All artwork, screenshots, characters, vehicles, storylines, world facts or other recognizable features of the intellectual property relating to these trademarks are likewise the intellectual property of CCP hf. CCP hf. has granted permission to evewho.com to use EVE Online and all associated logos and designs for promotional and information purposes on its website but does not endorse, and is not in any way affiliated with, evewho.com. CCP is in no way responsible for the content on or functioning of this website, nor can it be liable for any damage arising from the use of this website.')  All Eve Related Materials are Property of CCP Games
+
+script(defer src='https://cdn.jsdelivr.net/npm/vanilla-lazyload@12.0.0/dist/lazyload.min.js')
+script(defer src='https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js')
+script(defer src='https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js' integrity='sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1' crossorigin='anonymous')
+script(defer src='https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js' integrity='sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM' crossorigin='anonymous')
+script(defer src='/js/history-4.10.1.js')
+script(defer src='/js/reconnecting-websocket.js')
+script(defer data-server_start=server_started src='/js/z.js?v=' + server_started)

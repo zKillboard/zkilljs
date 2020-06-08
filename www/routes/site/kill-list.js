@@ -32,14 +32,10 @@ async function getData(req, res) {
             killmail_id: -1
         })
         .limit(50)
-        .project({
-            _id: 0,
-            killmail_id: 1,
-            hash: 1
-        }).toArray();
+        .toArray();
 
     return {
         json: result,
-        maxAge: 60
+        maxAge: 1
     };
 }

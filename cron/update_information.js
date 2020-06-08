@@ -1,6 +1,6 @@
 'use strict';
 
-var adds = ['character_id', 'corporation_id', 'alliance_id', 'group_id', 'category_id', 'constellation_id', 'region_id', 'creator_corporation_id', 'executor_corporation_id', 'creator_id', 'ceo_id', 'types', 'groups', 'systems', 'constellations'];
+var adds = ['character_id', 'corporation_id', 'alliance_id', 'group_id', 'category_id', 'constellation_id', 'region_id', 'creator_corporation_id', 'executor_corporation_id', 'creator_id', 'ceo_id', 'types', 'groups', 'systems', 'constellations', 'star_id'];
 var maps = {
     'creator_corporation_id': 'corporation_id',
     'executor_corporation_id': 'corporation_id',
@@ -23,6 +23,7 @@ var urls = {
     'solar_system_id': '/v4/universe/systems/:id/',
     'constellation_id': '/v1/universe/constellations/:id/',
     'region_id': '/v1/universe/regions/:id/',
+    'star_id': '/v1/universe/stars/:id/',
     'war_id': '/v1/wars/:id/'
 };
 var types = Object.keys(urls);
@@ -51,7 +52,8 @@ async function populateSet(app, typeValue) {
         let rows = await app.db.information.find({
             last_updated: {
                 $lt: dayAgo
-            }, type: typeValue
+            },
+            type: typeValue
         }).sort({
             last_updated: 1
         }).limit(100); // Limit so we reset this query often
@@ -122,7 +124,10 @@ async function fetch(app, row) {
 
                 if (adds.includes(key)) {
                     let type = maps[key] || key;
-                    if (type == null) die("null type");
+                    if (type == null) {
+                        console.log('Unmapped type: ' + type);
+                        continue;
+                    }
                     if (Array.isArray(value)) {
                         for (let v of value) {
                             await app.util.entity.add(app, type, v, false);
@@ -141,7 +146,7 @@ async function fetch(app, row) {
                     last_updated: now
                 }
             });
-             app.zincr('esi_304');
+            app.zincr('esi_304');
             break;
         case 404:
             await app.db.information.updateOne(row, {
@@ -168,11 +173,11 @@ async function fetch(app, row) {
         return false;
     } catch (e) {
         console.log(e);
-       await app.db.information.updateOne(row, {
-                $set: {
-                    last_updated: (Math.floor(Date.now() / 1000) - 86100)
-                }
-            });
+        await app.db.information.updateOne(row, {
+            $set: {
+                last_updated: (Math.floor(Date.now() / 1000) - 86100)
+            }
+        });
     } finally {
         set.delete(row);
     }

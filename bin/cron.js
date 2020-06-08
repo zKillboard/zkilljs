@@ -28,6 +28,7 @@ const tasks = {
     'update_factions.js': createTaskSettings(60),
     'update_information.js': createTaskSettings(1),
     'fetch_locations.js': createTaskSettings(1),
+    'update_alliance_membercounts.js': createTaskSettings(3600),
     
     // killmail producers
     'listen_redisq.js': createTaskSettings(15),
@@ -39,6 +40,7 @@ const tasks = {
     'fetch_mails.js': createTaskSettings(1),
     'parse_mails': createTaskSettings(1),
     'do_stats': createTaskSettings(1),
+    'do_activity': createTaskSettings(1),
 
     //'ztop.js': createTaskSettings(1),
 }
