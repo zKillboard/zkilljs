@@ -13,6 +13,7 @@ const types = [
     "solar_system_id",
     "constellation_id",
     "region_id",
+    "war_id",
 ];
 
 var epoch_types_started = {};
