@@ -8,6 +8,7 @@ addGet('/site/information/:type/:id.html', 'site/information.js', 'information.p
 addGet('/site/killmails/:type/:id.html', 'site/kill-list.js', 'kill-list.pug');
 addGet('/site/killmail/row/:id.html', 'site/killmail-row.js', 'killmail-row.pug');
 addGet('/site/statistics/:type/:id.html', 'site/statistics.js', 'statistics.pug');
+addGet('/site/stats_box/:type/:id.json', 'api/stats_box.js'); 
 
 addGet('/cache/1hour/api/information/:type/:id/:field.html', 'site/information', 'raw.pug');
 
@@ -16,6 +17,8 @@ addGet('/api/1hour/killmail/:id.json', 'api/killmail.js');
 addGet('/api/1hour/statistics/:type/:id.json', 'api/statistics.js');
 addGet('/api/1hour/killmails/recent/:type/:id.json', 'api/killmails.js');
 addGet('/api/1hour/killmails/:date/:type/:id.json', 'api/killmails-daily.js');
+
+addGet('/api/mongo.json', 'api/mongo.js');
 
 /*router.get('/*', (req, res) => {
     res.sendFile(__dirname + '/public/index.html');

@@ -7,7 +7,7 @@ async function f(app) {
     
     let res, json, min_id = 9999999999, max_id = 0;
     do {
-    	if (app.bailout) return;
+    	if (app.bailout || app.no_api) return;
         
         let url = app.esi + '/v1/wars/' + (min_id == 9999999999 ? '' : '?max_war_id=' + min_id);
         res = await app.phin(url);

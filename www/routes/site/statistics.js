@@ -11,6 +11,10 @@ async function getData(req, res) {
     };
 
     let result = await req.app.app.db.statistics.find(query).toArray();
+    let row = result[0];
+    if (row.alltime == undefined) row.alltime = {};
+    if (row.recent == undefined) row.recent = {};
+    if (row.week == undefined) row.week = {};
 
     var ret = {
         json: result[0],

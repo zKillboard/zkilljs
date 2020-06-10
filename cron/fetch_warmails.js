@@ -24,7 +24,7 @@ async function fetchWarMails(app, row) {
 
         json = JSON.parse(res.body);
         for (let mail of json) {
-            if (app.bailout) return;
+            if (app.bailout || app.no_api) return;
             await app.util.killmails.add(app, mail.killmail_id, mail.killmail_hash);
         }
         page++;

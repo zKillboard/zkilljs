@@ -28,19 +28,27 @@ async function iterate(app) {
             let killmail = await app.db.killmails.findOne({
                 killmail_id: killhash.killmail_id
             });
+
             const epoch = killmail.epoch;
-            if (epoch <= epoch90DaysAgo) continue;
+            if (epoch > epoch90DaysAgo) {
+                
+                await app.db.killmails_90.deleteOne({killmail_id: killmail.killmail_id});
+                await app.db.killmails_90.insertOne(killmail, {upsert: true});
 
-            var keys = Object.keys(killmail.involved);
-            var keybase, type, ids, entity_id, key;
+                await app.db.killmails_7.deleteOne({killmail_id: killmail.killmail_id});
+                if (epoch >= epoch7DaysAgo) await app.db.killmails_7.insertOne(killmail, {upsert: true});
 
-            for (var i = 0; i < keys.length; i++) {
-                type = keys[i];
-                ids = killmail.involved[type];
-                for (var id of ids) {
-                    id = Math.abs(id);
-                    if (epoch > epoch7DaysAgo) await update(app, 'activity_7', type, id, killmail.killmail_id, epoch);
-                    if (epoch > epoch90DaysAgo) await update(app, 'activity_90', type, id, killmail.killmail_id, epoch);
+                var keys = Object.keys(killmail.involved);
+                var keybase, type, ids, entity_id, key;
+
+                for (var i = 0; i < keys.length; i++) {
+                    type = keys[i];
+                    ids = killmail.involved[type];
+                    for (var id of ids) {
+                        id = Math.abs(id);
+                        if (epoch > epoch7DaysAgo) await update(app, 'activity_7', type, id, killmail.killmail_id, epoch);
+                        if (epoch > epoch90DaysAgo) await update(app, 'activity_90', type, id, killmail.killmail_id, epoch);
+                    }
                 }
             }
 

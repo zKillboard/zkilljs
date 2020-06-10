@@ -12,7 +12,7 @@ div.killrow
 	ul.info1
 		li
 			| !{time}
-		li.number= json.zmail.total_value
+		li.fnumber= json.zmail.total_value
 	ul.info2
 		+type_id_link('li', 'system', json.rawmail.solar_system_id, json.rawmail.solar_system_name)
 		+type_id_link('li', 'constellation', json.zmail.involved.constellation_id,json.zmail.involved.constellation_name)

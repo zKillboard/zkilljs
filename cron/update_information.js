@@ -40,13 +40,13 @@ async function f(app) {
     }
 
     await app.sleep(1000);
-    while (app.bailout && set.size > 0) await app.sleep(1000);
+    while (app.no_api && set.size > 0) await app.sleep(1000);
 }
 
 async function populateSet(app, typeValue) {
     let fetched = 0;
     try {
-        const fullStop = app.bailout || app.no_parsing || app.no_stats;
+        const fullStop = app.no_api || app.no_parsing || app.no_stats || app.bailout;
         const dayAgo = (fullStop ? 1 : (Math.floor(Date.now() / 1000) - 86400));
 
         let rows = await app.db.information.find({
@@ -59,7 +59,7 @@ async function populateSet(app, typeValue) {
         }).limit(100); // Limit so we reset this query often
 
         while (await rows.hasNext()) {
-            if (app.bailout == true) break;
+            if (app.bailout == true || app.no_api == true) break;
 
             fetch(app, await rows.next());
             let wait = 20;
@@ -156,15 +156,17 @@ async function fetch(app, row) {
             });
             break;
         case 420:
-            app.bailout = true;
+            app.no_api = true;
             setTimeout(() => {
-                app.bailout = false;
+                app.no_api = false;
             }, 1000 + (Date.now() % 60000));
-            console.log("420'ed", row);
+            //console.log("420'ed", );
             break;
         case 500:
         case 502:
+        case 503:
         case 504:
+            await app.sleep(1000);
             break; // Try again later
         default:
             console.log(row, 'Unhandled error code ' + res.statusCode);

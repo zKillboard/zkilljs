@@ -92,3 +92,17 @@ div#overview-information ul li {
     list-style: none;
     margin: 0px;
 }
+
+.item_destroyed, .red {
+    color: red;
+}
+
+.green {
+    color: green;
+}
+
+.stats-table td, .stats-table th {
+    text-align: right;
+    width: 2em;
+    max-width: 2em;
+}

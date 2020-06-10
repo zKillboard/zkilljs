@@ -22,6 +22,10 @@
 }*/
 
 
+// Reset weekly and recent stats
+// db.statistics.update({}, {$set: { update_weekly: false, week: {}, update_recent: false, recent: {}}}, {multi: true});
+// del "zkilljs:epoch:week:sequence" "zkilljs:epoch:recent:sequence"
+
 async function f(app) {
     let a = app.db.killmails.removeMany({});
     let b = app.db.statistics.removeMany({});

@@ -18,8 +18,6 @@ async function populateSet(app) {
     try {
         let killhashes = await app.db.killhashes.find({
             status: 'parsed'
-        }).sort({
-            _id: -1
         });
 
         while (await killhashes.hasNext()) {
@@ -30,11 +28,11 @@ async function populateSet(app) {
             prepped++;
             app.zincr('stats_prepped');
         }
-        while (prepSet.size > 100) {
+        while (prepSet.size > 0) {
             await app.sleep(1);
         }
 
-        await update_stats(app);
+        if (prepped == 0) await update_stats(app);
     } catch (e) {
         console.log(e);
     } finally {
@@ -111,6 +109,8 @@ async function addKM(app, killmail, type, id, span) {
                 id: id,
                 span: 'alltime',
                 update: true,
+                update_week: true,
+                update_recent: true,
                 sequence: killmail.sequence
             });
             addSet.add(addKey);
@@ -126,7 +126,7 @@ async function addKM(app, killmail, type, id, span) {
 
     let previousSequence = sequenceUpdates.get(addKey);
     if (previousSequence == undefined || killmail.sequence > previousSequence) {
-  
+
         await app.db.statistics.updateOne({
             type: type,
             id: id,
@@ -137,6 +137,8 @@ async function addKM(app, killmail, type, id, span) {
         }, {
             $set: {
                 update: true,
+                update_week: true,
+                update_recent: true,
                 sequence: killmail.sequence
             },
         });
@@ -180,6 +182,8 @@ async function update_stats(app) {
                 await app.db.statistics.updateOne(record, {
                     $unset: remove
                 });
+                record.update_weekly = true;
+                record.update_recent = true;
             }
 
             min = (record.last_sequence || 0);
@@ -193,14 +197,14 @@ async function update_stats(app) {
                 },
             };
 
-            while (updateSet.size >= 10) await app.sleep(1);
+            while (updateSet.size > 0) await app.sleep(1);
             promises.push(update_stat_record(app, record, match, max));
             await app.sleep(1);
 
             calced++;
             app.zincr('stats_updated');
         }
-        while (updateSet.size > 0) {
+        while (updateSet.size > 20) {
             await app.sleep(1);
         }
         await app.waitfor(promises);
@@ -215,7 +219,7 @@ async function update_stat_record(app, record, match, max) {
     const s = Symbol();
     try {
         updateSet.add(s);
-        await app.util.stats.update_stat_record(app, record, match, max);
+        await app.util.stats.update_stat_record(app, 'killmails', 'alltime', record, match, max);
     } catch (e) {
         console.log(e);
     } finally {

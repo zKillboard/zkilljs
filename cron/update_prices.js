@@ -14,7 +14,7 @@ async function f(app) {
 
     let promises = [];
     while (await prices_cursor.hasNext()) {
-        if (app.bailout == true) break;
+        if (app.bailout == true || app.no_api) break;
 
         let row = await prices_cursor.next();
         promises.push(update_price(app, row, todays_price_key));

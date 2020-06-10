@@ -37,10 +37,10 @@ ul#info-box
 			+info_row('Ticker:', json.ticker)
 			+info_row_a('Item:', 'item', json.item_id, json.item_name)
 			+info_row_a('Group:', 'group', json.group_id, json.group_name)
-			+info_row('Members:', json.member_count, 'fnumber')
+			+info_row('Members:', json.member_count, 'integer')
 			+info_row('Founded:', founded)
 			+info_row_a('System:', 'system', json.solar_system_id, json.solar_system_name)
 			+info_row_a('Constellation:', 'constellation', json.constellation_id, json.constellation_name)
 			+info_row_a('Region:', 'region', json.region_id, json.region_name)
-			+info_row('Security:', json.security_status, 'fnumber')
+			+info_row('Security:', json.security_status, 'number')
 
