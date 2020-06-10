@@ -182,7 +182,7 @@ async function update_stats(app) {
                 await app.db.statistics.updateOne(record, {
                     $unset: remove
                 });
-                record.update_weekly = true;
+                record.update_week = true;
                 record.update_recent = true;
             }
 
