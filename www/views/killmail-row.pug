@@ -38,7 +38,7 @@ div.killrow
 	ul.image
 		if json.rawmail.final_blow.alliance_id > 0
 			+alli_image('li', json.rawmail.final_blow.alliance_id, json.rawmail.final_blow.alliance_name, 64)
-		else if json.rawmail.final_blow.corporation_id > 0
+		else if json.rawmail.final_blow.corporation_id > 1999999 || parseInt(json.rawmail.final_blow.character_id) == 0
 			+corp_image('li', json.rawmail.final_blow.corporation_id, json.rawmail.final_blow.corporation_name, 64)
 		else if json.rawmail.final_blow.character_id > 0
 			+char_image('li', json.rawmail.final_blow.character_id, json.rawmail.final_blow.character_name, 64)

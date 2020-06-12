@@ -101,8 +101,18 @@ div#overview-information ul li {
     color: green;
 }
 
-.stats-table td, .stats-table th {
+/* https://stackoverflow.com/questions/41747667/bootstrap-4-responsive-tables-wont-take-up-100-width */
+.table-responsive {
+}
+
+#stats-table td, #stats-table th {
     text-align: right;
-    width: 2em;
-    max-width: 2em;
+    width: 6rem;
+    min-width: 6rem;
+}
+
+
+#overview-information, #overview-statistics {
+    min-eight: 10rem;
+    height: 10rem;
 }

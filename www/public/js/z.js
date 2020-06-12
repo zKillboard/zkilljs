@@ -3,6 +3,7 @@ var pageActive = Date.now();
 var subscribed_channels = [];
 var browserHistory = undefined;
 var server_started = 0;
+var jquery_loaded = false;
 
 function historyReady() {
     try {
@@ -16,6 +17,14 @@ function historyReady() {
     }
 }
 
+function is_jquery_loaded() {
+    if (typeof $ == 'function') {
+        jquery_loaded = true;
+        console.log('jquery loaded');
+    }
+    else setTimeout(is_jquery_loaded, 100);
+}
+
 // Called at the end of this document since all js libraries are deferred
 function documentReady() {
     if (typeof Promise == 'undefined' || typeof fetch == 'undefined') {
@@ -23,7 +32,7 @@ function documentReady() {
         return;
     }
 
-
+    is_jquery_loaded();
     loadPage();
     ws_connect();
 
@@ -108,6 +117,7 @@ function apply(element, path, subscribe, delay) {
     if (typeof element == 'string') element = document.getElementById(element);
     // Clear the element
     if (delay != true) element.innerHTML = "";
+    if (jquery_loaded) $(element).hide();
 
     if (path != null) {
         fetch(path).then(function (res) {
@@ -133,6 +143,7 @@ function applyHTML(element, html) {
     loadUnfetched(element);
     killlistCleanup();
     spaTheLinks();
+    if (jquery_loaded) $(element).show();
 }
 
 
@@ -175,7 +186,7 @@ function handleJSON(res) {
 /* By moving this into a function, the value of value is preserved 
     as the array is being iterated in applyJSON */
 function changeValue(elem, value) {
-    if (typeof $ != 'function') elem.innerHTML = value;
+    if (!jquery_loaded) elem.innerHTML = value;
     else $(elem).fadeOut(100, function () {
         $(this).html(value).fadeIn(100);
     });

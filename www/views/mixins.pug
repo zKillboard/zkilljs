@@ -40,7 +40,7 @@ mixin alli_image(tag, id, name, size)
 
 mixin corp_image(tag, id, name, size)
 	if id != undefined
-		-var url = '/alliance/' + id
+		-var url = '/corporation/' + id
 		-var image = 'https://images.evetech.net/corporations/' + id + '/logo?size=' + size
 		-var name = (name == null || name == undefined || name == '' ? type + ' ' + id : name)
 		+tag_image(tag, url, image, name, size)

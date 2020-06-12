@@ -1,39 +1,36 @@
-table.stats-table.table.table-hover.table-sm
-	thead
-		tr
-			th
-			th.right Killed
-			th ISK
-			th Rank
-			th Lost
-			th ISK
-			th Rank
-			th Eff. %
-	tbody
-		tr
-			th Alltime
-			td#alltime-kills.integer.green= json.alltime.killed
-			td#alltime-isk-killed.fnumber.green= json.alltime.isk_killed
-			td.number.green
-			td#alltime-lost.integer.red= json.alltime.lost
-			td#alltime-isk-lost.fnumber.red= json.alltime.isk_lost
-			td.number.red
-			td
-		tr
-			th 90 Days
-			td#recent-kills.integer.green= json.recent.killed
-			td#recent-isk-killed.fnumber.green= json.recent.isk_killed
-			td.integer.green
-			td#recent-lost.integer.red= json.recent.lost
-			td#recent-isk-lost.fnumber.red= json.recent.isk_lost
-			td.fnumber.red
-			td
-		tr
-			th 7 Days
-			td#week-kills.integer.green= json.week.killed
-			td#week-isk-killed.fnumber.green= json.week.isk_killed
-			td.number.green
-			td#week-lost.integer.red= json.week.lost
-			td#week-isk-lost.fnumber.red= json.week.isk_lost
-			td.number.red
-			td
+div.table-responsive
+	table#stats-table.table.table-hover.table-sm.table-responsive
+		thead
+			tr
+				th
+				th.right Killed
+				th ISK
+				th Rank
+				th Lost
+				th ISK
+				th Eff. %
+		tbody
+			tr
+				th Alltime
+				td#alltime-kills.integer.green= json.alltime.killed
+				td#alltime-isk-killed.fnumber.green= json.alltime.isk_killed
+				td.number.green
+				td#alltime-lost.integer.red= json.alltime.lost
+				td#alltime-isk-lost.fnumber.red= json.alltime.isk_lost
+				td#alltime-eff
+			tr
+				th 90 Days
+				td#recent-kills.integer.green= json.recent.killed
+				td#recent-isk-killed.fnumber.green= json.recent.isk_killed
+				td.integer.green
+				td#recent-lost.integer.red= json.recent.lost
+				td#recent-isk-lost.fnumber.red= json.recent.isk_lost
+				td#recent-eff
+			tr
+				th 7 Days
+				td#week-kills.integer.green= json.week.killed
+				td#week-isk-killed.fnumber.green= json.week.isk_killed
+				td.number.green
+				td#week-lost.integer.red= json.week.lost
+				td#week-isk-lost.fnumber.red= json.week.isk_lost
+				td#week-eff
