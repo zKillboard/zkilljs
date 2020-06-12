@@ -36,7 +36,7 @@ async function iterate(app) {
                 await app.db.killmails_90.insertOne(killmail, {upsert: true});
 
                 await app.db.killmails_7.deleteOne({killmail_id: killmail.killmail_id});
-                if (epoch >= epoch7DaysAgo) await app.db.killmails_7.insertOne(killmail, {upsert: true});
+                if (epoch > epoch7DaysAgo) await app.db.killmails_7.insertOne(killmail, {upsert: true});
 
                 var keys = Object.keys(killmail.involved);
                 var keybase, type, ids, entity_id, key;

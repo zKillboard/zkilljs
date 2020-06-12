@@ -48,7 +48,6 @@ async function f() {
         //points: require('../util/points.js'),
         price: require('../util/price.js'),
         stats: require('../util/stats.js'),
-        stats_epoch: require('../util/stats_epoch.js'),
     };
 
     app.cache = {

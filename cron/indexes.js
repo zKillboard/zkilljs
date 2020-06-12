@@ -20,9 +20,9 @@ async function applyIndexes(app) {
 
     await app.db.createCollection('statistics');
     await createIndex(app.db.statistics, {type: 1, id: 1}, {unique: true});
-    await createIndex(app.db.statistics, {update: 1}, {});
-    await createIndex(app.db.statistics, {update_recent: 1}, {});
-    await createIndex(app.db.statistics, {update_week: 1}, {});
+    await createIndex(app.db.collection('statistics'), {type: 1, update_alltime: 1}, {});
+    await createIndex(app.db.collection('statistics'), {type: 1, update_recent: 1}, {});
+    await createIndex(app.db.collection('statistics'), {type: 1, update_week: 1}, {});
 
     await app.db.createCollection('prices');
     await createIndex(app.db.prices, {item_id: 1}, {unique: true});
@@ -48,8 +48,7 @@ async function applyIndexes(app) {
     await createIndex(app.db.collection('information'), {type: 1, last_updated: 1}, {});
     await createIndex(app.db.collection('information'), {check_wars: 1}, {sparse: true});
 
-    await createIndex(app.db.collection('statistics'), {type: 1, id: 1}, {unique: true});
-    await createIndex(app.db.collection('statistics'), {update: 1}, {});
+
 
     await createIndex(app.db.collection('killhashes'), {killmail_id: 1, hash: 1}, {unique: true});
     await createIndex(app.db.collection('killhashes'), {status: 1}, bg);

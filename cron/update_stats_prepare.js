@@ -31,8 +31,6 @@ async function populateSet(app) {
         while (prepSet.size > 0) {
             await app.sleep(1);
         }
-
-        if (prepped == 0) await update_stats(app);
     } catch (e) {
         console.log(e);
     } finally {
@@ -70,7 +68,7 @@ async function prepStats(app, killhash) {
             let values = killmail.involved[type];
             for (let j = 0; j < values.length; j++) {
                 let id = values[j];
-                promises.push(addKM(app, killmail, type, id, "alltime"));
+                promises.push(addKM(app, killmail, type, id));
             }
             for (let j = 0; j < killmail.labels.length; j++) {
                 promises.push(addKM(app, killmail, 'label', killmail.labels[j], "alltime"));
@@ -99,7 +97,7 @@ setInterval(function () {
     sequenceUpdates.clear();
 }, 3600000);
 
-async function addKM(app, killmail, type, id, span) {
+async function addKM(app, killmail, type, id) {
     if (typeof id != 'string') id = Math.abs(id);
     let addKey = type + ':' + id;
     try {
@@ -107,8 +105,7 @@ async function addKM(app, killmail, type, id, span) {
             await app.db.statistics.insertOne({
                 type: type,
                 id: id,
-                span: 'alltime',
-                update: true,
+                update_alltime: true,
                 update_week: true,
                 update_recent: true,
                 sequence: killmail.sequence
@@ -130,13 +127,12 @@ async function addKM(app, killmail, type, id, span) {
         await app.db.statistics.updateOne({
             type: type,
             id: id,
-            span: 'alltime',
             sequence: {
                 $lt: killmail.sequence
             }
         }, {
             $set: {
-                update: true,
+                update_alltime: true,
                 update_week: true,
                 update_recent: true,
                 sequence: killmail.sequence
@@ -145,88 +141,5 @@ async function addKM(app, killmail, type, id, span) {
         sequenceUpdates.set(addKey, killmail.sequence);
     }
 }
-
-const nextAgg = {
-    'alltime': 'year',
-    'year': 'month',
-    'month': 'day'
-};
-
-let updateSet = new Set();
-
-async function update_stats(app) {
-    let calced;
-    do {
-        let promises = [];
-        calced = 0;
-        if (app.no_stats) break;
-        let records = await app.db.statistics.find({
-            update: true
-        });
-
-        let min, max;
-        while (await records.hasNext()) {
-            if (app.no_stats) break;
-            let record = await records.next();
-
-            if (record.reset == true) {
-                let keep = ['_id', 'type', 'id', 'span', 'sequence', 'update'];
-                let remove = {};
-                let keys = Object.keys(record);
-                for (let key of keys) {
-                    if (keep.indexOf(key) < 0) {
-                        remove[key] = 1;
-                        delete record[key];
-                    }
-                }
-                await app.db.statistics.updateOne(record, {
-                    $unset: remove
-                });
-                record.update_week = true;
-                record.update_recent = true;
-            }
-
-            min = (record.last_sequence || 0);
-            max = Math.min(min + 100000000, record.sequence);
-
-            let match = {
-                stats: true,
-                sequence: {
-                    '$gt': min,
-                    '$lte': max,
-                },
-            };
-
-            while (updateSet.size > 0) await app.sleep(1);
-            promises.push(update_stat_record(app, record, match, max));
-            await app.sleep(1);
-
-            calced++;
-            app.zincr('stats_updated');
-        }
-        while (updateSet.size > 20) {
-            await app.sleep(1);
-        }
-        await app.waitfor(promises);
-    } while (calced > 0);
-
-    while (updateSet.size > 0) {
-        await app.sleep(1);
-    }
-}
-
-async function update_stat_record(app, record, match, max) {
-    const s = Symbol();
-    try {
-        updateSet.add(s);
-        await app.util.stats.update_stat_record(app, 'killmails', 'alltime', record, match, max);
-    } catch (e) {
-        console.log(e);
-    } finally {
-        updateSet.delete(s);
-    }
-}
-
-
 
 module.exports = f;

@@ -35,7 +35,13 @@ async function f(app) {
 
 async function parse_mail(app, killhash) {
     try {
-        let removeOne = app.db.killmails.removeOne({
+        let remove_alltime = app.db.killmails.removeOne({
+            killmail_id: killhash.killmail_id
+        });
+        let remove_recent = app.db.killmails_90.removeOne({
+            killmail_id: killhash.killmail_id
+        });
+        let remove_week = app.db.killmails_7.removeOne({
             killmail_id: killhash.killmail_id
         });
 
@@ -131,8 +137,13 @@ async function parse_mail(app, killhash) {
 
         if (padpromise != undefined && (await padpromise) > 5) killmail.stats = false;
 
-        await removeOne;
+        await remove_alltime;
+        await remove_recent;
+        await remove_week;
+
         await app.db.killmails.insertOne(killmail);
+        await app.db.killmails_90.insertOne(killmail);
+        await app.db.killmails_7.insertOne(killmail);
         await app.db.killhashes.updateOne(killhash, parsed);
         app.zincr('mails_parsed');
 
@@ -144,7 +155,10 @@ async function parse_mail(app, killhash) {
 
 async function publishToKillFeed(app, killmail) {
     var sent = [];
-    var msg = JSON.stringify({'action': 'killlistfeed', 'killmail_id': killmail.killmail_id});
+    var msg = JSON.stringify({
+        'action': 'killlistfeed',
+        'killmail_id': killmail.killmail_id
+    });
     var keys = Object.keys(killmail.involved);
     var keybase, type, ids, entity_id, key;
 

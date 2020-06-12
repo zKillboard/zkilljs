@@ -38,13 +38,14 @@ const tasks = {
 
     // killmail consumers
     'fetch_mails.js': createTaskSettings(1),
-    'parse_mails': createTaskSettings(1),
-    'do_activity': createTaskSettings(1),
+    'parse_mails.js': createTaskSettings(1),
+    'do_activity.js': createTaskSettings(1),
 
     // statistics
-    'update_stats_alltime': createTaskSettings(1),
-    'update_stats_recent': createTaskSettings(1),
-    'update_stats_weekly': createTaskSettings(1),
+    'update_stats.js': createTaskSettings(1),
+    'update_stats_prepare.js': createTaskSettings(1),
+    'update_stats_cleanup.js': createTaskSettings(3600),
+    'publish_stats_updates.js': createTaskSettings(1),
 
     //'ztop.js': createTaskSettings(1),
 }

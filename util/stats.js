@@ -4,13 +4,17 @@ const negatives = ['character_id', 'corporation_id', 'alliance_id', 'faction_id'
     'war_id'
 ];
 
+
 const stats = {
     update_stat_record: async function (app, collection, epoch, record, match, max) {
         let fquery;
+        let redis_base = JSON.stringify({type: record.type, id: record.id});
+        await app.redis.srem('zkilljs:stats:publish', redis_base);
+
 
         if (negatives.includes(record.type)) {
             match['involved.' + record.type] = -1 * record.id;
-            fquery = await this.facet_query(app, collection, match, record.type);
+            fquery = await this.facet_query(app, collection, match);
 
             this.apply(record, epoch, fquery, false, 'groups');
             this.apply(record, epoch, fquery, false, 'labels');
@@ -24,40 +28,31 @@ const stats = {
             match['involved.' + record.type] = record.id;
         }
 
-        delete match['stats'];
-        fquery = await this.facet_query(app, collection, match, record.type);
+        //// Consider all kills
+        //delete match['stats'];
+        fquery = await this.facet_query(app, collection, match);
         this.apply(record, epoch, fquery, true, 'groups');
         this.apply(record, epoch, fquery, true, 'labels');
         this.apply(record, epoch, fquery, true, 'months');
         this.applyTop10(record, epoch, fquery, true);
 
-        if (epoch == 'alltime') {
-            record.last_sequence = max;
-            if (max == record.sequence) record.update = false;
-        } else record['update_' + epoch] = false;
+        record[epoch].last_sequence = max;
+
+        var set = {};
+        set[epoch] = record[epoch];
 
         await app.db.statistics.updateOne({
-            _id: record._id,
-            sequence: record.sequence
+            _id: record._id
         }, {
-            $set: record
+            $set: set
         });
 
-        if (record.update == false && epoch == 'alltime') await this.publishStatsUpdate(app, record);
-    },
-
-    publishStatsUpdate: async function (app, record) {
-        var base = '/' + record.type.replace('_id', '') + '/' + record.id;
-        var pubkey = 'statsfeed:' + base;
-        await app.redis.publish(pubkey, JSON.stringify({
-            action: 'statsfeed',
-            path: base
-        }));
+        await app.redis.sadd('zkilljs:stats:publish', redis_base);
     },
 
     apply: function (record, epoch, result, areKills, label) {
         let agg = result[label];
-        if (record[epoch] == undefined) record[epoch] = {};
+
         for (let row of agg) {
             let id = (label == 'groups' ? Math.abs(row._id) : row._id);
             let type = areKills ? 'killed' : 'lost';
@@ -75,6 +70,15 @@ const stats = {
                 record[epoch]['inv_' + type] = (record[epoch]['inv_' + type] || 0) + (row.inv || 0);
             }
         }
+        record[epoch]['danger_level'] = this.do_danger_calc(record[epoch]);
+    },
+
+    do_danger_calc: function (epoch) {
+        if (epoch == null) return null;
+        if (epoch.killed == 0) return 0;
+        if (epoch.lost == 0) return 1;
+
+        return epoch.killed / (epoch.killed + epoch.lost);
     },
 
     applyTop10: function (record, epoch, result, areKills) {
@@ -126,7 +130,7 @@ const stats = {
         };
     },
 
-    facet_query: async function (app, collection, match, type) {
+    facet_query: async function (app, collection, match) {
         let result = await app.db[collection].aggregate([{
             '$match': match
         }, {
