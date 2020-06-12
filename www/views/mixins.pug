@@ -1,5 +1,5 @@
-mixin char_id_link(tag, id, name)
-	+type_id_link(tag, 'character', id, name)
+mixin char_id_link(tag, id, name, extra)
+	+type_id_link(tag, 'character', id, name, extra)
 
 mixin corp_id_link(tag, id, name)
 	+type_id_link(tag, 'corporation', id, name)
@@ -8,12 +8,25 @@ mixin alli_id_link(tag, id, name)
 	+type_id_link(tag, 'alliance', id, name)
 
 
-mixin type_id_link(tag, type, id, name)
+mixin type_id_link(tag, type, id, name, extra)
+	-var url = '/' + type + '/' + id
+	-var name = (name == null || name == undefined || name == '' ? type + ' ' + id : name)
 	if id != undefined
-		-var url = '/' + type + '/' + id
-		-var name = (name == null || name == undefined || name == '' ? type + ' ' + id : name)
 		#{tag}
 			a(href=url alt=name class='override')= name
+			+include_extra(extra)
+	else if extra != ''
+			+include_extra(extra)
+
+mixin include_extra(extra)
+	if extra != ''
+		| &nbsp;
+		if extra == 'nostats'
+				span.label.alert.alert-danger.nostats &nbsp;STATS&nbsp;
+		else if extra == 'solo'
+			span.label.alert.alert-success &nbsp;SOLO&nbsp;
+		else
+			= extra
 
 mixin tag_image(tag, url, src, name, size)
 	#{tag}

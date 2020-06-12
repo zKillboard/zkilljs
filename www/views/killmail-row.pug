@@ -12,11 +12,11 @@ div.killrow
 	ul.info1
 		li
 			| !{time}
-		li.fnumber= json.zmail.total_value
+		li.fnumber= json.killmail.total_value
 	ul.info2
 		+type_id_link('li', 'system', json.rawmail.solar_system_id, json.rawmail.solar_system_name)
-		+type_id_link('li', 'constellation', json.zmail.involved.constellation_id,json.zmail.involved.constellation_name)
-		+type_id_link('li', 'region', json.zmail.involved.region_id, json.zmail.involved.region_name)
+		+type_id_link('li', 'constellation', json.killmail.involved.constellation_id,json.killmail.involved.constellation_name)
+		+type_id_link('li', 'region', json.killmail.involved.region_id, json.killmail.involved.region_name)
 	div.clearfix.d-block.d-lg-none
 	ul.image
 		if json.rawmail.victim.alliance_id > 0
@@ -45,7 +45,11 @@ div.killrow
 		else
 			+type_image('li', json.rawmail.final_blow.ship_type_id, json.rawmail.final_blow.ship_type_name, 64)
 	ul.finalblow
-		+char_id_link('li', json.rawmail.final_blow.character_id, json.rawmail.final_blow.character_name)
+		- var tag
+		- if (json.killmail.stats == false) tag = 'nostats'
+		- else if (json.killmail.labels.indexOf('solo') != -1) tag = 'solo'
+		- else tag = ' (' + json.killmail.involved_cnt + ')'
+		+char_id_link('li', json.rawmail.final_blow.character_id, json.rawmail.final_blow.character_name, tag)
 		+corp_id_link('li', json.rawmail.final_blow.corporation_id, json.rawmail.final_blow.corporation_name)
 		+alli_id_link('li', json.rawmail.final_blow.alliance_id, json.rawmail.final_blow.alliance_name)
 		if (!(json.rawmail.final_blow.character_id > 0 || json.rawmail.final_blow.corporation_id > 0 || json.rawmail.final_blow.alliance_id > 0)) 

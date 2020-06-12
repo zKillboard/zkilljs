@@ -22,7 +22,7 @@ async function getData(req, res) {
 
     var ret = {
         json: {
-            zmail: zmail,
+            killmail: zmail,
             rawmail: rawmail
         },
         maxAge: 3600
