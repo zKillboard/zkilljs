@@ -122,9 +122,11 @@ async function runTask(task, f, app, curKey, runKey, iteration) {
         console.log(task + ' failure:');
         console.log(e);
         await app.redis.del(curKey);
+        await app.redis.del(runKey);
     } finally {
         //console.log(task + ' finished');
         await app.redis.del(runKey);
+        if (app.bailout == true) await app.redis.del(curKey); // Bailed, probably didn't get to finish
     }
 }
 
