@@ -6,8 +6,8 @@ async function getData(req, res) {
     const app = req.app.app;
 
     let query = {
-        type: req.params.type + '_id',
-        id: parseInt(req.params.id)
+        type: (req.params.type == 'label' ? 'label' : req.params.type + '_id'),
+        id: (req.params.type == 'label' ? req.params.id : Math.abs(parseInt(req.params.id)))
     };
 
     let result = await req.app.app.db.statistics.find(query).toArray();

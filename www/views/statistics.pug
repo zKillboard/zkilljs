@@ -12,25 +12,25 @@ div.table-responsive
 		tbody
 			tr
 				th Alltime
-				td#alltime-kills.integer.green= json.alltime.killed
-				td#alltime-isk-killed.fnumber.green= json.alltime.isk_killed
+				td#alltime-kills.integer.green(format='integer')= json.alltime.killed
+				td#alltime-isk-killed.fnumber.green(format='fnumber')= json.alltime.isk_killed
 				td.number.green
-				td#alltime-lost.integer.red= json.alltime.lost
-				td#alltime-isk-lost.fnumber.red= json.alltime.isk_lost
+				td#alltime-lost.integer.red(format='integer')= json.alltime.lost
+				td#alltime-isk-lost.fnumber.red(format='fnumber')= json.alltime.isk_lost
 				td#alltime-eff
 			tr
 				th 90 Days
-				td#recent-kills.integer.green= json.recent.killed
-				td#recent-isk-killed.fnumber.green= json.recent.isk_killed
+				td#recent-kills.integer.green(format='integer')= json.recent.killed
+				td#recent-isk-killed.fnumber.green(format='fnumber')= json.recent.isk_killed
 				td.integer.green
-				td#recent-lost.integer.red= json.recent.lost
-				td#recent-isk-lost.fnumber.red= json.recent.isk_lost
+				td#recent-lost.integer.red(format='integer')= json.recent.lost
+				td#recent-isk-lost.fnumber.red(format='fnumber')= json.recent.isk_lost
 				td#recent-eff
 			tr
 				th 7 Days
-				td#week-kills.integer.green= json.week.killed
-				td#week-isk-killed.fnumber.green= json.week.isk_killed
+				td#week-kills.integer.green(format='integer')= json.week.killed
+				td#week-isk-killed.fnumber.green(format='fnumber')= json.week.isk_killed
 				td.number.green
-				td#week-lost.integer.red= json.week.lost
-				td#week-isk-lost.fnumber.red= json.week.isk_lost
+				td#week-lost.integer.red(format='integer')= json.week.lost
+				td#week-isk-lost.fnumber.red(format='fnumber')= json.week.isk_lost
 				td#week-eff

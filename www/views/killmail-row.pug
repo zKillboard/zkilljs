@@ -28,10 +28,9 @@ div.killrow
 	ul.victim
 		li
 			+char_id_link('span', json.rawmail.victim.character_id, json.rawmail.victim.character_name)
-			span
-				|  (
-				+type_id_link('span', 'item', json.rawmail.victim.ship_type_id, json.rawmail.victim.ship_type_name)
-				| )
+			if json.rawmail.victim.character_id > 0
+				| - 
+			+type_id_link('span', 'item', json.rawmail.victim.ship_type_id, json.rawmail.victim.ship_type_name)
 		+corp_id_link('li', json.rawmail.victim.corporation_id, json.rawmail.victim.corporation_name)
 		+alli_id_link('li', json.rawmail.victim.alliance_id, json.rawmail.victim.alliance_name)
 	div.clearfix.d-block.d-lg-none

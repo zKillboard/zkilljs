@@ -9,6 +9,10 @@ html {
   overflow-y: scroll;
 }
 
+body {
+    zoom: 90%;
+}
+
 .wrapper {
     min-height: 100%;
     height: auto !important;
@@ -115,4 +119,18 @@ div#overview-information ul li {
 #overview-information, #overview-statistics {
     min-eight: 10rem;
     height: 10rem;
+}
+
+.label {
+    margin: 0px;
+    padding: 0px;
+    font-size: 80%;
+}
+
+.nostats {
+    text-decoration: line-through;
+}
+
+.uppercase {
+    text-transform: uppercase ;
 }

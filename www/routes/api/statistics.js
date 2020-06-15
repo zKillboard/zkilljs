@@ -11,12 +11,8 @@ async function getData(req, res) {
     let result = await req.app.app.db.statistics.find({
         type: req.params.type,
         id: req.params.id
-    })/*.project({
-        _id: 0,
-        update: 0,
-        sequence: 0,
-        last_sequence: 0
-    })*/.toArray();
+    }).toArray();
+
     return {
         json: (result.length == 1 ? result[0] : null), maxAge: 1
     };

@@ -21,8 +21,7 @@ function is_jquery_loaded() {
     if (typeof $ == 'function') {
         jquery_loaded = true;
         console.log('jquery loaded');
-    }
-    else setTimeout(is_jquery_loaded, 100);
+    } else setTimeout(is_jquery_loaded, 100);
 }
 
 // Called at the end of this document since all js libraries are deferred
@@ -86,17 +85,13 @@ function showSection(section) {
 }
 
 function loadOverview(path) {
-    if (path == '/') {
-        apply('overview-information', null);
-        apply('overview-statistics', null);
-        apply('overview-killmails', '/site/killmails/all/all.html', 'killlistfeed:all');
-    } else {
-        path = path.replace('/system/', '/solar_system/').replace('/type/', '/item/');
-        apply('overview-information', '/site/information' + path + '.html');
-        apply('overview-statistics', '/site/statistics' + path + '.html', 'statsfeed:' + path);
-        apply('overview-killmails', '/site/killmails' + path + '.html', 'killlistfeed:' + path);
-    }
+    if (path == '/') path = '/label/all';
+    path = path.replace('/system/', '/solar_system/').replace('/type/', '/item/');
+    apply('overview-information', '/site/information' + path + '.html');
+    apply('overview-statistics', '/site/statistics' + path + '.html', 'statsfeed:' + path);
+    apply('overview-killmails', '/site/killmails' + path + '.html', 'killlistfeed:' + path);
     showSection('overview');
+    
     /*<div id="overview-information"></div>
         <div id="overview-statistics"></div>
         <div id="overview-menu"></div>

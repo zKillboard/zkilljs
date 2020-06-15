@@ -12,22 +12,37 @@ async function getData(req, res) {
     }
 
     let query = {};
-    if (req.params.type == 'label') query['labels'] = req.params.id;
+    var type, id;
+    if (req.params.type == 'label' && req.params.id == 'all') {
+        type = 'label';
+        id = 'all';
+        query = {};
+    }
+    else if (req.params.type == 'label') {
+        type = 'label';
+        id = req.params.id;
+        query['labels'] = req.params.id;
+    }
     else if (req.params.type != 'all' && req.params.id != 'all') {
-        var id = parseInt(req.params.id);
+        type = req.params.type + '_id';
+        id = parseInt(req.params.id);
         if (id == NaN) return {
             json: '[]'
         };
 
-        var key = 'involved.' + req.params.type + '_id';
+        var key = 'involved.' + type;
         query['$or'] = [{
             [key]: id
         }, {
             [key]: (-1 * id)
         }];
     };
+    var record = await app.db.statistics.findOne({type: type, id: id});
+    console.log(record['week']);
+    var collection = (get_sum(record, 'week') >= 50 ? 'killmails_7' : (get_sum(record, 'recent') >= 50 ? 'killmails_90' : 'killmails'));
+    console.log('kill list ', collection, type, id, query);
 
-    let result = await app.db.killmails.find(query)
+    let result = await app.db[collection].find(query)
         .sort({
             killmail_id: -1
         })
@@ -38,4 +53,10 @@ async function getData(req, res) {
         json: result,
         maxAge: 1
     };
+}
+
+function get_sum(record, epoch) {
+    if (record[epoch] == 0) return 0;
+    console.log(epoch, record[epoch].killed, record[epoch].lost);
+    return (record[epoch].killed) || (record[epoch].lost || 0);
 }

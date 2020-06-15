@@ -31,6 +31,7 @@ ul#info-box
 	li
 		table#info-table.table.table-borderless.table-hover.table-sm
 			-var founded = (json.founded == undefined ? '' : ('' + json.date_founded).replace('T', ' ').replace('Z', ''))
+			+info_row_a('Label:', 'label', json.label_id, json.label_id, 'uppercase') 
 			+info_row_a('Character:', 'character', json.character_id, json.character_name)
 			+info_row_a('Corporation:', 'corporation', json.corporation_id, json.corporation_name)
 			+info_row_a('Alliance:', 'alliance', json.alliance_id, json.alliance_name)
