@@ -50,6 +50,8 @@ async function update_stats(app, collection, epoch, type, find) {
             var record = await iter.next();
             if (record.id !== NaN) await update_record(app, collection, epoch, record);
         }
+    } catch (e) {
+        console.log(e);
     } finally {
         await app.sleep(1000);
         update_stats(app, collection, epoch, type, find);
@@ -74,7 +76,6 @@ async function update_record(app, collection, epoch, record) {
         },
     };
     if (min > 0) match.sequence['$gt'] = min;
-    //console.log(epoch, record.type, record.id, min, max);
 
     await app.util.stats.update_stat_record(app, collection, epoch, record, match, max);
 

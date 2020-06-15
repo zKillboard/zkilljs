@@ -9,8 +9,6 @@ const parsed = {
     }
 };
 
-let sequence = undefined;
-
 const set = new Set();
 var firstRun = true;
 
@@ -20,13 +18,6 @@ const match = {
 };
 
 async function f(app) {
-    if (sequence === undefined) {
-        let resultset = await app.db.killmails.find({}).sort({
-            sequence: -1
-        }).limit(1).toArray();
-        sequence = (resultset.length == 0) ? 0 : resultset[0].sequence;
-    }
-
     if (firstRun) {
         sw.start(app, app.db.killhashes, match, parse_mail, 10);
         firstRun = false;
@@ -119,8 +110,7 @@ async function parse_mail(app, killhash) {
         killmail.labels = labels;
         killmail.involved_cnt = rawmail.attackers.length;
 
-        sequence++;
-        killmail.sequence = sequence;
+        killmail.sequence = await app.util.killmails.next_sequence(app);
 
         let padhash = await get_pad_hash(app, rawmail, killmail);
         let padpromise = undefined;
@@ -174,6 +164,11 @@ async function publishToKillFeed(app, killmail) {
             await app.redis.publish('killlistfeed:' + key, msg);
             sent.push(key);
         }
+    }
+    killmail.labels.push('all');
+    for (var label of killmail.labels) {
+        key = '/label/' + label;
+        await app.redis.publish('killlistfeed:' + key, msg);
     }
 }
 

@@ -8,9 +8,11 @@ const negatives = ['character_id', 'corporation_id', 'alliance_id', 'faction_id'
 const stats = {
     update_stat_record: async function (app, collection, epoch, record, match, max) {
         let fquery;
-        let redis_base = JSON.stringify({type: record.type, id: record.id});
+        let redis_base = JSON.stringify({
+            type: record.type,
+            id: record.id
+        });
         await app.redis.srem('zkilljs:stats:publish', redis_base);
-
 
         if (negatives.includes(record.type)) {
             match['involved.' + record.type] = -1 * record.id;
@@ -19,10 +21,12 @@ const stats = {
             this.apply(record, epoch, fquery, false, 'groups');
             this.apply(record, epoch, fquery, false, 'labels');
             this.apply(record, epoch, fquery, false, 'months');
-            this.applyTop10(record, epoch, fquery, false);
+            //this.applyTop10(record, epoch, fquery, false);
         }
 
-        if (record.type == 'label') {
+        if (record.type == 'label' & record.id == 'all') {
+            // no match, we want all of the killmails
+        } else if (record.type == 'label') {
             match['labels'] = record.id;
         } else {
             match['involved.' + record.type] = record.id;
@@ -34,7 +38,7 @@ const stats = {
         this.apply(record, epoch, fquery, true, 'groups');
         this.apply(record, epoch, fquery, true, 'labels');
         this.apply(record, epoch, fquery, true, 'months');
-        this.applyTop10(record, epoch, fquery, true);
+        //this.applyTop10(record, epoch, fquery, true);
 
         record[epoch].last_sequence = max;
 
@@ -52,6 +56,8 @@ const stats = {
 
     apply: function (record, epoch, result, areKills, label) {
         let agg = result[label];
+
+        var beforek = record[epoch].killed, beforel = record[epoch].lost;
 
         for (let row of agg) {
             let id = (label == 'groups' ? Math.abs(row._id) : row._id);
@@ -139,7 +145,11 @@ const stats = {
                     $group: {
                         _id: null,
                         count: {
-                            $sum: 1
+                            $sum: {
+                                $cond: [{
+                                    $eq: ['$purging', true]
+                                }, -1, 1]
+                            }
                         },
                         isk: {
                             $sum: '$total_value'
@@ -161,7 +171,11 @@ const stats = {
                     $group: {
                         _id: '$involved.group_id',
                         count: {
-                            $sum: 1
+                            $sum: {
+                                $cond: [{
+                                    $eq: ['$purging', true]
+                                }, -1, 1]
+                            }
                         },
                         isk: {
                             $sum: '$total_value'
@@ -177,7 +191,11 @@ const stats = {
                         $group: {
                             _id: '$labels',
                             count: {
-                                $sum: 1
+                                $sum: {
+                                $cond: [{
+                                    $eq: ['$purging', true]
+                                }, -1, 1]
+                            }
                             },
                             isk: {
                                 $sum: '$total_value'
@@ -197,7 +215,11 @@ const stats = {
                             }, '$month']
                         },
                         count: {
-                            $sum: 1
+                            $sum: {
+                                $cond: [{
+                                    $eq: ['$purging', true]
+                                }, -1, 1]
+                            }
                         },
                         isk: {
                             $sum: '$total_value'
@@ -209,7 +231,7 @@ const stats = {
                         }
                     }
                 }],
-                'topisk': [{
+                /*'topisk': [{
                     $project: {
                         killmail_id: 1,
                         total_value: 1
@@ -226,7 +248,7 @@ const stats = {
                     }
                 }, {
                     $limit: 10
-                }]
+                }]*/
             }
         }, ], {
             allowDiskUse: true

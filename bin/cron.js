@@ -44,8 +44,8 @@ const tasks = {
     // statistics
     'update_stats.js': createTaskSettings(1),
     'update_stats_prepare.js': createTaskSettings(1),
-    'update_stats_cleanup.js': createTaskSettings(3600),
-    'publish_stats_updates.js': createTaskSettings(1),
+    'update_stats_cleanup.js': createTaskSettings(1),
+    'publish_stats_updates.js': createTaskSettings(5),
 
     //'ztop.js': createTaskSettings(1),
 }

@@ -19,4 +19,19 @@ module.exports = {
             }
         }
     },
+
+    next_sequence: async function (app) {
+        var next = await app.db.settings.findOneAndUpdate({
+            'key': 'sequence'
+        }, {
+            '$inc': {
+                value: 1
+            }
+        }, {
+            upsert: true,
+            returnNewDocument: true,
+            returnOriginal: false // seriously driver... come on just respect returnNewDocument
+        });
+        return next.value.value;
+    },
 }

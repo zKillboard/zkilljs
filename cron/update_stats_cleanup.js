@@ -2,103 +2,126 @@
 
 async function f(app) {
     try {
-        app.no_stats = true;
-        await app.sleep(30000); // Wait 30 seconds, give everyone a chance to finish up
+        if (app.bailout == true) return;
 
-        await clear_kills(app, 'killmails_7', 'week', Math.floor(Date.now() / 1000) - (86400 * 7));
-        await clear_kills(app, 'killmails_90', 'recent', Math.floor(Date.now() / 1000) - (86400 * 90));
+        var days7 = clear_kills(app, 'killmails_7', 'week', Math.floor(Date.now() / 1000) - (86400 * 7));
+        var days90 = clear_kills(app, 'killmails_90', 'recent', Math.floor(Date.now() / 1000) - (86400 * 90));
+
+        await days7;
+        await days90;
     } finally {
         app.no_stats = false;
     }
 }
 
 async function clear_kills(app, collection, epoch, max_epoch) {
-    var iter = await app.db[collection].find({
-        epoch: {
-            '$lt': max_epoch
-        }
-    });
+    try {
+        var iter = await app.db[collection].find({
+            epoch: {
+                '$lt': max_epoch
+            }
+        });
 
-    var resets = [];
+        var resets = [];
 
-    while (await iter.hasNext()) {
-        var killmail = await iter.next();
+        while (await iter.hasNext()) {
+            if (app.bailout) return;
 
-        var match = {
-            killmail_id: killmail.killmail_id
-        };
-        var facet = await app.util.stats.facet_query(app, collection, match);
-        var top10 = facet['topisk'];
-        delete facet['topisk'];
-        facet = inverse(facet);
+            var killmail = await iter.next();
 
+            if (killmail.stats == false || killmail.purging == true) {
+                await app.db[collection].removeOne({
+                    killmail_id: killmail.killmail_id
+                });
+                continue;
+            }
+            await wait_for_stats(app);
 
+            var original_killmail_id = killmail.killmail_id;
+            var purge_mail = killmail;
+            delete purge_mail._id;
+            purge_mail.purging = true;
+            purge_mail.killmail_id = -1 * killmail.killmail_id;
+            purge_mail.total_value = -1 * killmail.total_value;
+            purge_mail.involved_cnt = -1 * killmail.involved_cnt;
+            purge_mail.sequence = await app.util.killmails.next_sequence(app);
 
-        for (const type of Object.keys(killmail.involved)) {
-            for (var id of killmail.involved[type]) {
-                if (typeof id == 'number') id = Math.abs(id);
+            try {
+                await app.db[collection].insertOne(purge_mail); // Insert the killmail
+            } catch (e) {
+                if (e.code != 11000) console.log(e);
+            }
 
-                var reset_key = type + ':' + id;
+            // Mark everyone involved as needing a stat update
+            for (const type of Object.keys(killmail.involved)) {
+                for (var id of killmail.involved[type]) {
+                    if (typeof id == 'number') id = Math.abs(id);
+
+                    var reset_key = type + ':' + id;
+                    if (resets.indexOf(reset_key) != -1) continue;
+                    resets.push(reset_key);
+
+                    await update_stats_record(app, type, id, epoch, purge_mail.sequence);
+                }
+            }
+
+            killmail.labels.push('all');
+            for (const label of killmail.labels) {
+                var reset_key = 'label:' + label;
                 if (resets.indexOf(reset_key) != -1) continue;
                 resets.push(reset_key);
 
-                //console.log(type, id);
-                var record = await app.db.statistics.findOne({
-                    type: type,
-                    id: id
-                });
-                var set = {};
-                set['update_' + epoch] = true;
-                set[epoch] = {};
-                set[epoch].reset = true;
-                await app.db.statistics.updateOne({
-                    _id: record._id
-                }, {
-                    '$set': set
-                });
+                await update_stats_record(app, 'label', label, epoch, purge_mail.sequence);
             }
-        }
 
-        await app.db[collection].removeOne({
-            killmail_id: killmail.killmail_id
-        });
+            await wait_for_stats(app);
+
+            await app.db[collection].removeOne({
+                killmail_id: original_killmail_id
+            });
+            await app.db[collection].removeOne({
+                killmail_id: purge_mail.killmail_id
+            });
+            return;
+        }
+    } catch (e) {
+        console.log(e);
     }
 }
 
-async function apply_facet(app, record, epoch, facet) {
-
+async function wait_for_stats(app, epoch) {
+    var count;
+    do {
+        if (app.bailout == true) throw 'bailing!';
+        await app.sleep(1);
+        count = await app.db.statistics.countDocuments({
+            ['update_' + epoch]: true
+        });
+    } while (count > 0);
 }
 
-function inverse(facet) {
-    if (facet == null) return facet;
+async function update_stats_record(app, type, id, epoch, sequence) {
+    var record = await app.db.statistics.findOne({
+        type: type,
+        id: id
+    });
+    if (record == null) {
+        return;
+    }
 
-    if (typeof facet == 'object') {
-        var keys = Object.keys(facet);
-        for (const key of keys) {
-            var value = facet[key];
-            if (key == '_id') continue;
+    var set = {
+        ['update_' + epoch]: true,
+        sequence: sequence
+    }
 
-            if (typeof value == 'object') facet[key] = inverse(value);
-            else if (typeof value == 'number') facet[key] = -1 * value;
-            else {
-                console.log(key, typeof value);
-                continue;
-
-                switch (key) {
-                case 'count':
-                case 'inv':
-                case 'isk':
-                    facet[key] = -1 * value;
-                default:
-                    console.log(typeof key);
-                }
-            }
-        }
-    } else console.log('How to handle: ' + (typeof facet));
-    return facet;
+    await app.db.statistics.updateOne({
+        _id: record._id,
+        sequence: {
+            $lt: sequence
+        },
+    }, {
+        $set: set
+    });
 }
-
-
-
 
 module.exports = f;

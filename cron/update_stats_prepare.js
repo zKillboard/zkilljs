@@ -56,6 +56,7 @@ async function prepStats(app, killhash) {
             });
             return;
         }
+        killmail.labels.push('all');
 
         let promises = [];
         if (killmail.involved == undefined) {
