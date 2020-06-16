@@ -36,7 +36,7 @@ async function getData(req, res) {
 
     var ret = {
         json: result[0],
-        maxAge: 1
+        maxAge: 3600
     };
 
     ret.json = await app.util.info.fill(app, ret.json);
