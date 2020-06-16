@@ -6,11 +6,11 @@ module.exports = router;
 addGet('/index.html', 'site/index', 'index.pug');
 addGet('/site/information/:type/:id.html', 'site/information.js', 'information.pug');
 addGet('/site/killmails/:type/:id.html', 'site/kill-list.js', 'kill-list.pug');
-addGet('/site/killmail/row/:id.html', 'site/killmail-row.js', 'killmail-row.pug');
 addGet('/site/statistics/:type/:id.html', 'site/statistics.js', 'statistics.pug');
 addGet('/site/stats_box/:type/:id.json', 'api/stats_box.js'); 
 
 addGet('/cache/1hour/api/information/:type/:id/:field.html', 'site/information', 'raw.pug');
+addGet('/cache/1hour/killmail/row/:id.html', 'site/killmail-row.js', 'killmail-row.pug');
 
 addGet('/api/1hour/information/:type/:id.json', 'api/information.js');
 addGet('/api/1hour/killmail/:id.json', 'api/killmail.js');
