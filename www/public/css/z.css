@@ -105,6 +105,14 @@ div#overview-information ul li {
     color: green;
 }
 
+.victimrow {
+  background-color: #2F0202;
+}
+
+.aggressorrow {
+  background-color: #001600;
+}
+
 /* https://stackoverflow.com/questions/41747667/bootstrap-4-responsive-tables-wont-take-up-100-width */
 .table-responsive {
 }
@@ -117,8 +125,8 @@ div#overview-information ul li {
 
 
 #overview-information, #overview-statistics {
-    min-eight: 10rem;
-    height: 10rem;
+    min-width: 500px;
+    min-height: 150px;
 }
 
 .label {

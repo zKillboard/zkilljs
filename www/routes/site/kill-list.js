@@ -38,9 +38,7 @@ async function getData(req, res) {
         }];
     };
     var record = await app.db.statistics.findOne({type: type, id: id});
-    console.log(record['week']);
     var collection = (get_sum(record, 'week') >= 50 ? 'killmails_7' : (get_sum(record, 'recent') >= 50 ? 'killmails_90' : 'killmails'));
-    console.log('kill list ', collection, type, id, query);
 
     let result = await app.db[collection].find(query)
         .sort({
@@ -57,6 +55,5 @@ async function getData(req, res) {
 
 function get_sum(record, epoch) {
     if (record[epoch] == 0) return 0;
-    console.log(epoch, record[epoch].killed, record[epoch].lost);
     return (record[epoch].killed) || (record[epoch].lost || 0);
 }
