@@ -5,6 +5,10 @@ var browserHistory = undefined;
 var server_started = 0;
 var jquery_loaded = false;
 
+var type = undefined;
+var id = undefined;
+var killmail_id = undefined;
+
 function historyReady() {
     try {
         browserHistory = History.createBrowserHistory();
@@ -91,7 +95,7 @@ function loadOverview(path) {
     apply('overview-statistics', '/site/statistics' + path + '.html', 'statsfeed:' + path);
     apply('overview-killmails', '/site/killmails' + path + '.html', 'killlistfeed:' + path);
     showSection('overview');
-    
+
     /*<div id="overview-information"></div>
         <div id="overview-statistics"></div>
         <div id="overview-menu"></div>
@@ -103,8 +107,35 @@ function loadOverview(path) {
 function killlistCleanup() {
     try {
         while ($(".killrow").length > 50) $(".killrow").last().parent().remove();
+        applyRedGreen();
     } catch (e) {
         setTimeout(killlistCleanup, 100);
+    }
+}
+
+var redgreen_types = ['character', 'corporation', 'alliance', 'faction', 'item', 'group', 'category'];
+function applyRedGreen() {
+    var path = window.location.pathname;
+    var split = path.split('/');
+    var type = ((split.length >= 2 && split[1] != undefined) ? split[1] : '');
+    if (redgreen_types.indexOf(type) == -1) return;
+
+    if (split.length >= 3 && split[2] != undefined) {
+        var id = Number.parseInt(split[2]);
+        if (id > 0) {
+            var id = '' + (-1 * id);
+            console.log(id);
+
+            $.each($('.killrow'), function (index, element) {
+                element = $(element);
+                if (element.attr('redgreen_applied') == "true") return;
+                var victims = element.attr("victims");
+                var victims_array = victims.split(',');
+                if (victims_array.indexOf(id) != -1) element.addClass('victimrow').attr('redgreen_applied', 'true');
+                else element.addClass('aggressorrow').attr('redgreen_applied', 'true');
+
+            });
+        }
     }
 }
 
@@ -329,7 +360,7 @@ function ws_message(msg) {
         // Don't load the same kill twice
         if ($(".kill-" + killmail_id).length > 0) return;
 
-        var url = '/site/killmail/row/' + killmail_id + '.html';
+        var url = '/cache/1hour/killmail/row/' + killmail_id + '.html';
         var divraw = '<div fetch="' + url + '" unfetched="true" id="kill-' + killmail_id + '"></div>';
         $("#killlist").prepend(divraw);
         loadUnfetched(document);
