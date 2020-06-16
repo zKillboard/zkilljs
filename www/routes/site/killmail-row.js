@@ -20,12 +20,20 @@ async function getData(req, res) {
         }
     }
 
+    var victim_array = [];
+    for (const type of Object.keys(zmail.involved)) {
+        for (const id of zmail.involved[type]) {
+            if (id < 0) victim_array.push(id);
+        }
+    }
+
     var ret = {
         json: {
             killmail: zmail,
-            rawmail: rawmail
+            rawmail: rawmail,
+            victims: victim_array.join(','),
         },
-        maxAge: 3600
+        maxAge: 1
     };
     ret.json = await app.util.info.fill(app, ret.json);
     return ret;

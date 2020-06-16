@@ -124,7 +124,6 @@ function applyRedGreen() {
         var id = Number.parseInt(split[2]);
         if (id > 0) {
             var id = '' + (-1 * id);
-            console.log(id);
 
             $.each($('.killrow'), function (index, element) {
                 element = $(element);
