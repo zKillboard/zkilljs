@@ -39,6 +39,7 @@ const info_fill = {
     				case 'solar_system_id':
     				case 'constellation_id':
     				case 'region_id':
+                    case 'location_id':
     				case 'item_id':
                     case 'group_id':
                     case 'category_id':

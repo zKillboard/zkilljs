@@ -1,23 +1,5 @@
 include mixins.pug
 
-mixin info_row_a(label, type, id, value, classes)
-	-var href= '/' + type.replace('_id', '') + '/' + id
-	if value != undefined
-		- value = '' + value
-		if value.length > 0
-			tr
-				td= label
-				td(class=classes)
-					a(href=href class='override')= value
-
-mixin info_row(label, value, classes)
-	if value != undefined
-		- value = '' + value
-		if value.length > 0
-			tr
-				td= label
-				td(class=classes)= value
-
 ul#info-box
 	if json.type == 'character_id'
 		+char_image('li', json.id, json.name, 128)
@@ -35,6 +17,7 @@ ul#info-box
 			+info_row_a('Character:', 'character', json.character_id, json.character_name)
 			+info_row_a('Corporation:', 'corporation', json.corporation_id, json.corporation_name)
 			+info_row_a('Alliance:', 'alliance', json.alliance_id, json.alliance_name)
+			+info_row_a('Faction:', 'faction', json.faction_id, json.faction_name)
 			+info_row('Ticker:', json.ticker)
 			+info_row_a('Item:', 'item', json.item_id, json.item_name)
 			+info_row_a('Group:', 'group', json.group_id, json.group_name)

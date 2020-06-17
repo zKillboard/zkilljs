@@ -1,0 +1,86 @@
+include mixins.pug
+- var rawmail = json.rawmail;
+- var killmail = json.killmail;
+- var victim = json.rawmail.victim;
+- var time = rawmail.killmail_time.replace('T', ' ').replace('Z', '');
+
+div#killmail-fitting-wheel(style='width: 650px; height: 650px; min-width: 650px; min-height: 650px; ')
+	+type_image('li', victim.ship_type_id, victim.ship_type_name, 512)
+div#killmail-information(style='min-width: 350px; max-width: 350px; ')
+	table#info-table.table.table-borderless.table-hover.table-sm
+		tr
+			td(style='')
+			td.col-1(style='')
+		tr
+			td#victim-images(colspan='2' style='')
+				ul
+					+char_image('li', victim.character_id, victim.character_name, 128)
+					+corp_image('li', victim.corporation_id, victim.corporation_name, 64)
+					+alli_image('li', victim.alliance_id, victim.alliance_name, 64)
+					+corp_image('li', victim.faction_id, victim.faction_name, 64)
+		+info_row_a('Character:', 'character', victim.character_id, victim.character_name)
+		+info_row_a('Corporation:', 'corporation', victim.corporation_id, victim.corporation_name)
+		+info_row_a('Alliance:', 'alliance', victim.alliance_id, victim.alliance_name)
+		+info_row_a('Faction:', 'faction', victim.faction_id, victim.faction_name)
+		+info_row_a('Item:', 'item', victim.ship_type_id, victim.ship_type_name)
+		+info_row_a('Group:', 'group', victim.group_id, victim.group_name)
+		+info_row_a('System:', 'system', rawmail.solar_system_id, rawmail.solar_system_name)
+		+info_row_a('Constellation:', 'constellation', rawmail.constellation_id, rawmail.constellation_name)
+		+info_row_a('Region:', 'region', rawmail.region_id, rawmail.region_name)
+		+info_row_a('Location:', 'location', rawmail.location_id, rawmail.location_name)
+		+info_row('Time:', time)
+		+info_row('Destroyed:', killmail.total_destroyed, 'integer')
+		+info_row('Dropped:', killmail.total_dropped, 'integer')
+		+info_row('Total Value:', killmail.total_value, 'integer isk')
+div#killmail-cargo
+div#killmail-top-stats
+div#killmail-involved.attackers-list
+	if killmail.stats == false
+		+add_label('nostats')
+	each label in killmail.labels
+		+add_label(label)
+	hr
+	div
+		span
+			span.integer= killmail.involved_cnt
+			| &nbsp;Involved
+		span.right
+			= 'Total Damage: '
+			span.integer= victim.damage_taken
+	hr
+	each attacker in rawmail.attackers
+
+		div.attacker
+			ul#attacker1
+				if attacker.character_id > 0
+					+char_image('li', attacker.character_id, attacker.character_name, 64)
+				else
+					+corp_image('li', 1, ' ', 64)
+			ul#attacker2
+				+corp_image('li', attacker.corporation_id, attacker.corporation_name, 32)
+				+alli_image('li', attacker.alliance_id, attacker.alliance_name, 32)
+				if !(attacker.corporation_id > 0 && attacker.alliance_id > 0)
+					+corp_image('li', attacker.faction_id, attacker.faction_name, 32)
+			ul#attacker3
+				if attacker.character_id > 0
+					+char_id_link('li', attacker.character_id, attacker.character_name)
+				else
+					+type_id_link('li', 'item', attacker.ship_type_id, attacker.ship_type_name)
+				+corp_id_link('li', attacker.corporation_id, attacker.corporation_name)
+				+alli_id_link('li', attacker.alliance_id, attacker.alliance_name)
+				+type_id_link('li', 'faction', attacker.faction_id, attacker.faction_name)
+			ul#attacker4
+				li.integer= attacker.damage_done
+				if attacker.damage_done && victim.damage_taken > 0
+					li.percentage= (attacker.damage_done / victim.damage_taken)
+			div.clearfix
+			hr
+div#killmail-involved-therest
+div#killmail-comments
+
+div.clearfix
+div.row
+	- var rawmail = JSON.stringify(json.rawmail, undefined, 4)
+	- var killmail = JSON.stringify(json.killmail, undefined, 4)
+//-	pre !{rawmail}
+//-	pre !{killmail}

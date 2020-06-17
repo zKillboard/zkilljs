@@ -64,16 +64,23 @@ function loadPage() {
     window.scrollTo(0, 0);
     ws_clear_subs();
 
-    // if a user page...
-    if (path.substring(0, 6) == '/user/') {
-        console.log('user page');
-    }
-    // if a killmail
-    else if (window.location.pathname.substring(0, 10) == '/killmail/') {
-        fetch = '/site' + path;
-        console.log('killmail! ' + fetch);
-    } else { // overview page
+    var split = path.split('/');
+    var id = (split.length >= 3 ? split[2] : null);
+
+    switch (split[1]) {
+    case "user":
+        // TODO
+        break;
+    case "killmail":
+        console.log(id);
+        var killmail_id = id;
+        showSection('killmail');
+        apply('killmail', '/cache/1hour/killmail/' + killmail_id + '.html');
+        break;
+    default:
+        showSection('overview');
         loadOverview(path);
+        break;
     }
 }
 
@@ -103,6 +110,10 @@ function loadOverview(path) {
         <div id="overview-weekly"></div>*/
 }
 
+function loadKillmail(killmail_id) {
+
+}
+
 // Prevents the kill list from becoming too large and causing the browser to eat up too much memory
 function killlistCleanup() {
     try {
@@ -114,6 +125,7 @@ function killlistCleanup() {
 }
 
 var redgreen_types = ['character', 'corporation', 'alliance', 'faction', 'item', 'group', 'category'];
+
 function applyRedGreen() {
     var path = window.location.pathname;
     var split = path.split('/');
@@ -152,7 +164,6 @@ function apply(element, path, subscribe, delay) {
 }
 
 function handleResponse(res, element, path, subscribe) {
-
     if (res.ok) {
         res.text().then(function (html) {
             applyHTML(element, html);
@@ -200,6 +211,11 @@ function handleJSON(res) {
                     case 'fnumber':
                         value = intToString(value);
                         break;
+                    case 'percentage':
+                        value = Number.parseFloat(value).toLocaleString(undefined, {
+                            'minimumFractionDigits': 2,
+                            'maximumFractionDigits': 2
+                        }) + '%';
                     }
                 }
                 if (elem.innerHTML != value) changeValue(elem, value);
@@ -262,6 +278,19 @@ function updateNumbers() {
             element.text(value);
             element.removeClass('integer');
             element.attr('format', 'integer');
+        });
+        $.each($('.percentage'), function (index, element) {
+            element = $(element);
+            var value = element.text();
+            if (value == "") return;
+            value = Number.parseFloat(value).toLocaleString(undefined, {
+                style: 'percent',
+                'minimumFractionDigits': 1,
+                'maximumFractionDigits': 1
+            });
+            element.text(value);
+            element.removeClass('percentage');
+            element.attr('format', 'percentage');
         });
         $(".decimal").each(function (index, elem) {
             elem = $(elem);

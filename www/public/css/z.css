@@ -142,3 +142,48 @@ div#overview-information ul li {
 .uppercase {
     text-transform: uppercase ;
 }
+
+/* Killmail detail page */
+#victim-images ul, .attackers-list ul {
+    display: inline;
+    float: left;
+    white-space: nowrap;
+    overflow: hidden;
+    padding: 5px;
+    margin: 0px;
+}
+
+
+#victim-images ul li, .attackers-list ul li {
+    list-style: none;
+    margin: 5px;
+}
+
+#victim-images ul li {
+    float: left;
+}
+
+
+/* Compress the attackers list */
+div.attacker ul {
+    padding: 0px;
+    margin: 0px;
+}
+
+#attacker3 {
+    width: 200px;
+}
+
+
+.right { 
+    float: right;
+}
+
+
+hr {
+    border: none;
+    height: 1px;
+    background-color: #333; /* Modern Browsers */
+    padding: 0px;
+    margin-top: 0px;
+}
