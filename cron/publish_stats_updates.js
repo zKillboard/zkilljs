@@ -15,7 +15,8 @@ async function f(app) {
             var pubkey = 'statsfeed:' + base;
             await app.redis.publish(pubkey, JSON.stringify({
                 action: 'statsfeed',
-                path: base
+                path: base,
+                interval: 15
             }));
         }
     }
