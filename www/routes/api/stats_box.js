@@ -4,6 +4,14 @@ async function getData(req, res) {
     let parsed = parseInt(req.params.id);
     req.params.id = parsed > 0 ? parsed : req.params.id;
 
+    var epoch = Number.parseInt(req.query.epoch || 0);
+    var now = Math.floor(Date.now() / 1000);
+
+    if (epoch % 15 != 0 || epoch < (now - 60) || epoch > (now + 5)) {
+        // Someone is up to something bad
+        return null;
+    }
+
     let query = {
         type: (req.params.type == 'label' ? 'label' : req.params.type + '_id'),
         id: (req.params.type == 'label' ? req.params.id : Math.abs(parseInt(req.params.id)))
@@ -16,7 +24,8 @@ async function getData(req, res) {
     add(result, data, 'week');
 
     return {
-        json: data
+        json: data,
+        maxAge: 3600
     };
 }
 

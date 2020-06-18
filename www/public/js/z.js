@@ -5,6 +5,8 @@ var browserHistory = undefined;
 var server_started = 0;
 var jquery_loaded = false;
 
+var timeouts = [];
+
 var type = undefined;
 var id = undefined;
 var killmail_id = undefined;
@@ -35,9 +37,9 @@ function documentReady() {
         return;
     }
 
+    ws_connect();
     is_jquery_loaded();
     loadPage();
-    ws_connect();
 
     historyReady();
     toggleTooltips();
@@ -62,13 +64,20 @@ function loadPage() {
     var fetch;
 
     $("#page-title").html("&nbsp;");
-    window.scrollTo(0, 0);
+    $(".clearbeforeload").html("")
+    // Clear subscriptions
     ws_clear_subs();
+    // cancel any timeouts
+    while (timeouts.length > 0) {
+        clearTimeout(timeouts.shift());
+    }
+    window.scrollTo(0, 0);
 
     var split = path.split('/');
+    var type = (split.length >= 2 ? split[1] : null);
     var id = (split.length >= 3 ? split[2] : null);
 
-    switch (split[1]) {
+    switch (type) {
     case "user":
         // TODO
         break;
@@ -80,7 +89,7 @@ function loadPage() {
         break;
     default:
         showSection('overview');
-        loadOverview(path);
+        loadOverview(path, type, id);
         break;
     }
 }
@@ -96,12 +105,16 @@ function showSection(section) {
     }
 }
 
-function loadOverview(path) {
+function loadOverview(path, type, id) {
     if (path == '/') path = '/label/all';
     path = path.replace('/system/', '/solar_system/').replace('/type/', '/item/');
     apply('overview-information', '/site/information' + path + '.html');
-    apply('overview-statistics', '/site/statistics' + path + '.html', 'statsfeed:' + path);
     apply('overview-killmails', '/site/killmails' + path + '.html', 'killlistfeed:' + path);
+    load_stats_box({
+        path: path,
+        interval: 15
+    });
+    ws_action('sub', 'statsfeed:' + path);
     showSection('overview');
 
     /*<div id="overview-information"></div>
@@ -404,17 +417,10 @@ function ws_message(msg) {
     json = JSON.parse(msg);
     switch (json.action) {
     case 'killlistfeed':
-        var killmail_id = json.killmail_id;
-        // Don't load the same kill twice
-        if ($(".kill-" + killmail_id).length > 0) return;
-
-        var url = '/cache/1hour/killmail/row/' + killmail_id + '.html';
-        var divraw = '<div fetch="' + url + '" unfetched="true" id="kill-' + killmail_id + '"></div>';
-        $("#killlist").prepend(divraw);
-        loadUnfetched(document);
+        delayed_json_call(load_killmail_row, json);
         break;
     case 'statsfeed':
-        applyJSON('/site/stats_box' + json.path + ".json");
+        delayed_json_call(load_stats_box, json);
         break;
     case 'server_started':
         var started = json.server_started;
@@ -427,6 +433,36 @@ function ws_message(msg) {
     default:
         console.log(json);
     }
+}
+
+function delayed_json_call(f, json) {
+    var delay = Math.random(1, 50) * 100; // So not everyone pulls at the same time
+    timeouts.push(setTimeout(function () {
+        f(json);
+    }, delay));
+}
+
+function load_killmail_row(json) {
+    var killmail_id = json.killmail_id;
+    // Don't load the same kill twice
+    if ($(".kill-" + killmail_id).length > 0) return;
+
+    var url = '/cache/1hour/killmail/row/' + killmail_id + '.html';
+    var divraw = '<div fetch="' + url + '" unfetched="true" id="kill-' + killmail_id + '"></div>';
+    $("#killlist").prepend(divraw);
+    loadUnfetched(document);
+}
+
+function load_stats_box(json) {
+    if (json.path == undefined) {
+        throw 'path is not defined';
+    }
+    json.interval = json.interval || 15;
+    var now = Math.floor(Date.now() / 1000);
+    var param = '?epoch=' + (now - (now % json.interval));
+
+    applyJSON('/cache/1hour/stats_box' + json.path + '.json' + param);
+    //applyJSON('/cache/1hour/stats_box' + json.path + '.json' + param);
 }
 
 function pageTimer() {

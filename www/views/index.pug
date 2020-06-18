@@ -16,15 +16,50 @@ html
 					ul.navbar-nav.mr-auto
 					form.form-inline.my-2.my-lg-0
 						input.form-control.mr-sm-2(type='search' placeholder='Search' aria-label='Search')
-				h1#page-title &nbsp; 
 				hr
 				div#overview
 					div.row
 						div#overview-information.float-left.col-sm-6
 						div#overview-statistics.float-right.col-sm-6
+							div.table-responsive
+								table#stats-table.table.table-hover.table-sm.table-responsive
+									thead
+										tr
+											th
+											th Killed
+											th ISK
+											th Rank
+											th Lost
+											th ISK
+											th Eff. %
+									tbody
+										tr
+											th Alltime
+											td#alltime-kills.clearbeforeload.green(format='integer')
+											td#alltime-isk-killed.clearbeforeload.green(format='fnumber')
+											td.clearbeforeload
+											td#alltime-lost.clearbeforeload.red(format='integer')
+											td#alltime-isk-lost.clearbeforeload.red(format='fnumber')
+											td#alltime-eff.clearbeforeload
+										tr
+											th 90 Days
+											td#recent-kills.clearbeforeload.green(format='integer')
+											td#recent-isk-killed.clearbeforeload.green(format='fnumber')
+											td.clearbeforeload
+											td#recent-lost.clearbeforeload.red(format='integer')
+											td#recent-isk-lost.clearbeforeload.red(format='fnumber')
+											td#recent-eff.clearbeforeload
+										tr
+											th 7 Days
+											td#week-kills.clearbeforeload.green(format='integer')
+											td#week-isk-killed.clearbeforeload.green(format='fnumber')
+											td
+											td#week-lost.clearbeforeload.red(format='integer')
+											td#week-isk-lost.clearbeforeload.red(format='fnumber')
+											td#week-eff.clearbeforeload
 					div#overview-menu
-					div#overview-killmails.col-lg-5
-					div#overview-weekly.col-sm-6
+					div#overview-killmails.col
+					div#overview-weekly.col
 				div#killmail.row
 				div#other
 		div.clearfix.push
