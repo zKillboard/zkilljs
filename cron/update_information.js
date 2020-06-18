@@ -114,6 +114,13 @@ async function fetch(app, row) {
                 // Special case for wars, something with this war changed
                 body.check_wars = true;
             }
+
+            // Characters, corporations, and alliances don't always have alliance or faction id set
+            if (row.type == 'character_id' || row.type == 'corporation_id' || row.type == 'alliance_id') {
+                body.alliance_id = body.alliance_id || 0;
+                body.faction_id = body.faction_id || 0;
+            }
+
             await app.redis.hset('zkilljs:info:' + row.type, row.id, JSON.stringify(body));
             await app.db.information.updateOne(row, {
                 $set: body
