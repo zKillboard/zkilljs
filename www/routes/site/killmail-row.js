@@ -6,6 +6,11 @@ async function getData(req, res) {
     const app = req.app.app;
     var killmail_id = parseInt(req.params.id);
 
+    if (req.query.length > 0) {
+        // Someone is up to something bad
+        return null;
+    }
+
     let zmail = await app.db.killmails.findOne({
         killmail_id: killmail_id
     });
@@ -33,7 +38,7 @@ async function getData(req, res) {
             rawmail: rawmail,
             victims: victim_array.join(','),
         },
-        maxAge: 1
+        maxAge: 3600
     };
     ret.json = await app.util.info.fill(app, ret.json);
     return ret;
