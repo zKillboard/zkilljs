@@ -39,7 +39,7 @@ const info = {
 
         let minDistance = Number.MAX_VALUE;
         let returnID = undefined;
-        if (locations.locations == undefined) throw 'Have not fetched locations map for ' + solar_system_id;
+        if (locations.locations == undefined) throw 'Have not fetched locations map for ' + solar_system_id
         for (let row of locations.locations) {
             let distance = Math.sqrt(Math.pow(row.x - location.x, 2) + Math.pow(row.y - location.y, 2) + Math.pow(row.z - location.z, 2));
             if (distance < minDistance) {

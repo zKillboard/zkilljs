@@ -27,6 +27,7 @@ async function getData(req, res) {
         result = [{
             type: query.type,
             id: query.id,
+            name: 'Label: ' + query.id,
             label_id: query.id,
             label_name: query.id,
         }];
@@ -36,6 +37,7 @@ async function getData(req, res) {
 
     var ret = {
         json: result[0],
+        page_title: result[0].name,
         maxAge: 3600
     };
 

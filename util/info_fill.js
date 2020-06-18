@@ -4,7 +4,8 @@ var cache = {};
 
 function clearCache() {
 	cache.length = 0;
-	setTimeout(clearCache, 3600000);
+    console.log('clearing local info cache');
+	setTimeout(clearCache, 900000);
 }
 clearCache();
 
@@ -77,6 +78,14 @@ const info_fill = {
     	} else {
             id = parseInt(id || 0);
             if (id == 0) return {};
+
+            // Try the Redis cache first
+            var json = await app.redis.hget('zkilljs:info:' + type, id);
+            if (json != null) {
+                record = JSON.parse(json);
+                if (record != null) cache[key] = record;
+                return record;
+            }
 
             await app.util.entity.wait(app, type, id);
     		record = await app.db.information.findOne({type: type, id: id});

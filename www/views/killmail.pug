@@ -7,17 +7,19 @@ include mixins.pug
 div#killmail-fitting-wheel(style='width: 650px; height: 650px; min-width: 650px; min-height: 650px; ')
 	+type_image('li', victim.ship_type_id, victim.ship_type_name, 512)
 div#killmail-information(style='min-width: 350px; max-width: 350px; ')
+	h5
+		span= 'Killmail '
+		span.integer= killmail.killmail_id
+	hr
+	div#victim-images
+		ul
+			+char_image('li', victim.character_id, victim.character_name, 128)
+			+corp_image('li', victim.corporation_id, victim.corporation_name, 64)
+			+alli_image('li', victim.alliance_id, victim.alliance_name, 64)
+			+corp_image('li', victim.faction_id, victim.faction_name, 64)
+	div.clearfix
+	hr
 	table#info-table.table.table-borderless.table-hover.table-sm
-		tr
-			td(style='')
-			td.col-1(style='')
-		tr
-			td#victim-images(colspan='2' style='')
-				ul
-					+char_image('li', victim.character_id, victim.character_name, 128)
-					+corp_image('li', victim.corporation_id, victim.corporation_name, 64)
-					+alli_image('li', victim.alliance_id, victim.alliance_name, 64)
-					+corp_image('li', victim.faction_id, victim.faction_name, 64)
 		+info_row_a('Character:', 'character', victim.character_id, victim.character_name)
 		+info_row_a('Corporation:', 'corporation', victim.corporation_id, victim.corporation_name)
 		+info_row_a('Alliance:', 'alliance', victim.alliance_id, victim.alliance_name)
@@ -29,9 +31,9 @@ div#killmail-information(style='min-width: 350px; max-width: 350px; ')
 		+info_row_a('Region:', 'region', rawmail.region_id, rawmail.region_name)
 		+info_row_a('Location:', 'location', rawmail.location_id, rawmail.location_name)
 		+info_row('Time:', time)
-		+info_row('Destroyed:', killmail.total_destroyed, 'integer')
-		+info_row('Dropped:', killmail.total_dropped, 'integer')
-		+info_row('Total Value:', killmail.total_value, 'integer isk')
+		+info_row('Destroyed:', killmail.total_destroyed, 'isk')
+		+info_row('Dropped:', killmail.total_dropped, 'isk')
+		+info_row('Total Value:', killmail.total_value, 'isk')
 div#killmail-cargo
 div#killmail-top-stats
 div#killmail-involved.attackers-list
@@ -54,13 +56,17 @@ div#killmail-involved.attackers-list
 			ul#attacker1
 				if attacker.character_id > 0
 					+char_image('li', attacker.character_id, attacker.character_name, 64)
+				else if attacker.corporation_id > 0 
+					+corp_image('li', attacker.corporation_id, attacker.corporation_name, 64)
+				else if attacker.alliance_id > 0
+					+alli_image('li', attacker.alliance_id, attacker.alliance_name, 64)
+				else if attacker.faction_id > 0
+					+corp_image('li', attacker.faction_id, attacker.faction_name, 64)
 				else
-					+corp_image('li', 1, ' ', 64)
+					+corp_image('li', 1, 'Unknown', 64)
 			ul#attacker2
-				+corp_image('li', attacker.corporation_id, attacker.corporation_name, 32)
-				+alli_image('li', attacker.alliance_id, attacker.alliance_name, 32)
-				if !(attacker.corporation_id > 0 && attacker.alliance_id > 0)
-					+corp_image('li', attacker.faction_id, attacker.faction_name, 32)
+				+type_image('li', attacker.ship_type_id, attacker.ship_type_name, 32)
+				+type_image('li', attacker.weapon_type_id, attacker.weapon_type_name, 32)
 			ul#attacker3
 				if attacker.character_id > 0
 					+char_id_link('li', attacker.character_id, attacker.character_name)
@@ -82,5 +88,5 @@ div.clearfix
 div.row
 	- var rawmail = JSON.stringify(json.rawmail, undefined, 4)
 	- var killmail = JSON.stringify(json.killmail, undefined, 4)
-//-	pre !{rawmail}
-//-	pre !{killmail}
+	pre !{rawmail}
+	pre !{killmail}

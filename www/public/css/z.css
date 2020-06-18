@@ -1,12 +1,14 @@
 * {
     margin: 0;
 }
-html, body {
+
+html,
+body {
     height: 100%;
 }
 
 html {
-  overflow-y: scroll;
+    overflow-y: scroll;
 }
 
 body {
@@ -17,28 +19,32 @@ body {
     min-height: 100%;
     height: auto !important;
     height: 100%;
-    margin: 0 auto -50px; /* the bottom margin is the negative value of the footer's height */
-}
-.footer, .push {
-    height: 50px; /* .push must be the same height as .footer */
+    margin: 0 auto -50px;
+    /* the bottom margin is the negative value of the footer's height */
 }
 
-.tiny { 
+.footer,
+.push {
+    height: 50px;
+    /* .push must be the same height as .footer */
+}
+
+.tiny {
     font-size: 1%;
 }
 
 img.image {
-	background-color: #111;
-	margin-top: 5px;
+    background-color: #111;
+    margin-top: 5px;
 }
 
 div.killrow ul {
     display: inline;
-	float: left;
-	white-space: nowrap;
+    float: left;
+    white-space: nowrap;
     overflow: hidden;
-	padding: 5px;
-	margin: 0px;
+    padding: 5px;
+    margin: 0px;
 }
 
 div.killrow ul li {
@@ -47,35 +53,62 @@ div.killrow ul li {
 }
 
 div.killrow ul.info1 {
-	width: 6em;
+    width: 6em;
 }
 
 div.killrow ul.info2 {
-    width: 6em;	
+    width: 6em;
 }
 
-div.killrow ul.victim, div.killrow ul.finalblow {
-	width: 14em;
+div.killrow ul.victim,
+div.killrow ul.finalblow {
+    width: 14em;
 }
 
 div.killrow ul.image {
-	width: 70px;
+    width: 70px;
 }
 
-.autocomplete-suggestions { border: 1px solid #999; background: #FFF; overflow: auto; }
-.autocomplete-suggestion { padding: 2px 5px; white-space: nowrap; overflow: hidden; }
-.autocomplete-selected { background: #F0F0F0; }
-.autocomplete-suggestions strong { font-weight: normal; color: #3399FF; }
-.autocomplete-group { padding: 2px 5px; text-transform: capitalize; font-weight: bold; }
-.autocomplete-group strong { display: block; border-bottom: 1px solid #000; }
+.autocomplete-suggestions {
+    border: 1px solid #999;
+    background: #FFF;
+    overflow: auto;
+}
+
+.autocomplete-suggestion {
+    padding: 2px 5px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.autocomplete-selected {
+    background: #F0F0F0;
+}
+
+.autocomplete-suggestions strong {
+    font-weight: normal;
+    color: #3399FF;
+}
+
+.autocomplete-group {
+    padding: 2px 5px;
+    text-transform: capitalize;
+    font-weight: bold;
+}
+
+.autocomplete-group strong {
+    display: block;
+    border-bottom: 1px solid #000;
+}
 
 /* invert filter based dark mode */
-body.dark{
+body.dark {
     background-color: black;
     filter: invert(1);
 }
 
-body.dark img, body.dark iframe {
+body.dark img,
+body.dark iframe {
     filter: invert(1);
 }
 
@@ -84,7 +117,7 @@ body.dark img, body.dark iframe {
 }
 
 
-div#overview-information ul  {
+div#overview-information ul {
     white-space: nowrap;
     overflow: hidden;
     padding: 5px;
@@ -97,7 +130,8 @@ div#overview-information ul li {
     margin: 0px;
 }
 
-.item_destroyed, .red {
+.item_destroyed,
+.red {
     color: red;
 }
 
@@ -106,25 +140,26 @@ div#overview-information ul li {
 }
 
 .victimrow {
-  background-color: #2F0202;
+    background-color: #2F0202;
 }
 
 .aggressorrow {
-  background-color: #001600;
+    background-color: #001600;
 }
 
 /* https://stackoverflow.com/questions/41747667/bootstrap-4-responsive-tables-wont-take-up-100-width */
-.table-responsive {
-}
+.table-responsive {}
 
-#stats-table td, #stats-table th {
+#stats-table td,
+#stats-table th {
     text-align: right;
     width: 6rem;
     min-width: 6rem;
 }
 
 
-#overview-information, #overview-statistics {
+#overview-information,
+#overview-statistics {
     min-width: 500px;
     min-height: 150px;
 }
@@ -140,11 +175,12 @@ div#overview-information ul li {
 }
 
 .uppercase {
-    text-transform: uppercase ;
+    text-transform: uppercase;
 }
 
 /* Killmail detail page */
-#victim-images ul, .attackers-list ul {
+#victim-images ul,
+.attackers-list ul {
     display: inline;
     float: left;
     white-space: nowrap;
@@ -154,13 +190,23 @@ div#overview-information ul li {
 }
 
 
-#victim-images ul li, .attackers-list ul li {
+#victim-images ul li {
     list-style: none;
     margin: 5px;
 }
 
+.attackers-list {
+    margin-left: 2rem;
+}
+
+.attackers-list ul li {
+    list-style: none;
+    margin: 1px;
+}
+
 #victim-images ul li {
     float: left;
+    margin: 5px;
 }
 
 
@@ -175,7 +221,7 @@ div.attacker ul {
 }
 
 
-.right { 
+.right {
     float: right;
 }
 
@@ -183,7 +229,12 @@ div.attacker ul {
 hr {
     border: none;
     height: 1px;
-    background-color: #333; /* Modern Browsers */
+    background-color: #333;
+    /* Modern Browsers */
     padding: 0px;
     margin-top: 0px;
+}
+
+.page_title {
+    display: none;
 }

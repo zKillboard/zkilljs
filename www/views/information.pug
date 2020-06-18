@@ -1,5 +1,6 @@
 include mixins.pug
 
+span.page-title= page_title
 ul#info-box
 	if json.type == 'character_id'
 		+char_image('li', json.id, json.name, 128)
@@ -27,4 +28,3 @@ ul#info-box
 			+info_row_a('Constellation:', 'constellation', json.constellation_id, json.constellation_name)
 			+info_row_a('Region:', 'region', json.region_id, json.region_name)
 			+info_row('Security:', json.security_status, 'number')
-

@@ -12,6 +12,9 @@ async function f(app) {
     	}
 
     	if (alliance.member_count !== member_count) {
+            alliance.member_count = member_count;
+            
+            await app.redis.hset('zkilljs:info:' + alliance.type, alliance.id, JSON.stringify(alliance));
     		await app.db.information.updateOne({_id: alliance._id}, {$set: {member_count: member_count}});
     	}
     }

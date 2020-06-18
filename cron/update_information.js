@@ -90,6 +90,8 @@ async function fetch(app, row) {
         const orow = row;
         set.add(row);
 
+        await app.redis.hset('zkilljs:info:' + row.type, row.id, JSON.stringify(row));
+
         let url = app.esi + urls[row.type].replace(':id', row.id);
         let res = await app.phin({
             url: url,
@@ -112,6 +114,7 @@ async function fetch(app, row) {
                 // Special case for wars, something with this war changed
                 body.check_wars = true;
             }
+            await app.redis.hset('zkilljs:info:' + row.type, row.id, JSON.stringify(body));
             await app.db.information.updateOne(row, {
                 $set: body
             });

@@ -61,6 +61,7 @@ function loadPage() {
     var path = window.location.pathname;
     var fetch;
 
+    $("#page-title").html("&nbsp;");
     window.scrollTo(0, 0);
     ws_clear_subs();
 
@@ -176,16 +177,26 @@ function applyHTML(element, html) {
     if (typeof element == 'string') element = document.getElementById(element);
     element.innerHTML = html;
 
-    loadUnfetched(element);
-    killlistCleanup();
-    spaTheLinks();
-    if (jquery_loaded) $(element).show();
+    $(element).show();
+    postLoadActions(element);
 }
 
 
 function applyJSON(path) {
     fetch(path).then(function (res) {
         handleJSON(res);
+    });
+}
+
+/* Actions to be applied after a page load */
+function postLoadActions(element) {
+    if (element != undefined) loadUnfetched(element);
+    killlistCleanup();
+    spaTheLinks();
+    $.each($('.page-title'), function (index, element) {
+        console.log(element);
+        $("#page-title").html($(element).html());
+        $(element).remove();
     });
 }
 
@@ -278,6 +289,15 @@ function updateNumbers() {
             element.text(value);
             element.removeClass('integer');
             element.attr('format', 'integer');
+        });
+        $.each($('.isk'), function (index, element) {
+            element = $(element);
+            var value = element.text();
+            if (value == "") return;
+            var value = Number.parseInt(value).toLocaleString();
+            element.text(value + ' ISK');
+            element.removeClass('isk');
+            element.attr('format', 'isk');
         });
         $.each($('.percentage'), function (index, element) {
             element = $(element);
