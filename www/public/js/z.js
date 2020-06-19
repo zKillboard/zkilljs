@@ -11,6 +11,9 @@ var type = undefined;
 var id = undefined;
 var killmail_id = undefined;
 
+const fetch_controller = new AbortController();
+const { fetch_canceller } = fetch_controller;
+
 function historyReady() {
     try {
         browserHistory = History.createBrowserHistory();
@@ -63,6 +66,8 @@ function loadPage() {
     var path = window.location.pathname;
     var fetch;
 
+    // Cancel in flight fetches
+    fetch_controller.abort();
     $("#page-title").html("&nbsp;");
     $(".clearbeforeload").html("")
     // Clear subscriptions
@@ -171,7 +176,7 @@ function apply(element, path, subscribe, delay) {
     if (jquery_loaded) $(element).hide();
 
     if (path != null) {
-        fetch(path).then(function (res) {
+        fetch(path, {fetch_canceller}).then(function (res) {
             handleResponse(res, element, path, subscribe);
         });
     }
@@ -196,7 +201,7 @@ function applyHTML(element, html) {
 
 
 function applyJSON(path) {
-    fetch(path).then(function (res) {
+    fetch(path, {fetch_canceller}).then(function (res) {
         handleJSON(res);
     });
 }
