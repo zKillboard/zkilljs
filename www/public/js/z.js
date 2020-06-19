@@ -69,7 +69,7 @@ function loadPage() {
     // Cancel in flight fetches
     fetch_controller.abort();
     $("#page-title").html("&nbsp;");
-    $(".clearbeforeload").html("")
+    $(".clearbeforeload").html("&nbsp;")
     // Clear subscriptions
     ws_clear_subs();
     // cancel any timeouts
@@ -173,7 +173,7 @@ function apply(element, path, subscribe, delay) {
     if (typeof element == 'string') element = document.getElementById(element);
     // Clear the element
     if (delay != true) element.innerHTML = "";
-    if (jquery_loaded) $(element).hide();
+    
 
     if (path != null) {
         fetch(path, {fetch_canceller}).then(function (res) {

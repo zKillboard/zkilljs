@@ -19,8 +19,8 @@ html
 				hr
 				div#overview
 					div.row
-						div#overview-information.float-left.col-sm-6
-						div#overview-statistics.float-right.col-sm-6
+						div#overview-information.col-6
+						div#overview-statistics.col-6
 							div.table-responsive
 								table#stats-table.table.table-hover.table-sm.table-responsive
 									thead
@@ -57,11 +57,13 @@ html
 											td#week-lost.clearbeforeload.red(format='integer')
 											td#week-isk-lost.clearbeforeload.red(format='fnumber')
 											td#week-eff.clearbeforeload
+					div.clearfix
 					div#overview-menu
-					div#overview-killmails.col
-					div#overview-weekly.col
+					div.row
+						div#overview-killmails.col-6
+						div#overview-weekly.col-6
 				div#killmail.row
-				div#other
+				div#other.row
 		div.clearfix.push
 		div#footer
 			footer.footer
