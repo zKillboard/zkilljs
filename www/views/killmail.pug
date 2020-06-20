@@ -55,7 +55,7 @@ div#killmail-involved.attackers-list
 	+display_attackers(rawmail.attackers)
 	
 	if killmail.involved_cnt > 10
-		div.text-center
+		div.text-center(style='margin-top: 1em;')
 			button#load-all-attackers.btn.btn-secondary Load Remaining Attackers
 			div#remainingattackers
 
