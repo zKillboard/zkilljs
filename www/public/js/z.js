@@ -79,8 +79,8 @@ function loadPage() {
     window.scrollTo(0, 0);
 
     var split = path.split('/');
-    var type = (split.length >= 2 ? split[1] : null);
-    var id = (split.length >= 3 ? split[2] : null);
+    type = (split.length >= 2 ? split[1] : null);
+    id = (split.length >= 3 ? split[2] : null);
 
     switch (type) {
     case "user":
@@ -215,6 +215,11 @@ function postLoadActions(element) {
         console.log(element);
         $("#page-title").html($(element).html());
         $(element).remove();
+    });
+
+    $("#load-all-attackers").on('click', function() {
+        $("#load-all-attackers").hide();
+        apply("remainingattackers", "/cache/1hour/killmail/" + id + "/remaining.html");
     });
 }
 
@@ -507,7 +512,6 @@ function linkClicked(href) {
         window.location = href;
     }
 }
-
 
 
 // Everything has loaded, let's go!

@@ -1,0 +1,8 @@
+include mixins.pug
+include mixins-attackers.pug
+
+- var rawmail = json.rawmail;
+- var killmail = json.killmail;
+- var victim = json.rawmail.victim;
+
++display_attackers(json.remaining)

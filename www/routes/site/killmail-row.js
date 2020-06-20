@@ -32,6 +32,9 @@ async function getData(req, res) {
         }
     }
 
+    // We don't need to info fill attackers that are not the final blow, so clean that out
+    delete rawmail.involved;
+
     var ret = {
         json: {
             killmail: zmail,

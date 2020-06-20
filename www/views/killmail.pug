@@ -1,4 +1,6 @@
 include mixins.pug
+include mixins-attackers.pug
+
 - var rawmail = json.rawmail;
 - var killmail = json.killmail;
 - var victim = json.rawmail.victim;
@@ -50,37 +52,13 @@ div#killmail-involved.attackers-list
 			= 'Total Damage: '
 			span.integer= victim.damage_taken
 	hr
-	each attacker in rawmail.attackers
+	+display_attackers(rawmail.attackers)
+	
+	if killmail.involved_cnt > 10
+		div.text-center
+			button#load-all-attackers.btn.btn-secondary Load Remaining Attackers
+			div#remainingattackers
 
-		div.attacker
-			ul#attacker1
-				if attacker.character_id > 0
-					+char_image('li', attacker.character_id, attacker.character_name, 64)
-				else if attacker.corporation_id > 0 
-					+corp_image('li', attacker.corporation_id, attacker.corporation_name, 64)
-				else if attacker.alliance_id > 0
-					+alli_image('li', attacker.alliance_id, attacker.alliance_name, 64)
-				else if attacker.faction_id > 0
-					+corp_image('li', attacker.faction_id, attacker.faction_name, 64)
-				else
-					+corp_image('li', 1, 'Unknown', 64)
-			ul#attacker2
-				+type_image('li', attacker.ship_type_id, attacker.ship_type_name, 32)
-				+type_image('li', attacker.weapon_type_id, attacker.weapon_type_name, 32)
-			ul#attacker3
-				if attacker.character_id > 0
-					+char_id_link('li', attacker.character_id, attacker.character_name)
-				else
-					+type_id_link('li', 'item', attacker.ship_type_id, attacker.ship_type_name)
-				+corp_id_link('li', attacker.corporation_id, attacker.corporation_name)
-				+alli_id_link('li', attacker.alliance_id, attacker.alliance_name)
-				+type_id_link('li', 'faction', attacker.faction_id, attacker.faction_name)
-			ul#attacker4
-				li.integer= attacker.damage_done
-				if attacker.damage_done && victim.damage_taken > 0
-					li.percentage= (attacker.damage_done / victim.damage_taken)
-			div.clearfix
-			hr
 div#killmail-involved-therest
 div#killmail-comments
 
