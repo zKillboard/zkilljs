@@ -2,6 +2,7 @@
 
 const entity = require('../util/entity.js');
 const fill = require('./info_fill.js');
+const locations_fetched = {};
 
 const info = {
     async fill(app, o) {
@@ -10,7 +11,10 @@ const info = {
 
     async get_info(app, type, id) {
         if (type != 'label') id = parseInt(id);
-        let record = await app.db.information.findOne({type: type, id: id});
+        let record = await app.db.information.findOne({
+            type: type,
+            id: id
+        });
         return record;
     },
 
@@ -20,11 +24,24 @@ const info = {
     },
 
     async get_locations(app, solar_system_id) {
-        await entity.add(app, 'location_id', solar_system_id, true);
-        return await app.db.information.findOne({
-            type: 'location_id',
-            id: solar_system_id
-        });
+        if (locations_fetched[solar_system_id] == undefined) {
+            await entity.add(app, 'solar_system_id', solar_system_id, true);
+
+            var record;
+            do {
+                record = await app.db.information.findOne({
+                    type: 'solar_system_id',
+                    id: solar_system_id
+                });
+                if (record.locations_fetched != true) await app.sleep(1000);
+            } while (record.locations_fetched != true);
+
+            locations_fetched[solar_system_id] = await app.db.information.find({
+                type: 'location_id',
+                solar_system_id: solar_system_id
+            }).toArray();
+        }
+        return locations_fetched[solar_system_id];
     },
 
     async get_location_id(app, solar_system_id, location) {
@@ -32,19 +49,18 @@ const info = {
         if (solar_system_id > 32000000 && solar_system_id < 32999999) return undefined;
 
         const locations = await info.get_locations(app, solar_system_id);
-        if (locations == undefined) {
-            console.log('no locations for ' + solar_system_id);
-            quit();
+        if (locations == undefined || locations.length == 0) {
+            return undefined;
         }
 
         let minDistance = Number.MAX_VALUE;
         let returnID = undefined;
-        if (locations.locations == undefined) throw 'Have not fetched locations map for ' + solar_system_id
-        for (let row of locations.locations) {
+
+        for (let row of locations) {
             let distance = Math.sqrt(Math.pow(row.x - location.x, 2) + Math.pow(row.y - location.y, 2) + Math.pow(row.z - location.z, 2));
             if (distance < minDistance) {
                 minDistance = distance;
-                returnID = row.itemid;
+                returnID = row.id;
             }
         }
         return Number(returnID);

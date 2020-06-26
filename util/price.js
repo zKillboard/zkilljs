@@ -135,6 +135,8 @@ async function fetch(app, item_id, date) {
     let key = date + ':' + item_id;
     if (app.cache.prices[key] != undefined) return app.cache.prices[key];
 
+    //console.log('Price fetching:', item_id, date);
+
     let marketHistory, count = 0;
     let todays_key = app.util.price.get_todays_price_key();
     do {
@@ -164,6 +166,7 @@ async function fetch(app, item_id, date) {
             //console.log('Waiting on price fetch for: ', item_id);
             await app.sleep(1000);
         }
+        if (marketHistory.last_fetched != todays_key) console.log("Price check waiting", item_id, date);
     } while (marketHistory.last_fetched != todays_key);
 
     let maxSize = 34;

@@ -2,24 +2,17 @@
 
 var cache = {};
 
-function clearCache() {
-	cache.length = 0;
-    console.log('clearing local info cache');
-	setTimeout(clearCache, 900000);
-}
-clearCache();
-
 const info_fill = {
     async fill(app, object) {
         if (object == undefined) return object;
         
         // Check for solar system and pre-fill const and region ID's
         if (object.solar_system_id !== undefined) {
-            var constellation = await this.getInfo(app, 'constellation_id', object.constellation_id);
+            /*var constellation = await app.db.util.info(app, 'constellation_id', object.constellation_id);
             if (constellation != undefined) {
                 object.constellation_id = constellation.id;
                 object.region_id = constellation.region_id;
-            }
+            }*/
         }
 
         let keys = Object.keys(object);
@@ -44,7 +37,7 @@ const info_fill = {
     				case 'item_id':
                     case 'group_id':
                     case 'category_id':
-                        var record = await this.getInfo(app, key, o);
+                        var record = await app.util.info.get_info(app, key, o, true);
     					if (record != null && record.name != undefined) {
                             object[key.replace('_id', '_name')] = record.name;
                         }
@@ -52,7 +45,7 @@ const info_fill = {
     				case 'ship_type_id':
     				case 'weapon_type_id':
     				case 'item_type_id':
-    					var record = await this.getInfo(app, 'item_id', o);
+    					var record = await app.util.info.get_info(app, 'item_id', o);
     					if (record != null) object[key.replace('_id', '_name')] = record.name;
     					break;
 
@@ -69,31 +62,6 @@ const info_fill = {
 
     	return object;
     },
-
-    async getInfo(app, type, id) {
-    	const key = type + ':' + id;
-    	let record;
-    	if (cache[key] != undefined) {
-    		record = cache[key];
-    	} else {
-            id = parseInt(id || 0);
-            if (id == 0) return {};
-
-            // Try the Redis cache first
-            var json = await app.redis.hget('zkilljs:info:' + type, id);
-            if (json != null) {
-                record = JSON.parse(json);
-                if (record != null) cache[key] = record;
-                return record;
-            }
-
-            await app.util.entity.wait(app, type, id);
-    		record = await app.db.information.findOne({type: type, id: id});
-    		if (record != null) cache[key] = record;
-    	}
-
-    	return record;
-    }
 }
 
 module.exports = info_fill;

@@ -5,6 +5,7 @@ var wait_cache = {};
 
 const set = new Set(); // cache for keeping track of what has been inserted to information
 setInterval(function () {
+    console.log('clearing entity info caches');
     set.clear();
     info_cache = {};
     wait_cache = {};
@@ -58,10 +59,11 @@ const entity = {
             });
             if (row != null && row.last_updated != 0) return;
             if (row == null) {
+                console.log('Adding entity: ', type, id);
                 await entity.add(app, type, id, false);
             }
 
-            if (await app.redis.get("RESTART") != null) throw 'bailing out!';
+            if (app.bailout) throw 'bailing out!';
             await app.sleep(1000);
             count++;
             if (count > 10) throw 'Taking too long with this wait for ' + type + ' ' + id;
@@ -70,6 +72,8 @@ const entity = {
     },
 
     async info(app, type, id, wait = false) {
+        if (id == undefined) throw 'id cannot be undefined';
+
         const key = type + '_' + id;
         if (info_cache[key] != undefined) return info_cache[key];
 
@@ -78,10 +82,17 @@ const entity = {
             wait_cache[key] = true;
         }
 
-        let row = await app.db.information.findOne({
-            type: type,
-            id: id
-        });
+        let row = await app.redis.hget('zkilljs:info:' + type, id);
+        if (row != null) {
+            row = JSON.parse(row);
+        } 
+
+        if ((row == undefined || row == null) || row.type == undefined || row.id == undefined) {
+            row = await app.db.information.findOne({
+                type: type,
+                id: id
+            });
+        }
         info_cache[key] = row;
         return row;
     },
