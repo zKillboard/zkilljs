@@ -17,6 +17,8 @@ async function f(app) {
         if (app.bailout == true || app.no_api) break;
 
         let row = await prices_cursor.next();
+        if (isNaN(row.item_id)) continue;
+        
         promises.push(update_price(app, row, todays_price_key));
         await app.sleep(1);
         while (set.size > 50) await app.sleep(1);
@@ -62,7 +64,8 @@ async function update_price(app, row, todays_price_key) {
         }
 
         //console.log('Fetching price history for ' + item_id);
-        let res = await app.phin(app.esi + '/v1/markets/10000002/history/?type_id=' + item_id);
+        var url = app.esi + '/v1/markets/10000002/history/?type_id=' + item_id;
+        let res = await app.phin(url);
         if (res.statusCode == 200) {
             app.zincr('esi_fetched');
             let json = JSON.parse(res.body);
@@ -82,7 +85,7 @@ async function update_price(app, row, todays_price_key) {
             //console.log('Marking price check for ' + item_id + ' as no_fetch');
             await app.sleep(1000);
         } else {
-            console.log('Price fetch ended in error: ' + res.statusCode);
+            console.log('Price fetch ended in error: ' + res.statusCode, url);
         }
     } finally {
         set.delete(s);

@@ -9,6 +9,7 @@ const parsed = {
     }
 };
 
+
 const set = new Set();
 var firstRun = true;
 
@@ -26,6 +27,11 @@ async function f(app) {
 
 async function parse_mail(app, killhash) {
     try {
+        // just so we can reuse the sequence number
+        var prev_parsed_mail = undefined; /*await app.db.killmails.findOne({
+            killmail_id: killhash.killmail_id
+        });*/
+
         let remove_alltime = app.db.killmails.removeOne({
             killmail_id: killhash.killmail_id
         });
@@ -43,6 +49,9 @@ async function parse_mail(app, killhash) {
         const rawmail = await app.db.rawmails.findOne({
             killmail_id: killhash.killmail_id
         });
+
+
+
         if (rawmail == null) {
             // wth?
             console.log('marking as failed: ', killhash);
@@ -110,7 +119,8 @@ async function parse_mail(app, killhash) {
         killmail.labels = labels;
         killmail.involved_cnt = rawmail.attackers.length;
 
-        killmail.sequence = await app.util.killmails.next_sequence(app);
+        if (prev_parsed_mail != undefined && prev_parsed_mail.sequence != undefined) killmail.sequence = prev_parsed_mail.sequence;
+        else killmail.sequence = await app.util.killmails.next_sequence(app);
 
         let padhash = await get_pad_hash(app, rawmail, killmail);
         let padpromise = undefined;
@@ -132,14 +142,17 @@ async function parse_mail(app, killhash) {
         await remove_week;
 
         await app.db.killmails.insertOne(killmail);
-        await app.db.killmails_90.insertOne(killmail);
-        await app.db.killmails_7.insertOne(killmail);
+
+        const now = Math.floor(Date.now() / 1000);
+        if (killmail.epoch > (now - (90 * 86400))) await app.db.killmails_90.insertOne(killmail);
+        if (killmail.epoch > (now - (7 * 86400))) await app.db.killmails_7.insertOne(killmail);
         await app.db.killhashes.updateOne(killhash, parsed);
         app.zincr('mails_parsed');
 
         publishToKillFeed(app, killmail);
     } catch (e) {
-        console.log(e);
+        console.log(e, killhash);
+        await app.db.killhashes.updateOne(killhash, {$set: { status: 'parse-error'}});
     }
 }
 
@@ -194,10 +207,11 @@ async function addInvolved(app, object, involved, is_victim) {
 }
 
 function addTypeId(app, object, type, id) {
-    if (id != 0) {
-        if (object[type] == undefined) object[type] = [];
-        if (object[type].indexOf(id) == -1) object[type].push(id);
-    }
+    if (id == undefined) throw 'cannot add an undefined id';
+    if (id == 0) throw 'cannot add an id of 0';
+
+    if (object[type] == undefined) object[type] = [];
+    if (object[type].indexOf(id) == -1) object[type].push(id);
 }
 
 function isNPC(rawmail) {
