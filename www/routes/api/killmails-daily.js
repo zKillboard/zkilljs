@@ -3,6 +3,9 @@
 module.exports = getData;
 
 async function getData(req, res) {
+    var valid = req.verify_query_params(req, {});
+    if (valid !== true) return valid;
+
     let query = {};
     if (req.params.type == 'label') query['labels'] = req.params.id;
     else {
@@ -43,6 +46,7 @@ async function getData(req, res) {
         }).toArray();
 
     return {
-        json: result, maxAge: 86400
+        json: result,
+        maxAge: 86400
     };
 }

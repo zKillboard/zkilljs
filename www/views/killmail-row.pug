@@ -1,5 +1,8 @@
 include mixins.pug
 
+- var killmail = json.killmail
+- var rawmail = json.rawmail
+
 -var rowid = 'killmail-' + json.rawmail.killmail_id
 -var time = json.rawmail.killmail_time.replace("T", "<br/>").replace("Z", "");
 
@@ -15,8 +18,8 @@ div.killrow(victims=json.victims)
 		li.fnumber= json.killmail.total_value
 	ul.info2
 		+type_id_link('li', 'system', json.rawmail.solar_system_id, json.rawmail.solar_system_name)
-		+type_id_link('li', 'constellation', json.killmail.involved.constellation_id,json.killmail.involved.constellation_name)
-		+type_id_link('li', 'region', json.killmail.involved.region_id, json.killmail.involved.region_name)
+		+type_id_link('li', 'constellation', json.rawmail.constellation_id, json.rawmail.constellation_name)
+		+type_id_link('li', 'region', json.rawmail.region_id, json.rawmail.region_name)
 	div.clearfix.d-block.d-lg-none
 	ul.image
 		if json.rawmail.victim.alliance_id > 0
@@ -29,7 +32,7 @@ div.killrow(victims=json.victims)
 		li
 			+char_id_link('span', json.rawmail.victim.character_id, json.rawmail.victim.character_name)
 			if json.rawmail.victim.character_id > 0
-				| - 
+				|   -  
 			+type_id_link('span', 'item', json.rawmail.victim.ship_type_id, json.rawmail.victim.ship_type_name)
 		+corp_id_link('li', json.rawmail.victim.corporation_id, json.rawmail.victim.corporation_name)
 		+alli_id_link('li', json.rawmail.victim.alliance_id, json.rawmail.victim.alliance_name)

@@ -97,16 +97,16 @@ function loadPage() {
         loadOverview(path, type, id);
         break;
     }
-}
+} 
 
-const contentSection = ['overview', 'killmail', 'user', 'other'];
-
+const contentSections = ['overview', 'killmail', 'user', 'other'];
 function showSection(section) {
-    for (var i = 0; i < contentSection.length; i++) {
-        var s = contentSection[i];
+    for (var i = 0; i < contentSections.length; i++) {
+        var s = contentSections[i];
         var elem = $("div#" + s);
-        if (section != s) elem.hide();
-        else elem.show();
+        if (section == s) elem.show();
+        else elem.hide();
+        elem.removeClass("d-none"); // Just in case the !important is set
     }
 }
 

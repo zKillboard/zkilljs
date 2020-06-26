@@ -7,7 +7,7 @@ async function getData(req, res) {
 
     var ret = {
         json: {title: 'zKillboard'},
-        maxAge: 3600
+        maxAge: 1
     };
 
     return ret;

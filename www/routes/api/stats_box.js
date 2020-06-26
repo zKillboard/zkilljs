@@ -1,16 +1,16 @@
 'use strict';
 
 async function getData(req, res) {
-    let parsed = parseInt(req.params.id);
+    let parsed = (req.params.type != 'label' ? parseInt(req.params.id) : req.params.id);
     req.params.id = parsed > 0 ? parsed : req.params.id;
 
     var epoch = Number.parseInt(req.query.epoch || 0);
-    var now = Math.floor(Date.now() / 1000);
-
-    if (epoch % 15 != 0 || epoch < (now - 60) || epoch > (now + 5)) {
-        // Someone is up to something bad
-        return null;
+    epoch = epoch - (epoch % 15);
+    var valid = {
+        epoch: epoch
     }
+    var valid = req.verify_query_params(req, valid);
+    if (valid !== true) return valid;
 
     let query = {
         type: (req.params.type == 'label' ? 'label' : req.params.type + '_id'),
@@ -38,7 +38,7 @@ function add(result, data, type) {
 }
 
 function get(result, part1, part2) {
-    if (result[part1] != undefined && result[part1][part2] != undefined) return result[part1][part2];
+    if (result != undefined && result[part1] != undefined && result[part1][part2] != undefined) return result[part1][part2];
     return '';
 }
 

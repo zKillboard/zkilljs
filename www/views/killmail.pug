@@ -36,7 +36,6 @@ div#killmail-information(style='min-width: 350px; max-width: 350px; ')
 		+info_row('Destroyed:', killmail.total_destroyed, 'isk')
 		+info_row('Dropped:', killmail.total_dropped, 'isk')
 		+info_row('Total Value:', killmail.total_value, 'isk')
-div#killmail-cargo
 div#killmail-top-stats
 div#killmail-involved.attackers-list
 	if killmail.stats == false
@@ -58,8 +57,16 @@ div#killmail-involved.attackers-list
 		div.text-center(style='margin-top: 1em;')
 			button#load-all-attackers.btn.btn-secondary Load Remaining Attackers
 			div#remainingattackers
-
-div#killmail-involved-therest
+div.clearfix
+div#killmail-cargo.invisible
+	each items,slot in killmail.slots
+		h6= slot
+		each item in items
+			span.integer= item.price
+			span= ' ' + item.item_type_name + ' x ' + ((item.quantity_destroyed || 0) + (item.quantity_dropped || 0)) + '  '
+			- var which = ((item.quantity_destroyed || 0) ? ' Destroyed' : ' Dropped')
+			span= which
+			br
 div#killmail-comments
 
 div.clearfix

@@ -3,6 +3,9 @@
 module.exports = getData;
 
 async function getData(req, res) {
+    var valid = req.verify_query_params(req, {});
+    if (valid !== true) return valid;
+
     const app = req.app.app;
 
     let query = {};

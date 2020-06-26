@@ -5,8 +5,12 @@ module.exports = getData;
 const utf8 = require('utf8');
 
 async function getData(req, res) {
-	let parsed = parseInt(req.params.id);
-	req.params.id = parsed > 0 ? parsed : req.params.id;
+    var valid = req.verify_query_params(req, {});
+    if (valid !== true) return valid;
+
+
+    let parsed = parseInt(req.params.id);
+    req.params.id = parsed > 0 ? parsed : req.params.id;
 
     let result = await req.app.app.db.statistics.find({
         type: req.params.type,
@@ -14,6 +18,7 @@ async function getData(req, res) {
     }).toArray();
 
     return {
-        json: (result.length == 1 ? result[0] : null), maxAge: 1
+        json: (result.length == 1 ? result[0] : null),
+        maxAge: 1
     };
 }

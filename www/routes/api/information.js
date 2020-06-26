@@ -3,8 +3,11 @@
 module.exports = getData;
 
 async function getData(req, res) {
+    var valid = req.verify_query_params(req, {});
+    if (valid !== true) return valid;
+
     const app = req.app.app;
-    
+
     let query = {
         type: req.params.type + '_id',
         id: parseInt(req.params.id)
@@ -17,6 +20,7 @@ async function getData(req, res) {
     }).toArray();
 
     return {
-        json: (result.length == 1 ? await app.util.info.fill(req.app.app, result[0]) : null), maxAge: 3600
+        json: (result.length == 1 ? await app.util.info.fill(req.app.app, result[0]) : null),
+        maxAge: 3600
     };
 }
