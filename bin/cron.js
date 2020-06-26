@@ -19,15 +19,16 @@ function createTaskSettings(span = 1, iterations = 0, offset = 0) {
         span: span,
         iterations: iterations,
         offset: offset
-    }
+    };
 }
 
 const tasks = {
     // maintenance fun
+    'trigger_daily_price_checks': createTaskSettings(86400, 0, -43200),
     'update_prices': createTaskSettings(1),
     'update_factions.js': createTaskSettings(60),
     'update_information.js': createTaskSettings(1),
-    'fetch_locations.js': createTaskSettings(1),
+    'fetch_locations.js': createTaskSettings(5),
     'update_alliance_membercounts.js': createTaskSettings(3600),
     
     // killmail producers
@@ -39,11 +40,10 @@ const tasks = {
     // killmail consumers
     'fetch_mails.js': createTaskSettings(1),
     'parse_mails.js': createTaskSettings(1),
-    'do_activity.js': createTaskSettings(1),
+    'update_stats_prepare.js': createTaskSettings(1),
 
     // statistics
     'update_stats.js': createTaskSettings(1),
-    'update_stats_prepare.js': createTaskSettings(1),
     'update_stats_cleanup.js': createTaskSettings(1),
     'publish_stats_updates.js': createTaskSettings(15),
 
