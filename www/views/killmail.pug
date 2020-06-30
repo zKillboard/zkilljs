@@ -6,9 +6,10 @@ include mixins-attackers.pug
 - var victim = json.rawmail.victim;
 - var time = rawmail.killmail_time.replace('T', ' ').replace('Z', '');
 
-
-div#killmail-fitting-wheel(style='width: 650px; height: 650px; min-width: 650px; min-height: 650px; ')
-	+type_image('li', victim.ship_type_id, victim.ship_type_name, 512)
+div
+div#killmail-fitting-wheel
+	div#fittingwheelbox
+		object(id='fittingwheel' data='/img/tyrannis-plain.svg?v=' + server_started alt='Fitting wheel' type="image/svg+xml")
 div#killmail-information(style='min-width: 350px; max-width: 350px; ')
 	hr
 	div#victim-images
@@ -102,3 +103,15 @@ div#killmail-cargo
 			td
 			td.integer.tright= killmail.total_value
 div#killmail-comments
+
+- //var fwDoc = document.getElementById("fittingwheel").contentDocument
+- var fw = JSON.stringify(json.killmail.fittingwheel, undefined)
+pre#fwraw(style="display: none;")= fw
+pre#fwship(style="display: none;")= victim.ship_type_id
+
+div.clearfix
+div.row
+	- var rawmail = JSON.stringify(json.rawmail, undefined, 4)
+	- var killmail = JSON.stringify(json.killmail, undefined, 4)
+	- //pre !{rawmail}
+	- //pre !{killmail}

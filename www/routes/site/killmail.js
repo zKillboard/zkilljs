@@ -31,6 +31,7 @@ async function getData(req, res) {
     // Iterate through items and sort based on location
     var slots = {};
     if (rawmail.victim.items == undefined) rawmail.victim.items = [];
+    var fittingwheelitems = [];
     for (var item of rawmail.victim.items) {
         item.quantity_destroyed = item.quantity_destroyed || 0;
         item.quantity_dropped = item.quantity_dropped || 0;
@@ -50,6 +51,8 @@ async function getData(req, res) {
         if (item.destroyed) killmail.totals.destroyed += item.total_price;
         else killmail.totals.dropped += item.total_price;
         killmail.totals.total += item.total_price;
+
+        if (infernoFlags.get(item.slot) != undefined) fittingwheelitems.push(item);
     }
     killmail.allslots = slots;
     // Rearrange slots into proper order
@@ -60,6 +63,21 @@ async function getData(req, res) {
     }
     killmail.slotkeys = Array.from(rearranged.keys());
     killmail.slots = rearranged;
+
+    // Iterate the items for fitting wheel population
+    // infernoFlags.set('12', [27, 34]); // Highs
+    var fittingwheel = [];
+    for (let item of fittingwheelitems) {
+        let group = infernoFlags.get(item.slot);
+        var low = group[0];
+        var slot = item.flag - low + 1;
+        item.flagclass = 'flag' + item.flag;
+        var group_id = await app.util.info.get_info_field(app, 'item_id', item.item_type_id, 'group_id');
+        var item_category = await app.util.info.get_info_field(app, 'group_id', group_id, 'category_id');
+        item.base = item_category != 7 ? 'charge' : 'fitted';
+        fittingwheel.push(item);
+    }
+    killmail.fittingwheel = fittingwheel;
 
     killmail.ship_price = await app.util.price.get(app, rawmail.victim.ship_type_id, km_date);
     killmail.totals.total +=  killmail.ship_price;
@@ -86,12 +104,12 @@ function get_negative(arr) {
 
 function get_inferno_slot(flag_id) {
     const flag_str = '' + flag_id;
-    if (effectToSlot.get(flag_str) != undefined) return effectToSlot.get(flag_str);
     for (let [key, values] of infernoFlags) {
         var low = values[0];
         var high = values[1];
         if (flag_id >= low && flag_id <= high) return key;
     }
+    if (effectToSlot.get(flag_str) != undefined) return effectToSlot.get(flag_str);
     return '-1'; // Unknown
 }
 

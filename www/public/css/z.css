@@ -252,3 +252,7 @@ hr {
 .page_title {
     display: none;
 }
+
+#killmail-fitting-wheel {
+    width: 650px;
+}  

@@ -87,7 +87,6 @@ function loadPage() {
         // TODO
         break;
     case "killmail":
-        console.log(id);
         var killmail_id = id;
         showSection('killmail');
         apply('killmail', '/cache/1hour/killmail/' + killmail_id + '.html');
@@ -221,6 +220,8 @@ function postLoadActions(element) {
         $("#load-all-attackers").hide();
         apply("remainingattackers", "/cache/1hour/killmail/" + id + "/remaining.html");
     });
+
+    if ($("#fwraw").length > 0) setFittingWheel();
 }
 
 function handleJSON(res) {
@@ -513,6 +514,63 @@ function linkClicked(href) {
     }
 }
 
+function setFittingWheel() {
+    if ($("#fwraw").length == 0) return;
+    var fitting = JSON.parse($("#fwraw").text());
+    var ship_id = $("#fwship").text();
+    var fwDoc = document.getElementById('fittingwheel').contentDocument;
+
+    var gslots = fwDoc.getElementsByClassName('slot');
+    if (gslots.length != 32) { 
+        // SVG hasn't fully loaded yet
+        setTimeout(setFittingWheel, 1);
+        return;
+    }
+    var ship = fwDoc.getElementById('victimship');
+
+    setSvgAttribute(ship, 'href', 'https://images.evetech.net/types/' + ship_id + '/render?size=512', true);
+
+    for (var i = 0; i < gslots.length; i++) {
+        var elem = gslots[i];
+        setSvgAttribute(elem, 'style', 'display: none;');
+    }
+
+    for (var i = 0; i < fitting.length; i++) {
+        var item = fitting[i];
+        applyToFittingSlot(fwDoc, item);
+    }
+    $("#fwraw").remove();
+}
+
+function applyToFittingSlot(fwDoc, item) {
+    var slotflagid = 'flag' + item.flag;
+    var slotflag = fwDoc.getElementsByClassName(slotflagid);
+    if (slotflag.length < 1) return;
+    slotflag = slotflag[0];
+
+    removeSvgAttribute(slotflag, 'style', 'display: none;');
+    var image = slotflag.getElementsByClassName(item.base)[0].getElementsByTagName('image')[0];
+
+    setSvgAttribute(image, 'alt', item.item_type_name, true);
+    setSvgAttribute(image, 'role', 'img', true);
+    setSvgAttribute(image, 'href', 'https://images.evetech.net/types/' + item.item_type_id + '/icon?size=64', true);
+
+    var newElement = document.createElementNS("http://www.w3.org/2000/svg", 'title'); //Create a path in SVG's namespace
+    newElement.textContent  = item.item_type_name;
+    image.appendChild(newElement);
+}
+
+function setSvgAttribute(element, attr_name, attr_value, overwrite) {
+    var current_value = element.getAttribute(attr_name);
+    if (current_value == null || overwrite == true) current_value = '';
+    element.setAttribute(attr_name, attr_value + current_value);
+}
+
+function removeSvgAttribute(element, attr_name, attr_value) {
+    var current_value = element.getAttribute(attr_name);
+    if (current_value == null) current_value = '';
+    element.setAttribute(attr_name, current_value.replace(attr_value, ''));
+}
 
 // Everything has loaded, let's go!
 documentReady();
