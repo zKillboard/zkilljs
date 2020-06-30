@@ -6,10 +6,10 @@
     "async-redis": "^1.*",
     "cors": "^2.8.5",
     "express": "^4.17.*",
-    "mongodb": "^3.5.*",
+    "mongodb": "^3.5.9",
     "morgan": "^1.10.*",
     "node-watch": "^0.6.*",
-    "phin": "^3.4.*",
+    "phin": "^3.5.0",
     "pug": "^2.0.*",
     "utf8": "^3.0.*",
     "websocket": "^1.0.31"
