@@ -26,20 +26,44 @@ async function getData(req, res) {
     	rawmail.location_id = killmail.involved.location_id[0];
     }
 
+    killmail.totals = {dropped: 0, destroyed: 0, total: 0};
+
     // Iterate through items and sort based on location
     var slots = {};
     if (rawmail.victim.items == undefined) rawmail.victim.items = [];
     for (var item of rawmail.victim.items) {
+        item.quantity_destroyed = item.quantity_destroyed || 0;
+        item.quantity_dropped = item.quantity_dropped || 0;
+
         var flag = item.flag;
         item.price = await app.util.price.get(app, item.item_type_id, km_date);
         item.slot = get_inferno_slot(flag);
 
+        item.destroyed = (item.quantity_destroyed > 0);
+        item.class = item.destroyed ? 'victimrow' : 'aggressorrow';
+        item.total = item.quantity_destroyed + item.quantity_dropped;
+        item.total_price = item.total * item.price;
+
         if (slots[item.slot] == undefined) slots[item.slot] = [];
         slots[item.slot].push(item);
+
+        if (item.destroyed) killmail.totals.destroyed += item.total_price;
+        else killmail.totals.dropped += item.total_price;
+        killmail.totals.total += item.total_price;
     }
+    killmail.allslots = slots;
     // Rearrange slots into proper order
-    killmail.slots = slots;
+    var rearranged = new Map();
+    for (let [key, value] of effectToSlot) {
+        var items = slots[key];
+        if (items != undefined) rearranged.set(value, items);
+    }
+    killmail.slotkeys = Array.from(rearranged.keys());
+    killmail.slots = rearranged;
+
     killmail.ship_price = await app.util.price.get(app, rawmail.victim.ship_type_id, km_date);
+    killmail.totals.total +=  killmail.ship_price;
+    killmail.totals.destroyed += killmail.ship_price;
 
     var ret = {
         json: {
@@ -61,65 +85,57 @@ function get_negative(arr) {
 }
 
 function get_inferno_slot(flag_id) {
-    if (effectToSlot[flag_id] != undefined) return effectToSlot[flag_id];
-    for (var i = 0; i < infernoKeys.length; i++) {
-        var key = infernoKeys[i];
-        var values = infernoFlags[key];
-
+    const flag_str = '' + flag_id;
+    if (effectToSlot.get(flag_str) != undefined) return effectToSlot.get(flag_str);
+    for (let [key, values] of infernoFlags) {
         var low = values[0];
         var high = values[1];
-        if (flag_id >= low && flag_id <= high) {
-            var slot = effectToSlot[key];
-            return slot;
-        }
+        if (flag_id >= low && flag_id <= high) return key;
     }
-    return "Unknown";
+    return '-1'; // Unknown
 }
 
-const infernoFlags = {
-    4: [116, 121], // ???
-    12: [27, 34], // Highs
-    13: [19, 26], // Mids
-    11: [11, 18], // Lows
-    159: [159, 163], // Fighter Tubes
-    164: [164, 171], // Structure services
-    2663: [92, 98], // Rigs
-    3772: [125, 132], // Subs
-};
-const infernoKeys = Object.keys(infernoFlags);
+const infernoFlags = new Map();
+infernoFlags.set('4', [116, 121]); // ???
+infernoFlags.set('12', [27, 34]); // Highs
+infernoFlags.set('13', [19, 26]); // Mids
+infernoFlags.set('11', [11, 18]); // Lows
+infernoFlags.set('159', [159, 163]); // Fighter Tubes
+infernoFlags.set('164', [164, 171]); // Structure services
+infernoFlags.set('2663', [92, 98]); // Rigs
+infernoFlags.set('3772', [125, 132]); // Subs
 
-const effectToSlot = {
-    '12': 'High Slots',
-    '13': 'Mid Slots',
-    '11': 'Low Slots',
-    '2663': 'Rigs',
-    '3772': 'SubSystems',
-    '87': 'Drone Bay',
-    '5': 'Cargo',
-    '4': 'Corporate Hangar',
-    '0': 'Corporate  Hangar', // Yes, two spaces, flag 0 is wierd and should be 4
-    '89': 'Implants',
-    '133': 'Fuel Bay',
-    '134': 'Ore Hold',
-    '136': 'Mineral Hold',
-    '137': 'Salvage Hold',
-    '138': 'Specialized Ship Hold',
-    '143': 'Specialized Ammo Hold',
-    '90': 'Ship Hangar',
-    '148': 'Command Center Hold',
-    '149': 'Planetary Commodities Hold',
-    '151': 'Material Bay',
-    '154': 'Quafe Bay',
-    '155': 'Fleet Hangar',
-    '156': 'Hidden Modifiers',
-    '158': 'Fighter Bay',
-    '159': 'Fighter Tubes',
-    '164': 'Structure Service Slots',
-    '172': 'Structure Fuel',
-    '173': 'Deliveries',
-    '174': 'Crate Loot',
-    '176': 'Booster Bay',
-    '177': 'Subsystem Hold',
-    '64': 'Unlocked item, can be moved',
-};
-const slotKeys = Object.keys(effectToSlot);
+const effectToSlot = new Map();
+effectToSlot.set('12', 'High Slots');
+effectToSlot.set('13', 'Mid Slots');
+effectToSlot.set('11', 'Low Slots');
+effectToSlot.set('2663', 'Rigs');
+effectToSlot.set('3772', 'SubSystems');
+effectToSlot.set('87', 'Drone Bay');
+effectToSlot.set('5', 'Cargo');
+effectToSlot.set('4', 'Corporate Hangar');
+effectToSlot.set('0', 'Corporate  Hangar'); // Yes); two spaces); flag 0 is wierd and should be 4
+effectToSlot.set('89', 'Implants');
+effectToSlot.set('133', 'Fuel Bay');
+effectToSlot.set('134', 'Ore Hold');
+effectToSlot.set('136', 'Mineral Hold');
+effectToSlot.set('137', 'Salvage Hold');
+effectToSlot.set('138', 'Specialized Ship Hold');
+effectToSlot.set('143', 'Specialized Ammo Hold');
+effectToSlot.set('90', 'Ship Hangar');
+effectToSlot.set('148', 'Command Center Hold');
+effectToSlot.set('149', 'Planetary Commodities Hold');
+effectToSlot.set('151', 'Material Bay');
+effectToSlot.set('154', 'Quafe Bay');
+effectToSlot.set('155', 'Fleet Hangar');
+effectToSlot.set('156', 'Hidden Modifiers');
+effectToSlot.set('158', 'Fighter Bay');
+effectToSlot.set('159', 'Fighter Tubes');
+effectToSlot.set('164', 'Structure Service Slots');
+effectToSlot.set('172', 'Structure Fuel');
+effectToSlot.set('173', 'Deliveries');
+effectToSlot.set('174', 'Crate Loot');
+effectToSlot.set('176', 'Booster Bay');
+effectToSlot.set('177', 'Subsystem Hold');
+effectToSlot.set('64', 'Unlocked item, can be moved');
+effectToSlot.set('-1', 'Unknown');

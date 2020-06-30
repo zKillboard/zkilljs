@@ -6,12 +6,10 @@ include mixins-attackers.pug
 - var victim = json.rawmail.victim;
 - var time = rawmail.killmail_time.replace('T', ' ').replace('Z', '');
 
+
 div#killmail-fitting-wheel(style='width: 650px; height: 650px; min-width: 650px; min-height: 650px; ')
 	+type_image('li', victim.ship_type_id, victim.ship_type_name, 512)
 div#killmail-information(style='min-width: 350px; max-width: 350px; ')
-	h5
-		span= 'Killmail '
-		span.integer= killmail.killmail_id
 	hr
 	div#victim-images
 		ul
@@ -33,11 +31,10 @@ div#killmail-information(style='min-width: 350px; max-width: 350px; ')
 		+info_row_a('Region:', 'region', rawmail.region_id, rawmail.region_name)
 		+info_row_a('Location:', 'location', rawmail.location_id, rawmail.location_name)
 		+info_row('Time:', time)
-		+info_row('Destroyed:', killmail.total_destroyed, 'isk')
-		+info_row('Dropped:', killmail.total_dropped, 'isk')
 		+info_row('Total Value:', killmail.total_value, 'isk')
-div#killmail-top-stats
 div#killmail-involved.attackers-list
+	div#killmail-top-stats
+	hr
 	if killmail.stats == false
 		+add_label('nostats')
 	each label in killmail.labels
@@ -58,20 +55,50 @@ div#killmail-involved.attackers-list
 			button#load-all-attackers.btn.btn-secondary Load Remaining Attackers
 			div#remainingattackers
 div.clearfix
-div#killmail-cargo.invisible
-	each items,slot in killmail.slots
-		h6= slot
-		each item in items
-			span.integer= item.price
-			span= ' ' + item.item_type_name + ' x ' + ((item.quantity_destroyed || 0) + (item.quantity_dropped || 0)) + '  '
-			- var which = ((item.quantity_destroyed || 0) ? ' Destroyed' : ' Dropped')
-			span= which
-			br
+div#killmail-cargo
+	- var total = 0
+	- var dropped = 0
+	- var destroyed = 0
+	table.table
+		each group in killmail.slotkeys
+			tr
+				td(colspan='4')
+					h6= group
+			- var items = killmail.slots.get(group)
+			each item in items
+				tr(class=item.class)
+					td
+						+type_image('span', item.item_type_id, item.item_type_name, 32)
+					td
+						+type_id_link('span', 'item', item.item_type_id, item.item_type_name )
+					td.integer.tright= item.total
+					td.integer.tright= item.total_price
+		tr
+			td(colspan='4')
+				h6 Ship		
+		tr(class='victimrow')
+				td
+					+type_image('span', victim.ship_type_id, victim.ship_type_name, 32)
+				td
+					+type_id_link('span', 'item', victim.ship_type_id, victim.ship_type_name)
+				td
+				td.integer.tright= killmail.ship_price
+		tr
+			td(colspan='4')
+				h6 Totals
+		tr.aggressorrow
+			td
+			td Dropped
+			td
+			td.integer.tright= killmail.totals.dropped
+		tr.victimrow
+			td
+			td Destroyed
+			td
+			td.integer.tright= killmail.totals.destroyed
+		tr
+			td
+			td Total
+			td
+			td.integer.tright= killmail.total_value
 div#killmail-comments
-
-div.clearfix
-div.row
-	- var rawmail = JSON.stringify(json.rawmail, undefined, 4)
-	- var killmail = JSON.stringify(json.killmail, undefined, 4)
-	pre !{rawmail}
-	pre !{killmail}

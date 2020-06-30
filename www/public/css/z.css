@@ -38,6 +38,11 @@ img.image {
     margin-top: 5px;
 }
 
+.killrowblock {
+    display: inline;
+    float: left;
+}
+
 div.killrow ul {
     display: inline;
     float: left;
@@ -178,9 +183,18 @@ div#overview-information ul li {
     text-transform: uppercase;
 }
 
+.tright {
+    text-align: right;
+}
+
 /* Killmail detail page */
+#killmail {
+    width: 100%;
+    max-width: 1400px;
+}
+
 #victim-images ul,
-.attackers-list ul {
+.attackers-list ul, #killmail-cargo {
     display: inline;
     float: left;
     white-space: nowrap;
@@ -195,7 +209,7 @@ div#overview-information ul li {
     margin: 5px;
 }
 
-.attackers-list {
+#killmail-involved, #killmail-cargo {
     margin-left: 2rem;
 }
 

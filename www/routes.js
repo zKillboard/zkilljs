@@ -44,7 +44,7 @@ async function doStuff(req, res, next, controllerFile, pugFile) {
         let result = await controller(req, res);
         var maxAge = (result == null ? 0 : (result.maxAge || 0));
 
-        res.set('Cache-Control', 'public, max-age=' + maxAge);
+        //res.set('Cache-Control', 'public, max-age=' + maxAge);
 
         if (result === null || result === undefined) {
             res.sendStatus(404);
@@ -64,7 +64,7 @@ async function doStuff(req, res, next, controllerFile, pugFile) {
 
                     var render = compiled[pugFile];
                     var rendered = render(o, {
-                        debug: false,
+                        debug: true,
                         cache: false
                     });
                     res.send(rendered);
