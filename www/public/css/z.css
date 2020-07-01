@@ -153,7 +153,9 @@ div#overview-information ul li {
 }
 
 /* https://stackoverflow.com/questions/41747667/bootstrap-4-responsive-tables-wont-take-up-100-width */
-.table-responsive {}
+.table-responsive {
+    display: table;
+}
 
 #stats-table td,
 #stats-table th {
@@ -189,8 +191,38 @@ div#overview-information ul li {
 
 /* Killmail detail page */
 #killmail {
-    width: 100%;
-    max-width: 1400px;
+/*    width: 100%;
+    max-width: 1400px;*/
+}
+
+.leftkillblockcontainer {
+    max-width: 1100px;
+}
+
+.killblock {
+    margin: 0.5em;
+    padding: 0em;
+    max-width: 100vw;
+}
+
+
+##killmail-fitting, #killmail-fitting-wheel {
+}  
+
+.killblock1 {
+    width: 650px;
+}
+
+.killblock2 {
+    width: 400px;
+}
+
+.killblock3 {
+    width: 700px;
+}
+
+.killblock4 {
+    width: 400px;
 }
 
 #victim-images ul,
@@ -207,10 +239,6 @@ div#overview-information ul li {
 #victim-images ul li {
     list-style: none;
     margin: 5px;
-}
-
-#killmail-involved, #killmail-cargo {
-    margin-left: 2rem;
 }
 
 .attackers-list ul li {
@@ -231,7 +259,8 @@ div.attacker ul {
 }
 
 #attacker3 {
-    width: 200px;
+    padding-left: 2px;
+    width: 248px;
 }
 
 
@@ -252,7 +281,3 @@ hr {
 .page_title {
     display: none;
 }
-
-#killmail-fitting-wheel {
-    width: 650px;
-}  

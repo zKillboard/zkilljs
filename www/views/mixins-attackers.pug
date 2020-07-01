@@ -24,7 +24,7 @@ mixin display_attackers(attackers_array)
 				+alli_id_link('li', attacker.alliance_id, attacker.alliance_name)
 				+type_id_link('li', 'faction', attacker.faction_id, attacker.faction_name)
 			ul#attacker4
-				li.integer= attacker.damage_done
+				li.text-right.integer= attacker.damage_done
 				if attacker.damage_done && victim.damage_taken > 0
-					li.percentage= (attacker.damage_done / victim.damage_taken)
+					li.percentage.text-right= (attacker.damage_done / victim.damage_taken)
 			div.clearfix
