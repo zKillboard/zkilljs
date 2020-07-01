@@ -138,6 +138,7 @@ async function fetch(app, item_id, date, skip_fetch) {
 
     let marketHistory, count = 0;
     let todays_key = app.util.price.get_todays_price_key();
+    var iterations = 0;
     do {
         marketHistory = await app.db.prices.findOne({
             item_id: item_id
@@ -152,7 +153,7 @@ async function fetch(app, item_id, date, skip_fetch) {
             } catch (e) {}
             marketHistory = {};
         }
-        if (marketHistory.last_fetched != todays_key && skip_fetch != true) {
+        if (marketHistory.last_fetched != todays_key) {
             await app.db.prices.updateOne({
                 item_id: item_id,
             }, {
@@ -163,14 +164,18 @@ async function fetch(app, item_id, date, skip_fetch) {
             count++;
             if (app.bailout) throw 'Price check bailing';
             //console.log('Waiting on price fetch for: ', item_id);
-            await app.sleep(1000);
+            if (skip_fetch != true) await app.sleep(1000);
         }
-        if (marketHistory.last_fetched != todays_key && skip_fetch != true) console.log("Price check waiting", item_id, date);
+        if (marketHistory.last_fetched != todays_key && skip_fetch != true) {
+            iterations++;
+            if (iterations > 10) throw 'too many price check waits';
+            console.log("Price check waiting", item_id, date, marketHistory.last_fetched);
+        }
     } while (marketHistory.last_fetched != todays_key && skip_fetch != true);
 
     let maxSize = 34;
     let useTime = new Date(date);
-    let iterations = 0;
+    iterations = 0;
     let priceList = [];
     let marketlength = Object.keys(marketHistory).length;
     do {
