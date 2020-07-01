@@ -94,3 +94,11 @@ mixin info_row_a(label, type, id, value, classes)
 				td= label
 				td(class=classes)
 					a(href=href class='override')= value
+
+mixin spinner()
+	center
+		div.lds-ring
+			div
+			div
+			div
+			div

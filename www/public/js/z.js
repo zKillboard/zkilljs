@@ -227,7 +227,8 @@ function postLoadActions(element) {
 
     $("#load-all-attackers").on('click', function () {
         $("#load-all-attackers").hide();
-        apply("remainingattackers", "/cache/1hour/killmail/" + id + "/remaining.html");
+        $("#remainingattackers").removeClass("d-none");
+        apply("remainingattackers", "/cache/1hour/killmail/" + id + "/remaining.html", null, true);
     });
 
     if ($("#fwraw").length > 0) setFittingWheel();

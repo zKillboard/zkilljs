@@ -100,7 +100,8 @@ div.rightkillblockcontainer
 			if killmail.involved_cnt > 10
 				div.text-center(style='margin-top: 1em;')
 					button#load-all-attackers.btn.btn-secondary Load Remaining Attackers
-				div#remainingattackers
+				div#remainingattackers.d-none
+					+spinner
 		div#killmail-comments
 
 
