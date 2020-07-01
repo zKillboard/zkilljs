@@ -37,7 +37,7 @@ async function getData(req, res) {
         item.quantity_dropped = item.quantity_dropped || 0;
 
         var flag = item.flag;
-        item.price = await app.util.price.get(app, item.item_type_id, km_date);
+        item.price = await app.util.price.get(app, item.item_type_id, km_date, true);
         item.slot = get_inferno_slot(flag);
 
         item.destroyed = (item.quantity_destroyed > 0);
@@ -74,14 +74,16 @@ async function getData(req, res) {
         item.flagclass = 'flag' + item.flag;
         var group_id = await app.util.info.get_info_field(app, 'item_id', item.item_type_id, 'group_id');
         var item_category = await app.util.info.get_info_field(app, 'group_id', group_id, 'category_id');
-        item.base = item_category != 7 ? 'charge' : 'fitted';
+        item.base = item_category == 6 ? 'charge' : 'fitted';
         fittingwheel.push(item);
     }
     killmail.fittingwheel = fittingwheel;
 
-    killmail.ship_price = await app.util.price.get(app, rawmail.victim.ship_type_id, km_date);
+    killmail.ship_price = await app.util.price.get(app, rawmail.victim.ship_type_id, km_date, true);
     killmail.totals.total +=  killmail.ship_price;
     killmail.totals.destroyed += killmail.ship_price;
+
+    delete killmail.involved; // Not needed, present in rawmail 
 
     var ret = {
         json: {

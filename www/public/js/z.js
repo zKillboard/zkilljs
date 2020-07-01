@@ -12,7 +12,9 @@ var id = undefined;
 var killmail_id = undefined;
 
 const fetch_controller = new AbortController();
-const { fetch_canceller } = fetch_controller;
+const {
+    fetch_canceller
+} = fetch_controller;
 
 function historyReady() {
     try {
@@ -96,9 +98,10 @@ function loadPage() {
         loadOverview(path, type, id);
         break;
     }
-} 
+}
 
 const contentSections = ['overview', 'killmail', 'user', 'other'];
+
 function showSection(section) {
     for (var i = 0; i < contentSections.length; i++) {
         var s = contentSections[i];
@@ -172,10 +175,13 @@ function apply(element, path, subscribe, delay) {
     if (typeof element == 'string') element = document.getElementById(element);
     // Clear the element
     if (delay != true) element.innerHTML = "";
-    
+    console.log(element.id + ' fetching ' + path);
+
 
     if (path != null) {
-        fetch(path, {fetch_canceller}).then(function (res) {
+        fetch(path, {
+            fetch_canceller
+        }).then(function (res) {
             handleResponse(res, element, path, subscribe);
         });
     }
@@ -184,6 +190,7 @@ function apply(element, path, subscribe, delay) {
 function handleResponse(res, element, path, subscribe) {
     if (res.ok) {
         res.text().then(function (html) {
+            console.log(element.id + ' received ' + path);
             applyHTML(element, html);
             if (subscribe) ws_action('sub', subscribe);
         });
@@ -200,7 +207,9 @@ function applyHTML(element, html) {
 
 
 function applyJSON(path) {
-    fetch(path, {fetch_canceller}).then(function (res) {
+    fetch(path, {
+        fetch_canceller
+    }).then(function (res) {
         handleJSON(res);
     });
 }
@@ -216,7 +225,7 @@ function postLoadActions(element) {
         $(element).remove();
     });
 
-    $("#load-all-attackers").on('click', function() {
+    $("#load-all-attackers").on('click', function () {
         $("#load-all-attackers").hide();
         apply("remainingattackers", "/cache/1hour/killmail/" + id + "/remaining.html");
     });
@@ -278,6 +287,7 @@ function parseJSON(data) {
 }
 
 function loadUnfetched(element) {
+console.log(element);
     var unfeteched = element.querySelectorAll("[unfetched='true']");
     for (var i = 0; i < unfeteched.length; i++) {
         const tofetch = unfeteched[i];
@@ -521,7 +531,7 @@ function setFittingWheel() {
     var fwDoc = document.getElementById('fittingwheel').contentDocument;
 
     var gslots = fwDoc.getElementsByClassName('slot');
-    if (gslots.length != 32) { 
+    if (gslots.length != 32) {
         // SVG hasn't fully loaded yet
         setTimeout(setFittingWheel, 1);
         return;
@@ -532,7 +542,7 @@ function setFittingWheel() {
 
     for (var i = 0; i < gslots.length; i++) {
         var elem = gslots[i];
-        setSvgAttribute(elem, 'style', 'display: none;');
+        //setSvgAttribute(elem, 'style', 'display: none;');
     }
 
     for (var i = 0; i < fitting.length; i++) {
@@ -543,21 +553,27 @@ function setFittingWheel() {
 }
 
 function applyToFittingSlot(fwDoc, item) {
-    var slotflagid = 'flag' + item.flag;
-    var slotflag = fwDoc.getElementsByClassName(slotflagid);
-    if (slotflag.length < 1) return;
-    slotflag = slotflag[0];
+    try {
+        var slotflagid = 'flag' + item.flag;
+        var slotflag = fwDoc.getElementsByClassName(slotflagid);
+        if (slotflag.length < 1) return;
+        slotflag = slotflag[0];
 
-    removeSvgAttribute(slotflag, 'style', 'display: none;');
-    var image = slotflag.getElementsByClassName(item.base)[0].getElementsByTagName('image')[0];
+        removeSvgAttribute(slotflag, 'style', 'display: none;');
+        var image = slotflag.getElementsByClassName(item.base)[0].getElementsByTagName('image')[0];
 
-    setSvgAttribute(image, 'alt', item.item_type_name, true);
-    setSvgAttribute(image, 'role', 'img', true);
-    setSvgAttribute(image, 'href', 'https://images.evetech.net/types/' + item.item_type_id + '/icon?size=64', true);
+        setSvgAttribute(image, 'alt', item.item_type_name, true);
+        setSvgAttribute(image, 'role', 'img', true);
+        setSvgAttribute(image, 'class', 'image', true);
+        setSvgAttribute(image, 'href', 'https://images.evetech.net/types/' + item.item_type_id + '/icon?size=64', true);
 
-    var newElement = document.createElementNS("http://www.w3.org/2000/svg", 'title'); //Create a path in SVG's namespace
-    newElement.textContent  = item.item_type_name;
-    image.appendChild(newElement);
+        var newElement = document.createElementNS("http://www.w3.org/2000/svg", 'title'); //Create a path in SVG's namespace
+        newElement.textContent = item.item_type_name;
+        image.appendChild(newElement);
+    } catch (e) {
+        console.log(e);
+        console.log(item);
+    }
 }
 
 function setSvgAttribute(element, attr_name, attr_value, overwrite) {

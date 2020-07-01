@@ -1,6 +1,5 @@
 include mixins.pug
 
-- var killmail = json.killmail
 - var rawmail = json.rawmail
 
 -var rowid = 'killmail-' + json.rawmail.killmail_id
@@ -16,7 +15,7 @@ div.killrow(victims=json.victims)
 		ul.info1
 			li
 				| !{time}
-			li.fnumber= json.killmail.total_value
+			li.fnumber= json.rawmail.total_value
 		ul.info2
 			+type_id_link('li', 'system', json.rawmail.solar_system_id, json.rawmail.solar_system_name)
 			+type_id_link('li', 'constellation', json.rawmail.constellation_id, json.rawmail.constellation_name)
@@ -49,9 +48,9 @@ div.killrow(victims=json.victims)
 				+type_image('li', json.rawmail.final_blow.ship_type_id, json.rawmail.final_blow.ship_type_name, 64)
 		ul.finalblow
 			- var tag
-			- if (json.killmail.stats == false) tag = 'nostats'
-			- else if (json.killmail.labels.indexOf('solo') != -1) tag = 'solo'
-			- else tag = ' (' + json.killmail.involved_cnt + ')'
+			- if (json.rawmail.stats == false) tag = 'nostats'
+			- else if (json.rawmail.labels.indexOf('solo') != -1) tag = 'solo'
+			- else tag = ' (' + json.rawmail.involved_cnt + ')'
 			+char_id_link('li', json.rawmail.final_blow.character_id, json.rawmail.final_blow.character_name, tag)
 			+corp_id_link('li', json.rawmail.final_blow.corporation_id, json.rawmail.final_blow.corporation_name)
 			+alli_id_link('li', json.rawmail.final_blow.alliance_id, json.rawmail.final_blow.alliance_name)

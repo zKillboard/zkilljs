@@ -1,7 +1,7 @@
 let price_cache = {};
 
 const price = {
-    async get(app, item_id, date) {
+    async get(app, item_id, date, skip_fetch) {
         if (date == undefined) throw "Must provide date";
 
         if (typeof date == 'string') date = date.substr(0, 10);
@@ -21,7 +21,7 @@ const price = {
             if (build_price != undefined && build_price > 0.01) return this.cacheIt(app, rkey, build_price);
         }
 
-        return this.cacheIt(app, rkey, await fetch(app, item_id, date));
+        return this.cacheIt(app, rkey, await fetch(app, item_id, date, skip_fetch));
     },
 
     cacheIt(app, rkey, price) {
@@ -123,8 +123,9 @@ const price = {
 }
 
 
-async function fetch(app, item_id, date) {
+async function fetch(app, item_id, date, skip_fetch) {
     if (typeof date != 'string') date = app.util.price.format_date(date);
+    skip_fetch = skip_fetch || false;
 
     let epoch = Math.floor(Date.parse(date) / 1000);
     if (epoch > 1259976605) epoch = epoch - (36 * 3600);
@@ -134,8 +135,6 @@ async function fetch(app, item_id, date) {
 
     let key = date + ':' + item_id;
     if (app.cache.prices[key] != undefined) return app.cache.prices[key];
-
-    //console.log('Price fetching:', item_id, date);
 
     let marketHistory, count = 0;
     let todays_key = app.util.price.get_todays_price_key();
@@ -153,7 +152,7 @@ async function fetch(app, item_id, date) {
             } catch (e) {}
             marketHistory = {};
         }
-        if (marketHistory.last_fetched != todays_key) {
+        if (marketHistory.last_fetched != todays_key && skip_fetch != true) {
             await app.db.prices.updateOne({
                 item_id: item_id,
             }, {
@@ -166,8 +165,8 @@ async function fetch(app, item_id, date) {
             //console.log('Waiting on price fetch for: ', item_id);
             await app.sleep(1000);
         }
-        if (marketHistory.last_fetched != todays_key) console.log("Price check waiting", item_id, date);
-    } while (marketHistory.last_fetched != todays_key);
+        if (marketHistory.last_fetched != todays_key && skip_fetch != true) console.log("Price check waiting", item_id, date);
+    } while (marketHistory.last_fetched != todays_key && skip_fetch != true);
 
     let maxSize = 34;
     let useTime = new Date(date);
