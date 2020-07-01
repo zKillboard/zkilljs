@@ -114,6 +114,7 @@ async function parse_mail(app, killhash) {
         if (system.security_status < 0.05 && region.id < 11000001) labels.push('nullsec');
         if (region.id >= 11000000 && region.id < 12000000) labels.push('w-space');
         if (region.id >= 12000000 && region.id < 13000000) labels.push('abyssal');
+        if (region.id >= 12000000 && region.id < 13000000 && !npc) labels.push('abyssal-pvp');
 
         killmail.stats = !npc;
         killmail.labels = labels;
