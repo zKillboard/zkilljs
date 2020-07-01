@@ -64,6 +64,8 @@ async function getData(req, res) {
     killmail.slotkeys = Array.from(rearranged.keys());
     killmail.slots = rearranged;
 
+    killmail.cargo_groups = Object.keys(slots);
+
     // Iterate the items for fitting wheel population
     // infernoFlags.set('12', [27, 34]); // Highs
     var fittingwheel = [];

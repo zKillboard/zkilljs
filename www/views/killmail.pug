@@ -61,11 +61,11 @@ div#killmail-cargo
 	- var dropped = 0
 	- var destroyed = 0
 	table.table
-		each group in killmail.slotkeys
+		each group in killmail.cargo_groups
 			tr
 				td(colspan='4')
 					h6= group
-			- var items = killmail.slots.get(group)
+			- var items = killmail.allslots[group]
 			each item in items
 				tr(class=item.class)
 					td
