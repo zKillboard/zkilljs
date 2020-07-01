@@ -31,6 +31,8 @@ addGet('/api/mongo.json', 'api/mongo.js');
 addGet('/:type/:id', 'site/index', 'index.pug');
 addGet('/', 'site/index', 'index.pug');
 
+//router.use(express.static('www/public', { maxAge: '3600000' })); // Client-side file caching
+
 const pug = require('pug');
 var compiled = {};
 

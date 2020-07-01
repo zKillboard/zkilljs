@@ -40,7 +40,7 @@ async function startWebListener() {
     });
 
     www.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
-    www.use(express.static('www/public', { maxAge: '3600000' })); // Client-side file caching
+    //www.use(express.static('www/public', { maxAge: '3600000' })); // Client-side file caching
 
     www.disable('x-powered-by');
     www.use('/api/', require('cors')());
