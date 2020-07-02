@@ -115,8 +115,8 @@ function showSection(section) {
 function loadOverview(path, type, id) {
     if (path == '/') path = '/label/all';
     path = path.replace('/system/', '/solar_system/').replace('/type/', '/item/');
-    apply('overview-information', '/site/information' + path + '.html');
     apply('overview-killmails', '/site/killmails' + path + '.html', 'killlistfeed:' + path);
+    apply('overview-information', '/site/information' + path + '.html');
     load_stats_box({
         path: path,
         interval: 15
@@ -175,8 +175,6 @@ function apply(element, path, subscribe, delay) {
     if (typeof element == 'string') element = document.getElementById(element);
     // Clear the element
     if (delay != true) element.innerHTML = "";
-    console.log(element.id + ' fetching ' + path);
-
 
     if (path != null) {
         fetch(path, {
@@ -190,7 +188,6 @@ function apply(element, path, subscribe, delay) {
 function handleResponse(res, element, path, subscribe) {
     if (res.ok) {
         res.text().then(function (html) {
-            console.log(element.id + ' received ' + path);
             applyHTML(element, html);
             if (subscribe) ws_action('sub', subscribe);
         });
@@ -220,7 +217,6 @@ function postLoadActions(element) {
     killlistCleanup();
     spaTheLinks();
     $.each($('.page-title'), function (index, element) {
-        console.log(element);
         $("#page-title").html($(element).html());
         $(element).remove();
     });
@@ -288,7 +284,6 @@ function parseJSON(data) {
 }
 
 function loadUnfetched(element) {
-console.log(element);
     var unfeteched = element.querySelectorAll("[unfetched='true']");
     for (var i = 0; i < unfeteched.length; i++) {
         const tofetch = unfeteched[i];
