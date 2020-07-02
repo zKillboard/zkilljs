@@ -24,7 +24,7 @@ function createTaskSettings(span = 1, iterations = 0, offset = 0) {
 
 const tasks = {
     // maintenance fun
-    'trigger_daily_price_checks': createTaskSettings(86400, 0, -43200),
+    'trigger_price_checks': createTaskSettings(60),
     'update_prices': createTaskSettings(1),
     'update_factions.js': createTaskSettings(60),
     'update_information.js': createTaskSettings(1),
