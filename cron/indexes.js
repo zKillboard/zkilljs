@@ -46,9 +46,7 @@ async function applyIndexes(app) {
     await createIndex(app.db.collection('information'), {type: 1, id: 1}, {unique: true});
     await createIndex(app.db.collection('information'), {last_updated: 1}, {});
     await createIndex(app.db.collection('information'), {type: 1, last_updated: 1}, {});
-    await createIndex(app.db.collection('information'), {check_wars: 1}, {sparse: true});
-
-
+    await createIndex(app.db.collection('information'), {check_wars: 1}, {sparse: true});    
 
     await createIndex(app.db.collection('killhashes'), {killmail_id: 1, hash: 1}, {unique: true});
     await createIndex(app.db.collection('killhashes'), {status: 1}, bg);

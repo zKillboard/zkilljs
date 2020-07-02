@@ -88,8 +88,8 @@ async function f() {
     const client = new MongoClient(url, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
-        connectTimeoutMS: 3600000,    
-        socketTimeoutMS: 3600000, 
+        connectTimeoutMS: 3600000,
+        socketTimeoutMS: 3600000,
     });
 
     try {
@@ -105,6 +105,15 @@ async function f() {
         console.log('Prepping ' + collections[i].name);
         app.db[collections[i].name] = app.db.collection(collections[i].name);
     }
+
+    var Database = require('../util/mysql.js');
+    var mysql = new Database({
+        host: 'localhost',
+        user: 'zkilljs',
+        password: 'zkilljs',
+        database: 'zkilljs'
+    });
+    app.mysql = mysql;
 
     app.zincr = function (key) {
         let now = Math.floor(Date.now() / 1000) * 1000;

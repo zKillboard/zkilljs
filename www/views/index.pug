@@ -15,8 +15,8 @@ html
 				nav#toptoptop.navbar.navbar-expand-lg
 					a.navbar-brand.override(href='/')= 'zkillboard.dev (alpha)'
 					ul.navbar-nav.mr-auto
-					form.form-inline.my-2.my-lg-0
-						input.form-control.mr-sm-2(type='Search' placeholder='Not yet implemented' aria-label='Not yet implemented')
+					form.form-inline.my-2.my-lg-0(onsubmit='return false;')
+						input#autocomplete.form-control.mr-sm-2(type='Search' placeholder='Search' aria-label='Search')
 				hr
 				div#overview
 					div.row
@@ -60,6 +60,12 @@ html
 											td#week-eff.clearbeforeload
 					div.clearfix
 					div#overview-menu
+					div.row.d-none
+						nav.navbar
+							div.collapse.navbar-collapse
+								ul.navbar-nav.mr-auto
+									li.nav-item all
+						
 					div.row
 						div#overview-killmails
 						div#overview-weekly
@@ -79,6 +85,7 @@ script
 //-script(defer src='https://cdn.jsdelivr.net/npm/vanilla-lazyload@12.0.0/dist/lazyload.min.js')
 
 script(defer src='/js/jquery-3.4.1.min.js')
+script(defer src='/js/jquery.autocomplete-v1.4.11.min.js')
 
 script(defer src='/js/popper-1.14.7.min.js')
 //-script(defer src='https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js' integrity='sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM' crossorigin='anonymous')

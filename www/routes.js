@@ -15,6 +15,7 @@ addGet('/cache/1hour/killmail/:id.html', 'site/killmail.js', 'killmail.pug');
 addGet('/cache/1hour/killmail/:id/remaining.html', 'site/killmail-remaining.js', 'killmail-remaining.pug');
 addGet('/cache/1hour/killmail/row/:id.html', 'site/killmail-row.js', 'killmail-row.pug');
 addGet('/cache/1hour/killmails/:type/:id.html', 'site/kill-list.js', 'kill-list.pug');
+addGet('/cache/1hour/autocomplete/', 'site/autocomplete.js');
 
 addGet('/cache/1hour/api/information/:type/:id/:field.html', 'site/information', 'raw.pug');
 addGet('/cache/1hour/stats_box/:type/:id.json', 'api/stats_box.js');

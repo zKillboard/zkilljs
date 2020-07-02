@@ -49,6 +49,19 @@ function documentReady() {
     historyReady();
     toggleTooltips();
     setInterval(pageTimer, 100);
+
+    $('#autocomplete').autocomplete({
+      autoSelectFirst: true,
+      serviceUrl: '/cache/1hour/autocomplete/',
+      dataType: 'json',
+      groupBy: 'groupBy',
+      onSelect: function (suggestion) {
+          //window.location = '/' + suggestion.data.type + '/' + suggestion.data.id;
+          var path = '/' + suggestion.data.type + '/' + suggestion.data.id;
+          linkClicked(path);
+      },
+      error: function(xhr) { console.log(xhr); }
+    });
 }
 
 function toggleTooltips() {
@@ -64,8 +77,8 @@ function toggleTooltips() {
     }
 }
 
-function loadPage() {
-    var path = window.location.pathname;
+function loadPage(url) {
+    var path = url == undefined ? window.location.pathname : url;
     var fetch;
 
     // Cancel in flight fetches
@@ -79,6 +92,7 @@ function loadPage() {
         clearTimeout(timeouts.shift());
     }
     window.scrollTo(0, 0);
+    $("#autocomplete").val("");
 
     var split = path.split('/');
     type = (split.length >= 2 ? split[1] : null);

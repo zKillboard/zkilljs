@@ -148,6 +148,8 @@ async function fetch(app, row) {
                 }
             }
 
+            await app.mysql.query('replace into autocomplete values (?, ?, ?, ?)', [row.type, row.id, row.name, row.ticker]);
+
             return true;
             break;
         case 304: // ETAG match
