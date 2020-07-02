@@ -203,6 +203,7 @@ div#overview-information ul li {
     margin: 0.5em;
     padding: 0em;
     max-width: 100vw;
+    max-height: 100vw;
 }
 
 
@@ -211,6 +212,7 @@ div#overview-information ul li {
 
 .killblock1 {
     width: 650px;
+    height: 650px;
 }
 
 .killblock2 {
