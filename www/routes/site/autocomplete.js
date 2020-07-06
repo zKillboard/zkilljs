@@ -14,7 +14,6 @@ async function f(req, res) {
     for (var type of types) {
     	allresults = allresults.concat(await search(app, type, filter, false));
     }
-    console.log(allresults);
     return {json: {'suggestions': allresults }};
 
 }
