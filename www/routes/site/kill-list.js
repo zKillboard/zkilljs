@@ -39,8 +39,15 @@ async function getData(req, res) {
     };
     var record = await app.db.statistics.findOne({
         type: type,
-        id: id 
+        id: id
     });
+
+    if (record == null) {
+        // return an empty list
+        return {
+            json: {}
+        };
+    }
 
     var valid = {
         modifiers: 'string',
@@ -91,8 +98,7 @@ async function getData(req, res) {
         .toArray();
 
     return {
-        json: result,
-        maxAge: 1
+        json: result
     };
 }
 
