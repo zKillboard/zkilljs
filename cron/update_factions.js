@@ -20,6 +20,7 @@ async function f(app) {
                     $set: row
                 });
             }
+            await app.mysql.query('replace into autocomplete values (?, ?, ?, ?)', ['faction_id', row.faction_id, row.name, null]);
         }
     } else throw 'Invalid faction result';
 }
