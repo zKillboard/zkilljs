@@ -4,6 +4,8 @@ async function getData(req, res) {
     let parsed = (req.params.type != 'label' ? parseInt(req.params.id) : req.params.id);
     req.params.id = parsed > 0 ? parsed : req.params.id;
 
+    const app = req.app.app;
+
     var epoch = Number.parseInt(req.query.epoch || 0);
     epoch = epoch - (epoch % 15);
     var valid = {
@@ -19,9 +21,9 @@ async function getData(req, res) {
     let result = await req.app.app.db.statistics.findOne(query);
 
     var data = {};
-    add(result, data, 'alltime');
-    add(result, data, 'recent');
-    add(result, data, 'week');
+    await add(app, result, data, 'alltime');
+    await add(app, result, data, 'recent');
+    await add(app, result, data, 'week');
 
     return {
         json: data,
@@ -29,11 +31,14 @@ async function getData(req, res) {
     };
 }
 
-function add(result, data, type) {
-    data[type + '-kills'] = get(result, type, 'killed');
-    data[type + '-isk-killed'] = get(result, type, 'isk_killed');
-    data[type + '-lost'] = get(result, type, 'lost');
-    data[type + '-isk-lost'] = get(result, type, 'isk_lost');
+async function add(app, result, data, epoch) {
+    var rank = await app.redis.zrevrank('zkilljs:ranks:' + result.type + ':' + epoch, result.id);
+
+    data[epoch + '-kills'] = get(result, epoch, 'killed');
+    data[epoch + '-isk-killed'] = get(result, epoch, 'isk_killed');
+    data[epoch + '-rank'] = (rank != null ? rank + 1 : '');
+    data[epoch + '-lost'] = get(result, epoch, 'lost');
+    data[epoch + '-isk-lost'] = get(result, epoch, 'isk_lost');
 
 }
 

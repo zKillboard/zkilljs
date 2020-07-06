@@ -51,13 +51,21 @@ const stats = {
             $set: set
         });
 
+        // Update the redis ranking
+        const rnowkey = 'zkilljs:ranks:' + record.type + ':' + epoch;
+        var killed = record[epoch].killed || 0;
+        if (killed > 0) await app.redis.zadd(rnowkey, killed, record.id);
+        else await app.redis.zrem(rnowkey, record.id);
+
+        // announce that the stats have been updated
         await app.redis.sadd('zkilljs:stats:publish', redis_base);
     },
 
     apply: function (record, epoch, result, areKills, label) {
         let agg = result[label];
 
-        var beforek = record[epoch].killed, beforel = record[epoch].lost;
+        var beforek = record[epoch].killed,
+            beforel = record[epoch].lost;
 
         for (let row of agg) {
             let id = (label == 'groups' ? Math.abs(row._id) : row._id);
@@ -192,10 +200,10 @@ const stats = {
                             _id: '$labels',
                             count: {
                                 $sum: {
-                                $cond: [{
-                                    $eq: ['$purging', true]
-                                }, -1, 1]
-                            }
+                                    $cond: [{
+                                        $eq: ['$purging', true]
+                                    }, -1, 1]
+                                }
                             },
                             isk: {
                                 $sum: '$total_value'
