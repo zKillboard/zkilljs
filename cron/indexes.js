@@ -37,6 +37,7 @@ async function applyIndexes(app) {
     await createIndex(app.db.information, {type: 1, alliance_id: 1}, {sparse: true}); // For determining alliance member counts
 
     await create_collection(app, 'killmails');
+    await createIndex(app, 'killmails', {status: 1}, {sparse: true});
     await create_collection(app, 'killmails_7');
     await createIndex(app.db.collection('killmails_7'), {epoch: 1}, {});
 

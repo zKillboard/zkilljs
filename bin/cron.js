@@ -31,6 +31,7 @@ const tasks = {
     'fetch_locations.js': createTaskSettings(5),
     'update_alliance_membercounts.js': createTaskSettings(3600),
     'populate_ranks.js': createTaskSettings(86400),
+    'status_change.js': createTaskSettings(1),
     
     // killmail producers
     'listen_redisq.js': createTaskSettings(15),
