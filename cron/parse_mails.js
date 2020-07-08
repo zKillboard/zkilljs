@@ -116,6 +116,12 @@ async function parse_mail(app, killhash) {
         if (region.id >= 12000000 && region.id < 13000000) labels.push('abyssal');
         if (region.id >= 12000000 && region.id < 13000000 && !npc) labels.push('abyssal-pvp');
 
+        killmail.total_value = Math.round(await ship_price + await item_prices);
+
+        if (killmail.total_value >= 10000000000) labels.push('bigisk');
+        if (killmail.total_value >= 100000000000) labels.push('extremeisk');
+        if (killmail.total_value >= 1000000000000) labels.push('insaneisk');
+
         killmail.stats = !npc;
         killmail.labels = labels;
         killmail.involved_cnt = rawmail.attackers.length;
@@ -132,7 +138,6 @@ async function parse_mail(app, killhash) {
             });
         }
 
-        killmail.total_value = Math.round(await ship_price + await item_prices);
         await app.waitfor(promises);
         killmail.involved = involved;
 
