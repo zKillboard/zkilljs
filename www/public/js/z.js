@@ -48,19 +48,20 @@ function documentReady() {
 
     historyReady();
     toggleTooltips();
-    setInterval(pageTimer, 100);
 
     $('#autocomplete').autocomplete({
-      autoSelectFirst: true,
-      serviceUrl: '/cache/1hour/autocomplete/',
-      dataType: 'json',
-      groupBy: 'groupBy',
-      onSelect: function (suggestion) {
-          //window.location = '/' + suggestion.data.type + '/' + suggestion.data.id;
-          var path = '/' + suggestion.data.type + '/' + suggestion.data.id;
-          linkClicked(path);
-      },
-      error: function(xhr) { console.log(xhr); }
+        autoSelectFirst: true,
+        serviceUrl: '/cache/1hour/autocomplete/',
+        dataType: 'json',
+        groupBy: 'groupBy',
+        onSelect: function (suggestion) {
+            //window.location = '/' + suggestion.data.type + '/' + suggestion.data.id;
+            var path = '/' + suggestion.data.type + '/' + suggestion.data.id;
+            linkClicked(path);
+        },
+        error: function (xhr) {
+            console.log(xhr);
+        }
     });
 }
 
@@ -73,7 +74,7 @@ function toggleTooltips() {
             placement: 'top'
         });
     } catch (e) {
-        setTimeout(toggleTooltips, 100);
+        timeouts.push(setTimeout(toggleTooltips, 100));
     }
 }
 
@@ -84,7 +85,9 @@ function loadPage(url) {
     // Cancel in flight fetches
     fetch_controller.abort();
     $("#page-title").html("&nbsp;");
-    $(".clearbeforeload").html("&nbsp;")
+    $(".clearbeforeload").hide();
+    $(".hidebeforeload").hide();
+
     // Clear subscriptions
     ws_clear_subs();
     // cancel any timeouts
@@ -155,7 +158,7 @@ function killlistCleanup() {
         while ($(".killrow").length > 50) $(".killrow").last().parent().remove();
         applyRedGreen();
     } catch (e) {
-        setTimeout(killlistCleanup, 100);
+        timeouts.push(setTimeout(killlistCleanup, 100));
     }
 }
 
@@ -202,6 +205,7 @@ function apply(element, path, subscribe, delay) {
 function handleResponse(res, element, path, subscribe) {
     if (res.ok) {
         res.text().then(function (html) {
+            console.log(path);
             applyHTML(element, html);
             if (subscribe) ws_action('sub', subscribe);
         });
@@ -254,7 +258,7 @@ function handleJSON(res) {
                 var value = data[key];
                 var elem = document.getElementById(key);
                 if (elem == null) {
-                    console.log('could not find ' + key);
+                    //console.log('could not find ' + key);
                     continue;
                 }
                 var format = elem.getAttribute('format');
@@ -268,12 +272,19 @@ function handleJSON(res) {
                         break;
                     case 'percentage':
                         value = Number.parseFloat(value).toLocaleString(undefined, {
-                            'minimumFractionDigits': 2,
-                            'maximumFractionDigits': 2
+                            'minimumFractionDigits': 1,
+                            'maximumFractionDigits': 1
                         }) + '%';
+                        break;
+                    case 'decimal':
+                        value = Number.parseFloat(value).toLocaleString(undefined, {
+                            'minimumFractionDigits': 1,
+                            'maximumFractionDigits': 1
+                        });
+                        break;
                     }
                 }
-                if (elem.innerHTML != value) changeValue(elem, value);
+                changeValue(elem, value, (format == 'percentage'));
             }
         });
     }
@@ -281,10 +292,38 @@ function handleJSON(res) {
 
 /* By moving this into a function, the value of value is preserved 
     as the array is being iterated in applyJSON */
-function changeValue(elem, value) {
-    if (!jquery_loaded) elem.innerHTML = value;
-    else $(elem).fadeOut(100, function () {
-        $(this).html(value).fadeIn(100);
+function changeValue(elem, value, doRedGreen) {
+    elem = $(elem);
+    var origvalue = value;
+    var rawvalue = elem.attr('raw-value');
+
+    if (rawvalue == origvalue) {
+        elem.fadeIn(100);
+        return;
+    }
+
+    elem.fadeOut(100, function () {
+        var elem = $(this);
+        elem.html('');
+        if (elem.hasClass('progress-bar')) {
+            if (value == 'hide') {
+                elem.hide(); // just to be sure
+                return;
+            }
+            //if (rawvalue != undefined) return;
+
+            //if (elem.css('width') != (value + '%')) elem.css('width', value + '%').attr('aria-valuenow', value);
+            elem.width(value + '%');
+            if (value <= 5) value = '';
+            else value = value + '%';
+        }
+        if (doRedGreen) {
+            elem.removeClass('green').removeClass('red');
+            if (Number.parseInt(value) >= 50) elem.addClass('green');
+            else elem.addClass('red');
+        }
+
+        elem.html(value).attr('raw-value', origvalue).fadeIn(100);
     });
 }
 
@@ -306,12 +345,12 @@ function loadUnfetched(element) {
         tofetch.removeAttribute('unfetched');
         tofetch.removeAttribute('fetch');
         apply(id, path);
-        setTimeout(function () {
+        timeouts.push(setTimeout(function () {
             loadUnfetched(element)
-        }, 1);
+        }, 1));
         return;
     }
-    setTimeout(updateNumbers, 1);
+    timeouts.push(setTimeout(updateNumbers, 1));
 }
 
 // Iterates any elements with the number class and calls intToString to convert it
@@ -356,18 +395,20 @@ function updateNumbers() {
             element.removeClass('percentage');
             element.attr('format', 'percentage');
         });
-        $(".decimal").each(function (index, elem) {
-            elem = $(elem);
+        $.each($('.decimal'), function (index, element) {
+            element = $(element);
             var value = element.text();
             if (value == "") return;
-            var value = Number.parseFloat(value).toLocaleString(undefined, {
-                'minimumFractionDigits': 2,
-                'maximumFractionDigits': 2
+            value = Number.parseFloat(value).toLocaleString(undefined, {
+                'minimumFractionDigits': 1,
+                'maximumFractionDigits': 1
             });
-            elem.text(value).removeClass('.decimal').attr('format', 'integer');
+            element.text(value);
+            element.removeClass('decimal');
+            element.attr('format', 'decimal');
         });
     } catch (e) {
-        setTimeout(updateNumbers, 100);
+        timeouts.push(setTimeout(updateNumbers, 100));
     }
 }
 
@@ -400,7 +441,7 @@ function ws_connect() {
             ws_action('sub', 'zkilljs:public');
         }
     } catch (e) {
-        setTimeout(ws_connect, 100);
+        timeouts.push(setTimeout(ws_connect, 100));
     }
 }
 
@@ -437,9 +478,9 @@ function ws_action(action, msg, iteration) {
         iteration = (iteration || 0) + 1;
         if (iteration > 16) return;
         var wait = 10 * Math.pow(2, iteration);
-        setTimeout(function () {
+        timeouts.push(setTimeout(function () {
             ws_action(action, msg, iteration);
-        }, wait);
+        }, wait));
     }
 }
 
@@ -493,23 +534,13 @@ function load_stats_box(json) {
     var param = '?epoch=' + (now - (now % json.interval));
 
     applyJSON('/cache/1hour/stats_box' + json.path + '.json' + param);
-    //applyJSON('/cache/1hour/stats_box' + json.path + '.json' + param);
-}
-
-function pageTimer() {
-    let now = Date.now();
-    let delta = now - pageActive;
-    if (delta > 300000) {
-        location.reload(true);
-    }
-    pageActive = now;
 }
 
 function spaTheLinks() {
     try {
         $('.override').removeClass('override').each(spaTheLink);
     } catch (e) {
-        setTimeout(spaTheLinks, 100);
+        timeouts.push(setTimeout(spaTheLinks, 100));
     }
 }
 
@@ -543,7 +574,7 @@ function setFittingWheel() {
     var gslots = fwDoc.getElementsByClassName('slot');
     if (gslots.length != 32) {
         // SVG hasn't fully loaded yet
-        setTimeout(setFittingWheel, 1);
+        timeouts.push(setTimeout(setFittingWheel, 1));
         return;
     }
     var ship = fwDoc.getElementById('victimship');

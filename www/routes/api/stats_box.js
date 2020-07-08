@@ -34,12 +34,47 @@ async function getData(req, res) {
 async function add(app, result, data, epoch) {
     var rank = await app.redis.zrevrank('zkilljs:ranks:' + result.type + ':' + epoch, result.id);
 
-    data[epoch + '-kills'] = get(result, epoch, 'killed');
-    data[epoch + '-isk-killed'] = get(result, epoch, 'isk_killed');
-    data[epoch + '-rank'] = (rank != null ? rank + 1 : '');
-    data[epoch + '-lost'] = get(result, epoch, 'lost');
-    data[epoch + '-isk-lost'] = get(result, epoch, 'isk_lost');
+    var killed = get(result, epoch, 'killed');
+    var lost = get(result, epoch, 'lost');
+    var kisk = get(result, epoch, 'isk_killed');
+    var lisk = get(result, epoch, 'isk_lost')
 
+    var solokills;
+    try {
+        solokills = result[epoch]['labels']['solo']['killed'];
+        if (solokills == undefined) solokills = 0;
+    } catch (e) {
+        solokills = 0;
+    }
+    data[epoch + '-solo-kills'] = solokills;
+
+    data[epoch + '-kills'] = killed;
+    data[epoch + '-isk-killed'] = kisk;
+    data[epoch + '-rank'] = (rank != null ? rank + 1 : '');
+    data[epoch + '-lost'] = lost;
+    data[epoch + '-isk-lost'] = lisk;
+
+    var dangerlevel = get(result, epoch, 'danger_level');
+    if (isNaN(dangerlevel)) {
+        data[epoch + '-dangerlevel'] = 'hide';
+        data[epoch + '-dangerlevel-inverse'] = 'hide';
+    } else {
+        data[epoch + '-dangerlevel'] = (dangerlevel != undefined && !isNaN(dangerlevel) ? Math.round(100 * dangerlevel) : '');
+        data[epoch + '-dangerlevel-inverse'] = 100 - data[epoch + '-dangerlevel'];
+    }
+
+    var total = killed + lost;
+    data[epoch + '-eff'] = (total > 0 ? 100 * (killed / (total)) : '');
+
+    data[epoch + '-solopct'] = (solokills > 0 && solokills > -1 ? Math.round(100 * (solokills / killed)) : 0);
+    data[epoch + '-solopct-inverse'] = 100 - data[epoch + '-solopct'];
+
+    var k = (killed == 0 ? 0 : kisk / killed);
+    var l = (lost == 0 ? 0 : lisk / lost);
+    var total = k + l;
+    data[epoch + '-zscore'] = (total > 0 ? 100 * (k / (total)) : '');
+
+    data[epoch + '-avg-inv-cnt'] = (killed > 0 ? (get(result, epoch, 'inv_killed') / killed) : '')
 }
 
 function get(result, part1, part2) {

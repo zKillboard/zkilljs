@@ -33,6 +33,7 @@ html
 											th Lost
 											th ISK
 											th Eff. %
+											th Score
 									tbody
 										tr
 											th Alltime
@@ -41,7 +42,8 @@ html
 											td#alltime-rank.clearbeforeload(format='integer')
 											td#alltime-lost.clearbeforeload.red(format='integer')
 											td#alltime-isk-lost.clearbeforeload.red(format='fnumber')
-											td#alltime-eff.clearbeforeload
+											td#alltime-eff.clearbeforeload(format='percentage')
+											td#alltime-zscore.clearbeforeload(format='percentage')
 										tr
 											th 90 Days
 											td#recent-kills.clearbeforeload.green(format='integer')
@@ -49,7 +51,8 @@ html
 											td#recent-rank.clearbeforeload(format='integer')
 											td#recent-lost.clearbeforeload.red(format='integer')
 											td#recent-isk-lost.clearbeforeload.red(format='fnumber')
-											td#recent-eff.clearbeforeload
+											td#recent-eff.clearbeforeload(format='percentage')
+											td#recent-zscore.clearbeforeload(format='percentage')
 										tr
 											th 7 Days
 											td#week-kills.clearbeforeload.green(format='integer')
@@ -57,7 +60,30 @@ html
 											td#week-rank.clearbeforeload(format='integer')
 											td#week-lost.clearbeforeload.red(format='integer')
 											td#week-isk-lost.clearbeforeload.red(format='fnumber')
-											td#week-eff.clearbeforeload
+											td#week-eff.clearbeforeload(format='percentage')
+											td#week-zscore.clearbeforeload(format='percentage')
+										tr
+											td(colspan='4')
+												div.progress
+													div.hidebeforeload#alltime-dangerlevel.progress-bar.bg-red(role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style='width: 0%;')
+													div.hidebeforeload#alltime-dangerlevel-inverse.progress-bar.bg-green(role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style='width: 0%;')
+											td(colspan='4')
+												div.progress
+													div.hidebeforeload#alltime-solopct-inverse.progress-bar.bg-red(role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style='width: 0%;')
+													div.hidebeforeload#alltime-solopct.progress-bar.bg-green(role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style='width: 0%;') 
+										tr
+											td.red.text-left(colspan='2') Dangerous
+											td.green.text-right(colspan='2') Snuggly
+											td(colspan='2')
+												span#alltime-avg-inv-cnt.clearbeforeload(format='decimal')
+												span &nbsp; Avg. Inv. Cnt
+											td(colspan='2')
+												span#alltime-solo-kills.clearbeforeload(format='integer')
+												span &nbsp;Solo
+
+										-//tr
+											-//td.clearbeforeload#alltime-dangerlevel(format='percentage' colspan='4')
+											-//td.clearbeforeload#alltime-solopct(format='percentage' colspan='4')
 					div.clearfix
 					div#overview-menu
 					div.row.d-none

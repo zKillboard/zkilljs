@@ -36,6 +36,11 @@ body {
 img.image {
     background-color: #111;
     margin-top: 5px;
+    border-bottom-right-radius: 15px;
+}
+
+.killrow {
+    border-top: solid 1px #222;
 }
 
 .killrowblock {
@@ -142,6 +147,14 @@ div#overview-information ul li {
 
 .green {
     color: green;
+}
+
+.bg-green {
+    background-color: #007800;
+}
+
+.bg-red {
+    background-color: #A90707;
 }
 
 .victimrow {
@@ -290,3 +303,11 @@ hr {
 .autocomplete-suggestions strong { font-weight: normal; color: white; }
 .autocomplete-group { padding: 2px 5px; text-transform: capitalize; font-weight: bold; }
 .autocomplete-group strong { display: block; border-bottom: 1px solid #fff; }
+
+.progress .bar, .progress-bar {
+    -webkit-transition: none;
+    -moz-transition: none;
+    -ms-transition: none;
+    -o-transition: none;
+    transition: none;
+}​
