@@ -12,16 +12,32 @@ A rewrite of zkillboard using JavaScript Node and NPM packages.
 - implement scope cleanup
 - fetch insurance
 - fetch implant slots (is this in esi item info now?)
-- implement redis searching for names
 - implement alltime ranking
-- implement recent ranking (last 90 days) (can now use epoch)
-- implement weekly ranking (last 7 days) (can now use epoch)
-- implement top all time (use alltime label?)
-- implement ganked detection (how to do these stats?)
+- implement recent ranking (last 90 days)
+- implement weekly ranking (last 7 days) 
+- implement top all time
+- implement ganked detection
 - (install) implement zkbsetup for wormhole classes (zkbsetup.php)
 - implement redisq output
 - implement wallet listening, applying adfree, and thank you evemails
 - implement sponsorships
+
+#### Done
+- Implemented Cron Instance (crinstance). Allows to the second cron type scheduling ensuring only one instance of a function is executing at a time.
+- Fetch Dailies (from php zkill)
+- Fetch location information (Thank you FuzzySteve)
+- Fetch killmails from ESI
+- Listen to RedisQ (from php zkill)
+- Parse Killmails
+- Populate/Update Factions
+- Populate/Update Locations (using fetched location information)
+- Populate/Update Information for: item_id, group_id, character_id, corporation_id, alliance_id, solar_system_id, constellation_id, region_id
+- Populate/Update Prices (also currently using older zkill prices to fill in older data)
+- fetch all wars
+- fetch war details
+- fetch war killmails
+- Implemented sets to allow simultaneous processing while preventing too much happening at once
+- implement dayDump for daily killmail_id/hash api
 
 
 ### Frontend
@@ -47,9 +63,7 @@ A rewrite of zkillboard using JavaScript Node and NPM packages.
 - Payments history
 - Other account settings
 
-
 #### Overview Page
-- Char Info
 - Statistics, Ships, ISK, Involved Pct, Ranks for each w/ Kills/Losses, Dangerous/Snuggly Bar, Gangs/Solo Bar
 - Most Valuable Kills
 - Recent Kills (paginated)
@@ -57,24 +71,10 @@ A rewrite of zkillboard using JavaScript Node and NPM packages.
 - Top Chars, Corps, Ships, Systems, Locations
 - Menu: All, Kills, Losses, Trophies(?), Top, Ranks, Stats (use label dropdown?), Supers (maybe? alliances)
 
+#### Done
+- implement redis searching for names
+- Char Info
 
 ### Probably won't do
-- trophies (probably not)
-- implement hasSupers to show hasSupers on alli/corp pages (maybe?)
-
-## Completed
-- Implemented Cron Instance (crinstance). Allows to the second cron type scheduling ensuring only one instance of a function is executing at a time.
-- Fetch Dailies (from php zkill)
-- Fetch location information (Thank you FuzzySteve)
-- Fetch killmails from ESI
-- Listen to RedisQ (from php zkill)
-- Parse Killmails
-- Populate/Update Factions
-- Populate/Update Locations (using fetched location information)
-- Populate/Update Information for: item_id, group_id, character_id, corporation_id, alliance_id, solar_system_id, constellation_id, region_id
-- Populate/Update Prices (also currently using older zkill prices to fill in older data)
-- fetch all wars
-- fetch war details
-- fetch war killmails
-- Implemented sets to allow simultaneous processing while preventing too much happening at once
-- implement dayDump for daily killmail_id/hash api
+- trophies
+- implement hasSupers to show hasSupers on alli/corp pages (maybe, really only used by an elite few)
