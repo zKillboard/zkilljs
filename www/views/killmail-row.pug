@@ -51,7 +51,7 @@ div.killrow(victims=json.victims)
 			- if (json.rawmail.stats == false) tag = 'nostats'
 			- else if (json.rawmail.labels.indexOf('solo') != -1) tag = 'solo'
 			- else tag = ' (' + json.rawmail.involved_cnt + ')'
-			+char_id_link('li', json.rawmail.final_blow.character_id, json.rawmail.final_blow.character_name, tag)
+			+char_id_link('li', json.rawmail.final_blow.character_id, json.rawmail.final_blow.character_name + ' ', tag)
 			+corp_id_link('li', json.rawmail.final_blow.corporation_id, json.rawmail.final_blow.corporation_name)
 			+alli_id_link('li', json.rawmail.final_blow.alliance_id, json.rawmail.final_blow.alliance_name)
 			if (!(json.rawmail.final_blow.character_id > 0 || json.rawmail.final_blow.corporation_id > 0 || json.rawmail.final_blow.alliance_id > 0)) 
