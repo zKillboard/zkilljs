@@ -24,7 +24,7 @@ function historyReady() {
         });
         console.log('browser history ready and loaded');
     } catch (e) {
-        setTimeout(historyReady, 50);
+        setTimeout(historyReady, 1);
     }
 }
 
@@ -32,7 +32,7 @@ function is_jquery_loaded() {
     if (typeof $ == 'function') {
         jquery_loaded = true;
         console.log('jquery loaded');
-    } else setTimeout(is_jquery_loaded, 100);
+    } else setTimeout(is_jquery_loaded, 1);
 }
 
 // Called at the end of this document since all js libraries are deferred
@@ -65,6 +65,13 @@ function documentReady() {
     });
 }
 
+function timespantoggle(selector) {
+    /*
+    $(".tr-timespanrow").hide();
+    $(selector).show(); 
+    */
+}
+
 function toggleTooltips() {
     try {
         // Prep any tooltips
@@ -74,7 +81,7 @@ function toggleTooltips() {
             placement: 'top'
         });
     } catch (e) {
-        timeouts.push(setTimeout(toggleTooltips, 100));
+        timeouts.push(setTimeout(toggleTooltips, 1));
     }
 }
 
@@ -113,6 +120,7 @@ function loadPage(url) {
     default:
         showSection('overview');
         loadOverview(path, type, id);
+        timespantoggle('.tr-week');
         break;
     }
 }
@@ -205,7 +213,7 @@ function apply(element, path, subscribe, delay) {
 function handleResponse(res, element, path, subscribe) {
     if (res.ok) {
         res.text().then(function (html) {
-            console.log(path);
+            //console.log(path);
             applyHTML(element, html);
             if (subscribe) ws_action('sub', subscribe);
         });
@@ -225,6 +233,7 @@ function applyJSON(path) {
     fetch(path, {
         fetch_canceller
     }).then(function (res) {
+        console.log(path);
         handleJSON(res);
     });
 }
@@ -570,6 +579,11 @@ function setFittingWheel() {
     var fitting = JSON.parse($("#fwraw").text());
     var ship_id = $("#fwship").text();
     var fwDoc = document.getElementById('fittingwheel').contentDocument;
+    if (fwDoc == null) fwDoc = document.getElementById('fittingwheel').firstElementChild;
+
+    if (fwDoc == undefined || fwDoc == null) {
+        timeouts.push(setTimeout(setFittingWheel, 1));
+    }
 
     var gslots = fwDoc.getElementsByClassName('slot');
     if (gslots.length != 32) {

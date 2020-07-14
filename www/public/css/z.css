@@ -174,9 +174,18 @@ div#overview-information ul li {
 #stats-table th {
     text-align: right;
     width: 6rem;
-    min-width: 6rem;
+    min-width: 6em;
 }
 
+.timespan {
+    width: 2em !important;
+    min-width: 2em !important;
+}
+
+.timespanselector {
+    padding: 0px;
+    margin: 0px;
+}
 
 #overview-information,
 #overview-statistics {
@@ -310,4 +319,5 @@ hr {
     -ms-transition: none;
     -o-transition: none;
     transition: none;
-}​
+}
+
