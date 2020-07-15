@@ -68,17 +68,17 @@ function addResults(allresults, result, ids) {
 }
 
 var types = [
-    'character_id',
-    'corporation_id',
-    'alliance_id',
-    'faction_id',
     'item_id',
     'group_id',
+    'faction_id',
+    'alliance_id',
+    'corporation_id',
+    'character_id',
     'category_id',
+    'region_id',
     'location_id',
     'solar_system_id',
     'constellation_id',
-    'region_id',
 ]; // war_id is excluded
 
 module.exports = f;
