@@ -148,7 +148,10 @@ async function fetch(app, row) {
                 }
             }
 
-            await app.mysql.query('replace into autocomplete values (?, ?, ?, ?)', [row.type, row.id, row.name, row.ticker]);
+            var searchname = row.name;
+            if (row.type =='character_id' && row.corporation_id == 1000001) searchname = searchname + ' (recycled)';
+            else if ((row.type == 'corporation_id' || row.type == 'alliance_id') && row.membercount == 0) searchname = searchname + ' (closed)';
+            await app.mysql.query('replace into autocomplete values (?, ?, ?, ?)', [row.type, row.id, searchname, row.ticker]);
 
             return true;
             break;
