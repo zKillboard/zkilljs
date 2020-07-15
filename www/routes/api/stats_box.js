@@ -35,54 +35,16 @@ async function add(app, result, data, epoch) {
     if (result == undefined) return;
     var rank = await app.redis.zrevrank('zkilljs:ranks:' + result.type + ':' + epoch, result.id);
 
-    var killed = get(result, epoch, 'killed');
-    var lost = get(result, epoch, 'lost');
-    var kisk = get(result, epoch, 'isk_killed');
-    var lisk = get(result, epoch, 'isk_lost')
-
-    var solokills;
-    try {
-        solokills = result[epoch]['labels']['solo']['killed'];
-        if (solokills == undefined) solokills = 0;
-    } catch (e) {
-        solokills = 0;
-    }
-    data[epoch + '-solo-kills'] = (solokills > 0 ? solokills : '');
-
-    data[epoch + '-kills'] = killed;
-    data[epoch + '-isk-killed'] = kisk;
+    data[epoch + '-kills'] = get(result, epoch, 'killed');
+    data[epoch + '-isk-killed'] = get(result, epoch, 'isk_killed');
     data[epoch + '-rank'] = (rank != null ? rank + 1 : '');
-    data[epoch + '-lost'] = lost;
-    data[epoch + '-isk-lost'] = lisk;
-
-    var dangerlevel = get(result, epoch, 'danger_level');
-    if (isNaN(dangerlevel)) {
-        data[epoch + '-dangerlevel'] = '';
-        data[epoch + '-dangerlevel-bar'] = '';
-        data[epoch + '-dangerlevel-inverse'] = '';
-    } else {
-        data[epoch + '-dangerlevel-bar'] = (dangerlevel != undefined && !isNaN(dangerlevel) ? Math.round(100 * dangerlevel) : 0);
-        data[epoch + '-dangerlevel-inverse'] = 100 - data[epoch + '-dangerlevel'];
-        data[epoch + '-dangerlevel'] = 100 - data[epoch + '-dangerlevel-bar'];
-    }
-
-    var total = killed + lost;
-    var eff = (total > 0 ? (killed / (total)) : '');
-    data[epoch + '-eff'] = (eff == '' ? '' : 100 * eff);
-
-    data[epoch + '-solopct'] = (solokills > 0 && solokills > -1 ? Math.round(100 * (solokills / killed)) : '');
-    data[epoch + '-solopct-bar'] = data[epoch + '-solopct'];
-    data[epoch + '-solopct-inverse-bar'] = (killed > 0 ? 100 - data[epoch + '-solopct'] : '');
-
-    var k = (killed == 0 ? 0 : kisk / killed);
-    var l = (lost == 0 ? 0 : lisk / lost);
-    var total = k + l;
-    var avg_inv_cnt = (killed > 0 ? (get(result, epoch, 'inv_killed') / killed) : 0);
-    data[epoch + '-avg-inv-cnt'] = (avg_inv_cnt == 0 ? '' : avg_inv_cnt);
-
-    data[epoch + '-zscore'] = (killed > 0 ? 100 * (Math.min(1, (1 / Math.log10(Math.max(2, avg_inv_cnt)))) * Math.min(1, eff * 2) * (k / (total))) : '');
-    //data[epoch + '-zscore'] = (killed > 0 ? 100 * (Math.min(1, (1 / Math.log2(Math.log2(Math.max(2, avg_inv_cnt))))) * Math.min(1, eff * 2) ) : '');
-    //data[epoch + '-zscore'] = 100 * (eff * Math.log2(Math.log2(avg_inv_cnt + 1)));
+    data[epoch + '-lost'] = get(result, epoch, 'lost');
+    data[epoch + '-isk-lost'] = get(result, epoch, 'isk_lost');
+    data[epoch + '-eff'] = get(result, epoch, 'eff');
+    data[epoch + '-dangerlevel'] = get(result, epoch, 'snuggly');
+    data[epoch + '-solopct'] = get(result, epoch, 'solo');
+    data[epoch + '-avg-inv-cnt'] = get(result, epoch, 'avg_inv_cnt');
+    data[epoch + '-zscore'] = get(result, epoch, 'score');
 }
 
 function get(result, part1, part2) {

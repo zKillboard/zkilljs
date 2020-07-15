@@ -42,53 +42,10 @@ async function clear_kills(app, collection, epoch, max_epoch) {
                 });
                 continue;
             }
-            await wait_for_stats(app);
+            
+            await app.util.killmails.remove(app, collection, killmail, epoch);
 
-            var original_killmail_id = killmail.killmail_id;
-            var purge_mail = killmail;
-            delete purge_mail._id;
-            purge_mail.purging = true;
-            purge_mail.killmail_id = -1 * killmail.killmail_id;
-            purge_mail.total_value = -1 * killmail.total_value;
-            purge_mail.involved_cnt = -1 * killmail.involved_cnt;
-            purge_mail.sequence = await app.util.killmails.next_sequence(app);
 
-            try {
-                await app.db[collection].insertOne(purge_mail); // Insert the killmail
-            } catch (e) {
-                if (e.code != 11000) console.log(e);
-            }
-
-            // Mark everyone involved as needing a stat update
-            for (const type of Object.keys(killmail.involved)) {
-                for (var id of killmail.involved[type]) {
-                    if (typeof id == 'number') id = Math.abs(id);
-
-                    var reset_key = type + ':' + id;
-                    if (resets.indexOf(reset_key) != -1) continue;
-                    resets.push(reset_key);
-
-                    await update_stats_record(app, type, id, epoch, purge_mail.sequence);
-                }
-            }
-
-            killmail.labels.push('all');
-            for (const label of killmail.labels) {
-                var reset_key = 'label:' + label;
-                if (resets.indexOf(reset_key) != -1) continue;
-                resets.push(reset_key);
-
-                await update_stats_record(app, 'label', label, epoch, purge_mail.sequence);
-            }
-
-            await wait_for_stats(app);
-
-            await app.db[collection].removeOne({
-                killmail_id: original_killmail_id
-            });
-            await app.db[collection].removeOne({
-                killmail_id: purge_mail.killmail_id
-            });
             return;
         }
     } catch (e) {
@@ -96,39 +53,7 @@ async function clear_kills(app, collection, epoch, max_epoch) {
     }
 }
 
-async function wait_for_stats(app, epoch) {
-    var count;
-    do {
-        if (app.bailout == true) throw 'bailing!';
-        await app.sleep(1);
-        count = await app.db.statistics.countDocuments({
-            ['update_' + epoch]: true
-        });
-    } while (count > 0);
-}
 
-async function update_stats_record(app, type, id, epoch, sequence) {
-    var record = await app.db.statistics.findOne({
-        type: type,
-        id: id
-    });
-    if (record == null) {
-        return;
-    }
 
-    var set = {
-        ['update_' + epoch]: true,
-        sequence: sequence
-    }
-
-    await app.db.statistics.updateOne({
-        _id: record._id,
-        sequence: {
-            $lt: sequence
-        },
-    }, {
-        $set: set
-    });
-}
 
 module.exports = f;

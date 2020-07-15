@@ -39,8 +39,6 @@ function redis_retry_strategy(options) {
 async function f() {
     const app = {};
 
-    app.totals = 0;
-
     app.util = {
         entity: require('../util/entity.js'),
         info: require('../util/info.js'),
@@ -161,3 +159,10 @@ async function clearIndexes() {
     }
     setTimeout(clearIndexes, 1001);
 }
+
+function memUsage() {
+    var used = process.memoryUsage().heapUsed / 1024 / 1024;
+    console.log(`Using approximately ${Math.round(used * 100) / 100} MB`);
+    setTimeout(memUsage, 1000);
+}
+memUsage();
