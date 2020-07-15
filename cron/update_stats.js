@@ -46,13 +46,13 @@ async function update_stats(app, collection, epoch, type, find) {
     try {
         if (app.bailout == true || app.no_stats == true) return;
 
-        var iter = await app.db.statistics.find(find).limit(1000);
+        var iter = await app.db.statistics.find(find).limit(10000);
         while (await iter.hasNext()) {
             if (app.bailout == true || app.no_stats == true) break;
 
             var record = await iter.next();
             if (record.id !== NaN) {
-                promises.push(update_record(app, collection, epoch, record));
+                await update_record(app, collection, epoch, record);
                 iterated = true;
             }
         }
@@ -76,6 +76,12 @@ async function update_record(app, collection, epoch, record) {
         }
         record[epoch].reset = false;
 
+        let redis_base = JSON.stringify({
+            type: record.type,
+            id: record.id
+        });
+        await app.redis.srem('zkilljs:stats:publish', redis_base);
+
         var min = (record[epoch].last_sequence || 0);
         var max = Math.min(min + 100000000, record.sequence);
 
@@ -87,10 +93,18 @@ async function update_record(app, collection, epoch, record) {
         };
         if (min > 0) match.sequence['$gt'] = min;
 
-        await app.util.stats.update_stat_record(app, collection, epoch, record, match, max);
+        // Update the stats based on the result, but don't clear the update_ field yet
+        var set = {};
+        var result = await app.util.stats.update_stat_record(app, collection, epoch, record, match, max);
+        set[epoch] = result;
+        await app.db.statistics.updateOne({
+            _id: record._id,
+        }, {
+            $set: set
+        });
 
         // Now clear the update field only if the sequence matches
-        var set = {};
+        set = {};
         set['update_' + epoch] = false;
         await app.db.statistics.updateOne({
             _id: record._id,
@@ -98,6 +112,18 @@ async function update_record(app, collection, epoch, record) {
         }, {
             $set: set
         });
+
+        // Update the redis ranking
+        const redisRankKey = 'zkilljs:ranks:' + record.type + ':' + epoch;
+        var killed = result.killed || 0;
+        var score = result.score || 0;
+        if (killed > 0) await app.redis.zadd(redisRankKey, Math.floor(killed * score), record.id);
+        else await app.redis.zrem(redisRankKey, record.id);
+
+        // announce that the stats have been updated
+        await app.redis.sadd('zkilljs:stats:publish', redis_base);
+
+
     } finally {
         concurrent--;
     }

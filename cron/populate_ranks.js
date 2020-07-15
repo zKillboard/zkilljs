@@ -27,7 +27,9 @@ async function add_killed(app, row, epoch, date, date7) {
     var epoch_block = row[epoch] == undefined ? {} : row[epoch];
 
     var killed = epoch_block.killed || 0;
-    if (killed > 0) await app.redis.zadd(rnowkey, killed, row.id);
+    var score = epoch_block.score || 0;
+    if (killed > 0) await app.redis.zadd(rnowkey, Math.floor(killed * score), row.id);
+    else await app.redis.zrem(rnowkey, row.id);
 }
 
 module.exports = f;

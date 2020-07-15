@@ -8,11 +8,6 @@ const negatives = ['character_id', 'corporation_id', 'alliance_id', 'faction_id'
 const stats = {
     update_stat_record: async function (app, collection, epoch, record, match, max) {
         let fquery;
-        let redis_base = JSON.stringify({
-            type: record.type,
-            id: record.id
-        });
-        await app.redis.srem('zkilljs:stats:publish', redis_base);
 
         if (negatives.includes(record.type)) {
             match['involved.' + record.type] = -1 * record.id;
@@ -62,22 +57,7 @@ const stats = {
 
         record[epoch].last_sequence = max;
 
-        var set = {};
-        set[epoch] = record[epoch];
-
-        await app.db.statistics.updateOne({
-            _id: record._id
-        }, {
-            $set: set
-        });
-
-        // Update the redis ranking
-        const redisRankKey = 'zkilljs:ranks:' + record.type + ':' + epoch;
-        if (killed > 0) await app.redis.zadd(redisRankKey, killed, record.id);
-        else await app.redis.zrem(redisRankKey, record.id);
-
-        // announce that the stats have been updated
-        await app.redis.sadd('zkilljs:stats:publish', redis_base);
+        return record[epoch];
     },
 
     apply: function (record, epoch, result, areKills, label) {
