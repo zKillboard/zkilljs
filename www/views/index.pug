@@ -29,7 +29,6 @@ html
 											th.timespan Days
 											th Killed
 											th ISK
-											th Rank
 											th Lost
 											th ISK
 											th Eff
@@ -37,12 +36,12 @@ html
 											th Solo
 											th Inv Avg
 											th Score
+											th Rank
 									tbody
 										tr
 											th ∞
 											td#alltime-kills.clearbeforeload.green(format='integer')
 											td#alltime-isk-killed.clearbeforeload.green(format='fnumber')
-											td#alltime-rank.clearbeforeload(format='integer')
 											td#alltime-lost.clearbeforeload.red(format='integer')
 											td#alltime-isk-lost.clearbeforeload.red(format='fnumber')
 											td#alltime-eff.clearbeforeload(format='percentage')
@@ -50,11 +49,11 @@ html
 											td#alltime-solopct.clearbeforeload(format='percentage')
 											td#alltime-avg-inv-cnt.clearbeforeload(format='decimal')
 											td#alltime-zscore.clearbeforeload(format='percentage')
+											td#alltime-rank.clearbeforeload(format='integer')
 										tr
 											th 90
 											td#recent-kills.clearbeforeload.green(format='integer')
 											td#recent-isk-killed.clearbeforeload.green(format='fnumber')
-											td#recent-rank.clearbeforeload(format='integer')
 											td#recent-lost.clearbeforeload.red(format='integer')
 											td#recent-isk-lost.clearbeforeload.red(format='fnumber')
 											td#recent-eff.clearbeforeload(format='percentage')
@@ -62,11 +61,11 @@ html
 											td#recent-solopct.clearbeforeload(format='percentage')
 											td#recent-avg-inv-cnt.clearbeforeload(format='decimal')
 											td#recent-zscore.clearbeforeload(format='percentage')
+											td#recent-rank.clearbeforeload(format='integer')
 										tr
 											th 7
 											td#week-kills.clearbeforeload.green(format='integer')
 											td#week-isk-killed.clearbeforeload.green(format='fnumber')
-											td#week-rank.clearbeforeload(format='integer')
 											td#week-lost.clearbeforeload.red(format='integer')
 											td#week-isk-lost.clearbeforeload.red(format='fnumber')
 											td#week-eff.clearbeforeload(format='percentage')
@@ -74,6 +73,7 @@ html
 											td#week-solopct.clearbeforeload(format='percentage')
 											td#week-avg-inv-cnt.clearbeforeload(format='decimal')
 											td#week-zscore.clearbeforeload(format='percentage')
+											td#week-rank.clearbeforeload(format='integer')
 										
 
 					div.clearfix
