@@ -11,10 +11,7 @@ var type = undefined;
 var id = undefined;
 var killmail_id = undefined;
 
-const fetch_controller = new AbortController();
-const {
-    fetch_canceller
-} = fetch_controller;
+var fetch_controller = new AbortController();
 
 function historyReady() {
     try {
@@ -89,18 +86,23 @@ function loadPage(url) {
     var path = url == undefined ? window.location.pathname : url;
     var fetch;
 
-    // Cancel in flight fetches
-    fetch_controller.abort();
-    $("#page-title").html("&nbsp;");
-    $(".clearbeforeload").hide();
-    $(".hidebeforeload").hide();
-
     // Clear subscriptions
     ws_clear_subs();
+
+    // Cancel in flight fetches
+    fetch_controller.abort();
+    fetch_controller = new AbortController();
+
     // cancel any timeouts
     while (timeouts.length > 0) {
         clearTimeout(timeouts.shift());
     }
+
+    $("#page-title").html("&nbsp;");
+    $(".clearbeforeload").hide();
+    $(".hidebeforeload").hide();
+
+
     window.scrollTo(0, 0);
     $("#autocomplete").val("");
 
@@ -203,7 +205,7 @@ function apply(element, path, subscribe, delay) {
 
     if (path != null) {
         fetch(path, {
-            fetch_canceller
+            signal: fetch_controller.signal
         }).then(function (res) {
             handleResponse(res, element, path, subscribe);
         });
@@ -231,7 +233,7 @@ function applyHTML(element, html) {
 
 function applyJSON(path) {
     fetch(path, {
-        fetch_canceller
+        signal: fetch_controller.signal
     }).then(function (res) {
         console.log(path);
         handleJSON(res);
