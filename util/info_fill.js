@@ -1,6 +1,6 @@
 'use strict';
 
-var cache = {};
+//var cache = {};
 
 const info_fill = {
     async fill(app, object) {

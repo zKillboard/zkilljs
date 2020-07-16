@@ -1,28 +1,6 @@
 #!/usr/bin/env node
 
-var app = undefined;
-async function getApp() {
-    if (app === undefined) {
-        var req = require('./init.js');
-        app = await req();
-    }
-    return app;
-}
-
-if (process.argv[2]) {
-    debug(process.argv[2]);
-    return;
-}
-
-function createTaskSettings(span = 1, iterations = 0, offset = 0) {
-    return {
-        span: span,
-        iterations: iterations,
-        offset: offset
-    };
-}
-
-const tasks = {
+var tasks = {
     // maintenance fun
     'trigger_price_checks': createTaskSettings(60),
     'update_prices': createTaskSettings(1),
@@ -32,7 +10,7 @@ const tasks = {
     'update_alliance_membercounts.js': createTaskSettings(3600),
     'populate_ranks.js': createTaskSettings(86400),
     'status_change.js': createTaskSettings(1),
-    
+
     // killmail producers
     'listen_redisq.js': createTaskSettings(15),
     'fetch_wars.js': createTaskSettings(9600),
@@ -50,6 +28,36 @@ const tasks = {
     'publish_stats_updates.js': createTaskSettings(15),
 
     //'ztop.js': createTaskSettings(1),
+}
+
+var app = undefined;
+async function getApp() {
+    if (app === undefined) {
+        var req = require('./init.js');
+        app = await req();
+    }
+    return app;
+}
+
+var taskname = '';
+if (process.argv[2]) {
+    //debug(process.argv[2]);
+    //return;
+    var onetask = {};
+    var keys = Object.keys(tasks);
+    var tasknum = Number.parseInt(process.argv[2]);
+    if (tasknum >= keys.length) return;
+    taskname = keys[tasknum];
+    console.log(taskname);
+    tasks = {[taskname]: tasks[taskname]};
+}
+
+function createTaskSettings(span = 1, iterations = 0, offset = 0) {
+    return {
+        span: span,
+        iterations: iterations,
+        offset: offset
+    };
 }
 
 // Clear existing running keys
@@ -87,8 +95,7 @@ async function runTasks(app, tasks) {
             process.exit();
         }
 
-        let now = Date.now();
-        now = Math.floor(now / 1000);
+        let now = Math.floor(Date.now() / 1000);
 
         let arr = Object.keys(tasks);
         for (let i = 0; i < arr.length; i++) {
@@ -112,7 +119,9 @@ async function runTasks(app, tasks) {
         }
     } finally {
         await app.sleep(Math.max(1, 1 + (Date.now() % 1000)));
-        runTasks(app, tasks);
+        setTimeout(function () {
+            runTasks(app, tasks);
+        }, 1);
     }
 }
 
@@ -148,3 +157,4 @@ watch('restart.txt', {
 }, async function (evt, name) {
     await app.redis.set("RESTART", "true");
 });
+

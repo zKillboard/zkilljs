@@ -276,11 +276,11 @@ const stats = {
     wait_for_stats: async function (app, epoch) {
         var count;
         do {
-            if (app.bailout == true) throw 'bailing!';
-            await app.sleep(1);
+            if (app.bailout == true) throw 'bailing!';            
             count = await app.db.statistics.countDocuments({
                 ['update_' + epoch]: true
             });
+            if (count > 0) await app.sleep(1);
         } while (count > 0);
     }
 }

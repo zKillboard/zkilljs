@@ -156,6 +156,8 @@ async function parse_mail(app, killhash) {
         app.zincr('mails_parsed');
 
         publishToKillFeed(app, killmail);
+
+        killmail = null; // memory leak protection
     } catch (e) {
         console.log(e, killhash);
         await app.db.killhashes.updateOne(killhash, {$set: { status: 'parse-error'}});

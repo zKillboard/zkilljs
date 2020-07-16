@@ -160,9 +160,14 @@ async function clearIndexes() {
     setTimeout(clearIndexes, 1001);
 }
 
+var max = 0;
+
 function memUsage() {
-    var used = process.memoryUsage().heapUsed / 1024 / 1024;
-    console.log(`Using approximately ${Math.round(used * 100) / 100} MB`);
+    var used = Math.floor(process.memoryUsage().heapUsed / 1024 / 1024);
+    if (used > max) {
+        max = used;
+        console.log(used + ' MB');
+    }
     setTimeout(memUsage, 1000);
 }
 memUsage();

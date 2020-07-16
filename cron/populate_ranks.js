@@ -13,6 +13,7 @@ async function f(app) {
 
     var result = await app.db.statistics.find();
     while (await result.hasNext()) {
+        if (app.bailout) return;
         row = await result.next();
 
         await add_killed(app, row, 'week', formatted_date_now, formatted_date_week_ago);

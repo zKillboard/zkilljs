@@ -3,7 +3,7 @@
 async function f(app) {
     if (await app.redis.exists('zkilljs:stats:publish') > 0) {
         await app.redis.rename('zkilljs:stats:publish', 'zkilljs:stats:publish_copy');
-        while (true) {
+        while (await app.redis.scard('zkilljs:stats:publish_copy') > 0) {
             if (app.bailout == true) return;
 
             var next = await app.redis.spop('zkilljs:stats:publish_copy');

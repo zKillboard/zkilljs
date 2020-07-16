@@ -27,7 +27,7 @@ async function clear_kills(app, collection, epoch, max_epoch) {
             epoch: {
                 '$lt': max_epoch
             }
-        });
+        }).limit(1);
 
         var resets = [];
 

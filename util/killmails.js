@@ -85,6 +85,9 @@ module.exports = {
         await app.db[collection].removeOne({
             killmail_id: purge_mail.killmail_id
         });
+
+        purge_mail = null; // Having these two cause a circular dependency which causes a memory leak...
+        killmail = null; // Having these two cause a circular dependency which causes a memory leak...
     }
 }
 

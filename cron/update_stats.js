@@ -123,7 +123,8 @@ async function update_record(app, collection, epoch, record) {
         // announce that the stats have been updated
         await app.redis.sadd('zkilljs:stats:publish', redis_base);
 
-
+        record = null; // memory leak prevention
+        result = null; // memory leak prevention
     } finally {
         concurrent--;
     }
