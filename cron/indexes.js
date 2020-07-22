@@ -11,7 +11,7 @@ async function f(app) {
 
 }
 
-var bg = {};
+var bg = {background: true};
 
 async function applyIndexes(app) {
     await app.db.createCollection('killhashes');
@@ -23,10 +23,13 @@ async function applyIndexes(app) {
     await createIndex(app.db.collection('statistics'), {type: 1, update_alltime: 1}, {});
     await createIndex(app.db.collection('statistics'), {type: 1, update_recent: 1}, {});
     await createIndex(app.db.collection('statistics'), {type: 1, update_week: 1}, {});
+    await createIndex(app.db.collection('statistics'), {'recent.last_sequence': 1}, {sparse: true});
+    await createIndex(app.db.collection('statistics'), {'week.last_sequence': 1}, {sparse: true});
 
     await app.db.createCollection('prices');
     await createIndex(app.db.prices, {item_id: 1}, {unique: true});
     await createIndex(app.db.prices, {waiting: 1}, {});
+    await createIndex(app.db.prices, {last_fetched: 1}, {});
 
     await app.db.createCollection('information');
     await createIndex(app.db.information, {type: 1});
@@ -37,7 +40,7 @@ async function applyIndexes(app) {
     await createIndex(app.db.information, {type: 1, alliance_id: 1}, {sparse: true}); // For determining alliance member counts
 
     await create_collection(app, 'killmails');
-    await createIndex(app, 'killmails', {status: 1}, {sparse: true});
+    await createIndex(app.db.collection('killmails'), {status: 1}, {sparse: true});
     await create_collection(app, 'killmails_7');
     await createIndex(app.db.collection('killmails_7'), {epoch: 1}, {});
 
@@ -93,14 +96,14 @@ async function create_collection(app, collection) {
         await createIndex(app.db.collection(collection), index, bg);
         
         index = {
+            stats: 1,
             sequence: 1,
         };
         index[key] = 1;
         await createIndex(app.db.collection(collection), index, bg);
-        
+
         index = {
-            stats: 1,
-            sequence: 1,
+            killmail_id: -1
         };
         index[key] = 1;
         await createIndex(app.db.collection(collection), index, bg);

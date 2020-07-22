@@ -60,8 +60,9 @@ async function update_stats(app, collection, epoch, type, find) {
     } catch (e) {
         console.log(e);
     } finally {
-        if (!iterated) await app.sleep(1000);
-        update_stats(app, collection, epoch, type, find);
+        setTimeout(function () {
+            update_stats(app, collection, epoch, type, find);
+        }, (iterated ? 1 : 1000));
     }
 }
 
@@ -96,12 +97,32 @@ async function update_record(app, collection, epoch, record) {
         // Update the stats based on the result, but don't clear the update_ field yet
         var set = {};
         var result = await app.util.stats.update_stat_record(app, collection, epoch, record, match, max);
-        set[epoch] = result;
-        await app.db.statistics.updateOne({
-            _id: record._id,
-        }, {
-            $set: set
-        });
+        const redisRankKey = 'zkilljs:ranks:' + record.type + ':' + epoch;
+        if (result == null) {
+            await app.db.statistics.updateOne({
+                _id: record._id,
+            }, {
+                $unset: {
+                    [epoch]: 1
+                }
+            });
+
+            // Update the redis ranking
+            await app.redis.zrem(redisRankKey, record.id);
+        } else {
+            set[epoch] = result;
+            await app.db.statistics.updateOne({
+                _id: record._id,
+            }, {
+                $set: set
+            });
+
+            // Update the redis ranking
+            var killed = result.killed || 0;
+            var score = result.score || 0;
+            if (killed > 0) await app.redis.zadd(redisRankKey, Math.floor(killed * score), record.id);
+            else await app.redis.zrem(redisRankKey, record.id);
+        }
 
         // Now clear the update field only if the sequence matches
         set = {};
@@ -112,13 +133,6 @@ async function update_record(app, collection, epoch, record) {
         }, {
             $set: set
         });
-
-        // Update the redis ranking
-        const redisRankKey = 'zkilljs:ranks:' + record.type + ':' + epoch;
-        var killed = result.killed || 0;
-        var score = result.score || 0;
-        if (killed > 0) await app.redis.zadd(redisRankKey, Math.floor(killed * score), record.id);
-        else await app.redis.zrem(redisRankKey, record.id);
 
         // announce that the stats have been updated
         await app.redis.sadd('zkilljs:stats:publish', redis_base);

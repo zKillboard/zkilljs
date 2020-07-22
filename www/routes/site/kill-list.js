@@ -15,6 +15,8 @@ async function getData(req, res) {
     var type, id, page = 0;
     var query_or = undefined;
 
+    var query_and = [];
+
     if (req.params.type == 'label' && req.params.id == 'all') {
         type = 'label';
         id = 'all';
@@ -22,7 +24,9 @@ async function getData(req, res) {
     } else if (req.params.type == 'label') {
         type = 'label';
         id = req.params.id;
-        query['labels'] = req.params.id;
+        query_and.push({
+            labels: id
+        });
     } else if (req.params.type != 'all' && req.params.id != 'all') {
         type = req.params.type + '_id';
         id = parseInt(req.params.id);
@@ -45,7 +49,7 @@ async function getData(req, res) {
     if (record == null) {
         // return an empty list
         return {
-            json: {}
+            json: []
         };
     }
 
@@ -55,7 +59,7 @@ async function getData(req, res) {
         sequence: record.sequence,
         required: ['page', 'sequence'],
     }
-    req.alternativeUrl = '/cache/1hour/killmails/' + req.params.type + '/' + req.params.id + '.html';
+    req.alternativeUrl = '/cache/1hour/killmails/' + req.params.type + '/' + req.params.id + '.json';
     var valid = req.verify_query_params(req, valid);
     if (valid !== true) return valid;
 
@@ -67,11 +71,11 @@ async function getData(req, res) {
             if (modifier <= last_modifier) return null; // 404
 
             if (modifier == 'killed') {
-                query_or = [{
+                if (type != 'label') query_or = [{
                     [key]: id
                 }];
             } else if (modifier == 'lost') {
-                query_or = [{
+                if (type != 'label') query_or = [{
                     [key]: (-1 * id)
                 }];
             } else if (modifier == 'npc') {
@@ -79,26 +83,45 @@ async function getData(req, res) {
             } else if (modifier == 'pvp') {
                 query['stats'] = true;
             } else {
-                query.labels = modifier;
+                query_and.push({
+                    labels: modifier.replace(' ', '+')
+                });
             }
             last_modifier = modifier;
         }
     }
+    if (query_and.length > 0) {
+        query['$and'] = query_and;
+    }
+
     if (query_or != undefined) query['$or'] = query_or;
     page = req.query['page'];
 
-    var collection = (get_sum(record, 'week') >= 50 ? 'killmails_7' : (get_sum(record, 'recent') >= 50 ? 'killmails_90' : 'killmails'));
-
-    let result = await app.db[collection].find(query)
-        .sort({
-            killmail_id: -1
-        })
-        .skip(page * 50)
-        .limit(50)
-        .toArray();
+    var killmails;
+    var collections = ['killmails_7', 'killmails_90', 'killmails'];
+    for (var i = 0; i < collections.length; i++) {
+        /*console.log(collections[i], query, await app.db[collections[i]].find(query)
+            .sort({
+                killmail_id: -1
+            })
+            .skip(page * 50) // faster without a limit... 
+            .batchSize(50).explain());*/
+        let result = await app.db[collections[i]].find(query)
+            .sort({
+                killmail_id: -1
+            })
+            .skip(page * 50) // faster without a limit... 
+            .batchSize(50);
+        killmails = [];
+        while (await result.hasNext()) {
+            killmails.push((await result.next()).killmail_id)
+            if (killmails.length >= 50) break;
+        }
+        if (killmails.length >= 50) break;
+    }
 
     return {
-        json: result
+        json: killmails
     };
 }
 

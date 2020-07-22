@@ -7,14 +7,14 @@ module.exports = router;
 // Site
 addGet('/index.html', 'site/index', 'index.pug');
 addGet('/site/information/:type/:id.html', 'site/information.js', 'information.pug');
-addGet('/site/killmails/:type/:id.html', 'site/kill-list.js', 'kill-list.pug');
+addGet('/site/killmails/:type/:id.json', 'site/kill-list.js', 'kill-list.pug');
 addGet('/site/statistics/:type/:id.html', 'site/statistics.js', 'statistics.pug');
 
 // Cached endpoints
 addGet('/cache/1hour/killmail/:id.html', 'site/killmail.js', 'killmail.pug');
 addGet('/cache/1hour/killmail/:id/remaining.html', 'site/killmail-remaining.js', 'killmail-remaining.pug');
 addGet('/cache/1hour/killmail/row/:id.html', 'site/killmail-row.js', 'killmail-row.pug');
-addGet('/cache/1hour/killmails/:type/:id.html', 'site/kill-list.js', 'kill-list.pug');
+addGet('/cache/1hour/killmails/:type/:id.json', 'site/kill-list.js');
 addGet('/cache/1hour/autocomplete/', 'site/autocomplete.js');
 
 addGet('/cache/1hour/api/information/:type/:id/:field.html', 'site/information', 'raw.pug');
@@ -57,7 +57,6 @@ async function doStuff(req, res, next, controllerFile, pugFile) {
                 } else {
                     if (compiled[pugFile] == null) {
                         compiled[pugFile] = pug.compileFile(__dirname + '/views/' + pugFile);
-                        //console.log(compiled[pugFile]);
                     }
                     var o = {};
                     Object.assign(o, res.locals);

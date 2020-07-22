@@ -16,7 +16,7 @@ const stats = {
             this.apply(record, epoch, fquery, false, 'groups');
             this.apply(record, epoch, fquery, false, 'labels');
             this.apply(record, epoch, fquery, false, 'months');
-            //this.applyTop10(record, epoch, fquery, false);
+            this.applyTop10(record, epoch, fquery, false);
         }
 
         if (record.type == 'label' & record.id == 'all') {
@@ -31,33 +31,42 @@ const stats = {
         this.apply(record, epoch, fquery, true, 'groups');
         this.apply(record, epoch, fquery, true, 'labels');
         this.apply(record, epoch, fquery, true, 'months');
-        //this.applyTop10(record, epoch, fquery, true);
+        this.applyTop10(record, epoch, fquery, true);
 
-        var solokills;
-        try {
-            solokills = record[epoch]['labels']['solo']['killed'];
-            if (solokills == undefined) solokills = 0;
-        } catch (e) {
-            solokills = 0;
-        }
         var killed = record[epoch].killed || 0;
         var lost = record[epoch].lost || 0;
-        var total = killed + lost;
-        var eff = (total > 0 ? (100 * (killed / total)) : null);
-        var avg_inv_cnt = (killed > 0 ? (record[epoch].inv_killed / killed) : null);
-        var solo = (killed > 0 ? 100 * (solokills / killed) : null);
-        var snuggly = (eff == null ? null : (100 - eff));
-        var score = (eff == null || avg_inv_cnt == null) ? null : Math.max(0, (eff - (snuggly / 2) - Math.sqrt(avg_inv_cnt - 1)));
 
-        record[epoch]['solo'] = solo;
-        record[epoch]['eff'] = eff;
-        record[epoch]['snuggly'] = snuggly;
-        record[epoch]['avg_inv_cnt'] = avg_inv_cnt;
-        record[epoch]['score'] = score;
+        if (killed + lost == 0) {
+            return null; // Nothing here, return nothing
+        } else {
+            var solokills;
+            try {
+                solokills = record[epoch]['labels']['solo']['killed'];
+                if (solokills == undefined) solokills = 0;
+            } catch (e) {
+                solokills = 0;
+            }
+            var total = killed + lost;
+            var eff = (total > 0 ? (100 * (killed / total)) : null);
+            var avg_inv_cnt = (killed > 0 ? (record[epoch].inv_killed / killed) : null);
+            var solo = (killed > 0 ? 100 * (solokills / killed) : null);
+            var snuggly = (eff == null ? null : (100 - eff));
+            var score = (eff == null || avg_inv_cnt == null) ? null : Math.max(0, (eff - (snuggly / 2) - Math.sqrt(avg_inv_cnt - 1)));
 
-        record[epoch].last_sequence = max;
+            record[epoch]['solo'] = solo;
+            record[epoch]['eff'] = eff;
+            record[epoch]['snuggly'] = snuggly;
+            record[epoch]['avg_inv_cnt'] = avg_inv_cnt;
+            record[epoch]['score'] = score;
 
-        return record[epoch];
+            record[epoch].last_sequence = max;
+        }
+
+        try {
+            return record[epoch];
+        } finally {
+            record = null;
+        }
     },
 
     apply: function (record, epoch, result, areKills, label) {
@@ -80,6 +89,7 @@ const stats = {
                 record[epoch]['inv_' + type] = (record[epoch]['inv_' + type] || 0) + (row.inv || 0);
             }
         }
+        agg = null;
     },
 
     applyTop10: function (record, epoch, result, areKills) {
@@ -113,6 +123,8 @@ const stats = {
         } else {
             delete record[epoch][key]; // Don't save it to db since nothing changed
         }
+
+        agg = null;
     },
 
     getMins: function (arr) {
@@ -230,7 +242,7 @@ const stats = {
                             }
                         }
                     }],
-                    /*'topisk': [{
+                    'topisk': [{
                         $project: {
                             killmail_id: 1,
                             total_value: 1
@@ -247,7 +259,7 @@ const stats = {
                         }
                     }, {
                         $limit: 10
-                    }]*/
+                    }]
                 }
             }, ], {
                 allowDiskUse: true
@@ -274,9 +286,10 @@ const stats = {
     },
 
     wait_for_stats: async function (app, epoch) {
+        if (epoch == undefined) throw 'Invalid epoch';
         var count;
         do {
-            if (app.bailout == true) throw 'bailing!';            
+            if (app.bailout == true) throw 'bailing!';
             count = await app.db.statistics.countDocuments({
                 ['update_' + epoch]: true
             });

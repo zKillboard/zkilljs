@@ -166,25 +166,28 @@ div#overview-information ul li {
 }
 
 /* https://stackoverflow.com/questions/41747667/bootstrap-4-responsive-tables-wont-take-up-100-width */
-.table-responsive {
+/*.table-responsive {
     display: table;
-}
+}*/
 
 #stats-table td,
 #stats-table th {
     text-align: right;
-    width: 6rem;
-    min-width: 6em;
 }
 
-.timespan {
-    width: 2em !important;
-    min-width: 2em !important;
+.w-integer {
+    width: 7em;
+    min-width: 7em;
 }
 
-.timespanselector {
-    padding: 0px;
-    margin: 0px;
+.w-isk {
+    width: 5em;
+    min-width: 5em;
+}
+
+.w-decimal {
+    width: 5em;
+    min-width: 5em;
 }
 
 #overview-information,

@@ -26,11 +26,13 @@ async function f(app) {
 }
 
 async function parse_mail(app, killhash) {
+    var killmail = {};
     try {
         // just so we can reuse the sequence number
-        var prev_parsed_mail = undefined; /*await app.db.killmails.findOne({
-            killmail_id: killhash.killmail_id
-        });*/
+        var prev_parsed_mail = undefined;
+        /*await app.db.killmails.findOne({
+                   killmail_id: killhash.killmail_id
+               });*/
 
         let remove_alltime = app.db.killmails.removeOne({
             killmail_id: killhash.killmail_id
@@ -42,7 +44,6 @@ async function parse_mail(app, killhash) {
             killmail_id: killhash.killmail_id
         });
 
-        var killmail = {};
         killmail.killmail_id = killhash.killmail_id;
         killmail.hash = killhash.hash;
 
@@ -154,42 +155,64 @@ async function parse_mail(app, killhash) {
         if (killmail.epoch > (now - (7 * 86400))) await app.db.killmails_7.insertOne(killmail);
         await app.db.killhashes.updateOne(killhash, parsed);
         app.zincr('mails_parsed');
-
-        publishToKillFeed(app, killmail);
-
-        killmail = null; // memory leak protection
     } catch (e) {
         console.log(e, killhash);
-        await app.db.killhashes.updateOne(killhash, {$set: { status: 'parse-error'}});
+        await app.db.killhashes.updateOne(killhash, {
+            $set: {
+                status: 'parse-error'
+            }
+        });
+    } finally {
+        publishToKillFeed(app, killmail);
+        killmail = null; // memory leak protection
     }
 }
 
 async function publishToKillFeed(app, killmail) {
-    var sent = [];
-    var msg = JSON.stringify({
-        'action': 'killlistfeed',
-        'killmail_id': killmail.killmail_id
-    });
-    var keys = Object.keys(killmail.involved);
-    var keybase, type, ids, entity_id, key;
+    try {
+        var sent = [];
+        var msg = JSON.stringify({
+            'action': 'killlistfeed',
+            'killmail_id': killmail.killmail_id
+        });
+        var keys = Object.keys(killmail.involved);
+        var keybase, type, ids, entity_id, key;
 
-    app.redis.publish('killlistfeed:all', msg);
-    for (var i = 0; i < keys.length; i++) {
-        type = keys[i];
-        keybase = type.replace('_id', '');
-        ids = killmail.involved[type];
-        for (entity_id of ids) {
-            entity_id = Math.abs(entity_id);
-            key = '/' + keybase + '/' + entity_id;
-            if (sent.indexOf(key) != -1) continue;
-            await app.redis.publish('killlistfeed:' + key, msg);
-            sent.push(key);
+        // Iterate each type and id first to make sure we have all information needed
+        // before sending it off to the masses
+        for (var i = 0; i < keys.length; i++) {
+            type = keys[i];
+            keybase = type.replace('_id', '');
+            ids = killmail.involved[type];
+            for (entity_id of ids) {
+                entity_id = Math.abs(entity_id);
+                await app.util.entity.wait(app, type, entity_id);
+            }
         }
-    }
-    killmail.labels.push('all');
-    for (var label of killmail.labels) {
-        key = '/label/' + label;
-        await app.redis.publish('killlistfeed:' + key, msg);
+
+        app.redis.publish('killlistfeed:all', msg);
+        for (var i = 0; i < keys.length; i++) {
+            type = keys[i];
+            keybase = type.replace('_id', '');
+            ids = killmail.involved[type];
+            for (entity_id of ids) {
+                entity_id = Math.abs(entity_id);
+                // Make sure we have information on this entity
+                await app.util.entity.wait(app, type, entity_id);
+
+                key = '/' + keybase + '/' + entity_id;
+                if (sent.indexOf(key) != -1) continue;
+                await app.redis.publish('killlistfeed:' + key, msg);
+                sent.push(key);
+            }
+        }
+        killmail.labels.push('all');
+        for (var label of killmail.labels) {
+            key = '/label/' + label;
+            await app.redis.publish('killlistfeed:' + key, msg);
+        }
+    } catch (e) {
+        // ignore the error
     }
 }
 

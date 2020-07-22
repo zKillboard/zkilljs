@@ -68,6 +68,8 @@ function addResults(allresults, result, ids) {
 }
 
 var types = [
+    'region_id',
+    'solar_system_id',
     'item_id',
     'group_id',
     'faction_id',
@@ -75,9 +77,7 @@ var types = [
     'corporation_id',
     'character_id',
     'category_id',
-    'region_id',
     'location_id',
-    'solar_system_id',
     'constellation_id',
 ]; // war_id is excluded
 

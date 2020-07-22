@@ -1,105 +1,140 @@
 doctype html
 html
-	head
-		meta(charset='UTF-8')
-		meta(name='viewport' content='width=device-width, initial-scale=1')
-		title= json.title
-		link(rel='stylesheet' href='/css/cyborg.css')
-		script(src='https://cdn.jsdelivr.net/npm/vanilla-lazyload@12.0.0/dist/lazyload.min.js')
-		link(rel='stylesheet' href='/css/spinner.css?v=' + server_started)
-		link(rel='stylesheet' href='/css/z.css?v=' + server_started)
+    head
+        meta(charset='UTF-8')
+        meta(name='viewport' content='width=device-width, initial-scale=1')
+        title= json.title
+        link(rel='stylesheet' href='/css/cyborg.css')
+        link(rel='stylesheet' href='/css/spinner.css?v=' + server_started)
+        link(rel='stylesheet' href='/css/z.css?v=' + server_started)
 
-	body
-		div.wrapper.container-fluid
-			div#content
-				nav#toptoptop.navbar.navbar-expand-lg
-					a.navbar-brand.override(href='/')= 'zkillboard.dev (alpha)'
-					ul.navbar-nav.mr-auto
-					form.form-inline.my-2.my-lg-0(onsubmit='return false;')
-						input#autocomplete.form-control.mr-sm-2(type='Search' placeholder='Search' aria-label='Search')
-				hr
-				div#overview
-					div.row
-						div#overview-information.col-6
-						div#overview-statistics.col-6
-							div.table-responsive
-								table#stats-table.table.table-hover.table-sm.table-responsive
-									thead
-										tr
-											th.timespan Days
-											th Killed
-											th ISK
-											th Lost
-											th ISK
-											th Eff
-											th Snuggly
-											th Solo
-											th Inv Avg
-											th Score
-											th Rank
-									tbody
-										tr
-											th ∞
-											td#alltime-kills.clearbeforeload.green(format='integer')
-											td#alltime-isk-killed.clearbeforeload.green(format='fnumber')
-											td#alltime-lost.clearbeforeload.red(format='integer')
-											td#alltime-isk-lost.clearbeforeload.red(format='fnumber')
-											td#alltime-eff.clearbeforeload(format='percentage')
-											td#alltime-dangerlevel.clearbeforeload(format='percentage')
-											td#alltime-solopct.clearbeforeload(format='percentage')
-											td#alltime-avg-inv-cnt.clearbeforeload(format='decimal')
-											td#alltime-zscore.clearbeforeload(format='percentage')
-											td#alltime-rank.clearbeforeload(format='integer')
-										tr
-											th 90
-											td#recent-kills.clearbeforeload.green(format='integer')
-											td#recent-isk-killed.clearbeforeload.green(format='fnumber')
-											td#recent-lost.clearbeforeload.red(format='integer')
-											td#recent-isk-lost.clearbeforeload.red(format='fnumber')
-											td#recent-eff.clearbeforeload(format='percentage')
-											td#recent-dangerlevel.clearbeforeload(format='percentage')
-											td#recent-solopct.clearbeforeload(format='percentage')
-											td#recent-avg-inv-cnt.clearbeforeload(format='decimal')
-											td#recent-zscore.clearbeforeload(format='percentage')
-											td#recent-rank.clearbeforeload(format='integer')
-										tr
-											th 7
-											td#week-kills.clearbeforeload.green(format='integer')
-											td#week-isk-killed.clearbeforeload.green(format='fnumber')
-											td#week-lost.clearbeforeload.red(format='integer')
-											td#week-isk-lost.clearbeforeload.red(format='fnumber')
-											td#week-eff.clearbeforeload(format='percentage')
-											td#week-dangerlevel.clearbeforeload(format='percentage')
-											td#week-solopct.clearbeforeload(format='percentage')
-											td#week-avg-inv-cnt.clearbeforeload(format='decimal')
-											td#week-zscore.clearbeforeload(format='percentage')
-											td#week-rank.clearbeforeload(format='integer')
-										
+    body
+        div.wrapper.container-fluid
+            div#content
+                nav#toptoptop.navbar.navbar-expand-lg
+                    a.navbar-brand.override(href='/')
+                        img.d-inline-block(src="/img/zkill.png" width="30" height="30" alt="zKillboard wreck icon")
+                        span.d-none.d-md-inline-block.text-dark &nbsp;zKillboard (alpha)
+                    ul.navbar-nav.mr-auto
+                    form.form-inline.my-2.my-lg-0(onsubmit='return false;')
+                        input#autocomplete.form-control.mr-sm-2(type='Search' placeholder='Search' aria-label='Search')
+                hr
+                div#overview.collapse.container-fluid
+                    div.row
+                        div#overview-information.col-6
+                        div#overview-statistics.col-6
+                            div.table-responsive.float-right
+                                table#stats-table.table.table-hover.table-sm.table-responsive
+                                    thead
+                                        tr
+                                            th.timespan Days
+                                            th.w-integer Killed
+                                            th.w-isk ISK
+                                            th.w-integer Lost
+                                            th.w-isk ISK
+                                            th.w-decimal Eff
+                                            th.w-decimal Snuggly
+                                            th.w-decimal Solo
+                                            th.w-decimal Inv Avg
+                                            th.w-decimal Score
+                                            th.w-decimal Rank
+                                    tbody
+                                        tr
+                                            th ∞
+                                            td#alltime-kills.clearbeforeload.green(format='integer')
+                                            td#alltime-isk-killed.clearbeforeload.green(format='fnumber')
+                                            td#alltime-lost.clearbeforeload.red(format='integer')
+                                            td#alltime-isk-lost.clearbeforeload.red(format='fnumber')
+                                            td#alltime-eff.clearbeforeload(format='percentage')
+                                            td#alltime-dangerlevel.clearbeforeload(format='percentage')
+                                            td#alltime-solopct.clearbeforeload(format='percentage')
+                                            td#alltime-avg-inv-cnt.clearbeforeload(format='decimal')
+                                            td#alltime-zscore.clearbeforeload(format='percentage')
+                                            td#alltime-rank.clearbeforeload(format='integer')
+                                        tr
+                                            th 90
+                                            td#recent-kills.clearbeforeload.green(format='integer')
+                                            td#recent-isk-killed.clearbeforeload.green(format='fnumber')
+                                            td#recent-lost.clearbeforeload.red(format='integer')
+                                            td#recent-isk-lost.clearbeforeload.red(format='fnumber')
+                                            td#recent-eff.clearbeforeload(format='percentage')
+                                            td#recent-dangerlevel.clearbeforeload(format='percentage')
+                                            td#recent-solopct.clearbeforeload(format='percentage')
+                                            td#recent-avg-inv-cnt.clearbeforeload(format='decimal')
+                                            td#recent-zscore.clearbeforeload(format='percentage')
+                                            td#recent-rank.clearbeforeload(format='integer')
+                                        tr
+                                            th 7
+                                            td#week-kills.clearbeforeload.green(format='integer')
+                                            td#week-isk-killed.clearbeforeload.green(format='fnumber')
+                                            td#week-lost.clearbeforeload.red(format='integer')
+                                            td#week-isk-lost.clearbeforeload.red(format='fnumber')
+                                            td#week-eff.clearbeforeload(format='percentage')
+                                            td#week-dangerlevel.clearbeforeload(format='percentage')
+                                            td#week-solopct.clearbeforeload(format='percentage')
+                                            td#week-avg-inv-cnt.clearbeforeload(format='decimal')
+                                            td#week-zscore.clearbeforeload(format='percentage')
+                                            td#week-rank.clearbeforeload(format='integer')
+                                        
 
-					div.clearfix
-					div#overview-menu
-					div.row.d-none
-						nav.navbar
-							div.collapse.navbar-collapse
-								ul.navbar-nav.mr-auto
-									li.nav-item all
-						
-					div.row
-						div#overview-killmails
-						div#overview-weekly
-				div#killmail.row
-				div#other.row
-		div.clearfix.push
-		div#footer
-			footer.footer
-				small
-					center
-						| Brought to you by 
-						a.override(href='/character/1633218082') Squizz Caphinator
-					center(data-toggle='tooltip' style='cursor: pointer; text-decoration: underline' title='EVE Online and the EVE logo are the registered trademarks of CCP hf. All rights are reserved worldwide. All other trademarks are the property of their respective owners. EVE Online, the EVE logo, EVE and all associated logos and designs are the intellectual property of CCP hf. All artwork, screenshots, characters, vehicles, storylines, world facts or other recognizable features of the intellectual property relating to these trademarks are likewise the intellectual property of CCP hf. CCP hf. has granted permission to evewho.com to use EVE Online and all associated logos and designs for promotional and information purposes on its website but does not endorse, and is not in any way affiliated with, evewho.com. CCP is in no way responsible for the content on or functioning of this website, nor can it be liable for any damage arising from the use of this website.')  All Eve Related Materials are Property of CCP Games
-
+                    div.clearfix
+                    
+                    div.row#overview-menu
+                        div.btn-toolbar(role="tooolbar" aria-label="Overview Menu")
+                            div.btn-group.mr-2
+                                button#feedbutton.btn.btn-primary(type='button')
+                                    svg#feedactive.bi.bi-play-fill(width='1em', height='1em', viewbox='0 0 16 16', fill='currentColor', xmlns='http://www.w3.org/2000/svg')
+                                        path(d='M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z')
+                                    svg#feedinactive.collapse.bi.bi-pause-fill(width='1em', height='1em', viewbox='0 0 16 16', fill='currentColor', xmlns='http://www.w3.org/2000/svg')
+                                        path(d='M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z')
+                                    | Feed
+                                button#filtersbutton.btn.btn-secondary(type='button' toggle='#overview-filters' data-toggle="button") Filters
+                    div.row#overview-filters.collapse(style='margin-top: 1em;')
+                        div.btn-toolbar(role="tooolbar" aria-label="Overview Filter")
+                            div.btn-group.mr-2
+                                button#allbtn.ofilter.btn.btn-primary(type='button') All
+                                button.ofilter.btn.btn-secondary(type='button') Killed
+                                button.ofilter.btn.btn-secondary(type='button') Lost
+                            div.btn-group.mr-2
+                                button.ofilter.btn.btn-secondary(type='button') HIGHSEC
+                                button.ofilter.btn.btn-secondary(type='button') LOWSEC
+                                button.ofilter.btn.btn-secondary(type='button') NULLSEC
+                                button.ofilter.btn.btn-secondary(type='button') W-SPACE
+                                button.ofilter.btn.btn-secondary(type='button') Abyssal
+                            div.btn-group.mr-2
+                                button.ofilter.btn.btn-secondary(type='button') NPC
+                                button.ofilter.btn.btn-secondary(type='button') PVP
+                                button.ofilter.btn.btn-secondary(type='button') Solo
+                                button.ofilter.btn.btn-secondary(type='button') Abyssal-PVP
+                                button.ofilter.btn.btn-secondary(type='button') 100+
+                                button.ofilter.btn.btn-secondary(type='button') 1000+
+                                button.ofilter.btn.btn-secondary(type='button') BIGISK
+                                button.ofilter.btn.btn-secondary(type='button') EXTREMEISK
+                                button.ofilter.btn.btn-secondary(type='button') INSANEISK
+                    br   
+                    div.row
+                        div#overview-killmails
+                            div#killlist
+                        div#overview-weekly
+                div#killmail.row.collapse
+                div#other.row.collapse
+        div.clearfix.push
+        div#footer
+            footer.footer
+                small
+                    center
+                        | Brought to you by 
+                        a.override(href='/character/1633218082') Squizz Caphinator
+                    center(data-toggle='tooltip' style='cursor: pointer; text-decoration: underline' title='EVE Online and the EVE logo are the registered trademarks of CCP hf. All rights are reserved worldwide. All other trademarks are the property of their respective owners. EVE Online, the EVE logo, EVE and all associated logos and designs are the intellectual property of CCP hf. All artwork, screenshots, characters, vehicles, storylines, world facts or other recognizable features of the intellectual property relating to these trademarks are likewise the intellectual property of CCP hf. CCP hf. has granted permission to evewho.com to use EVE Online and all associated logos and designs for promotional and information purposes on its website but does not endorse, and is not in any way affiliated with, evewho.com. CCP is in no way responsible for the content on or functioning of this website, nor can it be liable for any damage arising from the use of this website.')  All Eve Related Materials are Property of CCP Games
+div.collapse
+    div#spinner
+        div.lds-ring
+            div
+            div
+            div
+            div
 script
-	| var start_time = Date.now()
+    | var start_time = Date.now()
 //-script(defer src='https://cdn.jsdelivr.net/npm/vanilla-lazyload@12.0.0/dist/lazyload.min.js')
 
 script(defer src='/js/jquery-3.4.1.min.js')

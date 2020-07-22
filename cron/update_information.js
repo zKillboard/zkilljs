@@ -18,7 +18,7 @@ var urls = {
     'group_id': '/v1/universe/groups/:id/',
     'character_id': '/v4/characters/:id/',
     'corporation_id': '/v4/corporations/:id/',
-    'alliance_id': '/v3/alliances/:id/',
+    'alliance_id': '/v4/alliances/:id/',
     'category_id': '/v1/universe/categories/:id/',
     'solar_system_id': '/v4/universe/systems/:id/',
     'constellation_id': '/v1/universe/constellations/:id/',
@@ -61,7 +61,11 @@ async function populateSet(app, typeValue) {
         while (await rows.hasNext()) {
             if (app.bailout == true || app.no_api == true) break;
 
-            fetch(app, await rows.next());
+            var p = fetch(app, await rows.next());
+            if (typeValue == 'alliance_id') {
+                await p;
+                await app.sleep(1000);
+            }
             let wait = 20;
             while (set.size > 100) {
                 wait--;
@@ -77,8 +81,7 @@ async function populateSet(app, typeValue) {
             await app.sleep(1);
         }
     } catch (e) {
-        console.log(e);
-        console.log('dropped on ' + typeValue);
+        console.log(e, 'dropped on ' + typeValue);
     } finally {
         if (fetched == 0) await app.sleep(1000);
         populateSet(app, typeValue);
@@ -96,7 +99,7 @@ async function fetch(app, row) {
         let res = await app.phin({
             url: url,
             headers: {
-                'If-None-Match': row.etag || ''
+                'If-None-Match': (row.type == 'alliance_id' ? '' : row.etag || '')
             }
         });
 
@@ -172,12 +175,12 @@ async function fetch(app, row) {
             break;
         case 420:
             app.no_api = true;
-            setTimeout(() => {
-                app.no_api = false;
-            }, 1000 + (Date.now() % 60000));
-            //console.log("420'ed", );
+            setTimeout(clear_no_api, 1000 + (Date.now() % 60000));
+            console.log("420'ed");
             break;
         case 500:
+            console.log(row.type, row.id, '500 received');
+            break;
         case 502:
         case 503:
         case 504:
@@ -201,6 +204,10 @@ async function fetch(app, row) {
 }
 
 module.exports = f;
+
+function clear_no_api(app) {
+    app.no_api = false;
+}
 
 function esi_err_log(app) {
     esi_error++;

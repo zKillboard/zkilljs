@@ -67,7 +67,7 @@ const entity = {
             await app.sleep(1000);
             count++;
             if (count > 10) throw 'Taking too long with this wait for ' + type + ' ' + id;
-            console.log('entity.wait: Waiting on ' + type + ' ' + id);
+            //console.log('entity.wait: Waiting on ' + type + ' ' + id);
         }
     },
 

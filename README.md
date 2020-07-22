@@ -62,6 +62,7 @@ A rewrite of zkillboard using JavaScript Node and NPM packages.
 - Tickets
 - Payments history
 - Other account settings
+- Added random hull destruction sound
 
 #### Overview Page
 - Statistics, Ships, ISK, Involved Pct, Ranks for each w/ Kills/Losses, Dangerous/Snuggly Bar, Gangs/Solo Bar

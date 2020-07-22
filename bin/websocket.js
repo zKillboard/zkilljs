@@ -22,7 +22,7 @@ redis.on("pmessage", (pattern, channel, message) => {
 			}
 		}
 	});
-	if (count > 0) console.log(`Websocket: Broadcasted to ${count} clients: ${message}`);
+	//if (count > 0) console.log(`Websocket: Broadcasted to ${count} clients: ${message}`);
 	updateWsCount(redis2, ws.connections.length);
 });
 redis.psubscribe("*");

@@ -10,6 +10,7 @@ var timeouts = [];
 var type = undefined;
 var id = undefined;
 var killmail_id = undefined;
+var pagepath;
 
 var fetch_controller = new AbortController();
 
@@ -42,6 +43,9 @@ function documentReady() {
     ws_connect();
     is_jquery_loaded();
     loadPage();
+    $(".ofilter").unbind().click(filterchange);
+    $("#feedbutton").unbind().click(feedtoggle);
+    $("#filtersbutton").unbind().click(filtertoggle);
 
     historyReady();
     toggleTooltips();
@@ -52,7 +56,6 @@ function documentReady() {
         dataType: 'json',
         groupBy: 'groupBy',
         onSelect: function (suggestion) {
-            //window.location = '/' + suggestion.data.type + '/' + suggestion.data.id;
             var path = '/' + suggestion.data.type + '/' + suggestion.data.id;
             linkClicked(path);
         },
@@ -60,13 +63,7 @@ function documentReady() {
             console.log(xhr);
         }
     });
-}
-
-function timespantoggle(selector) {
-    /*
-    $(".tr-timespanrow").hide();
-    $(selector).show(); 
-    */
+    console.log("Page ready");
 }
 
 function toggleTooltips() {
@@ -101,6 +98,7 @@ function loadPage(url) {
     $("#page-title").html("&nbsp;");
     $(".clearbeforeload").hide();
     $(".hidebeforeload").hide();
+    resetFilters();
 
 
     window.scrollTo(0, 0);
@@ -121,8 +119,8 @@ function loadPage(url) {
         break;
     default:
         showSection('overview');
+        pagepath = type + '/' + id;
         loadOverview(path, type, id);
-        timespantoggle('.tr-week');
         break;
     }
 }
@@ -142,7 +140,9 @@ function showSection(section) {
 function loadOverview(path, type, id) {
     if (path == '/') path = '/label/all';
     path = path.replace('/system/', '/solar_system/').replace('/type/', '/item/');
-    apply('overview-killmails', '/site/killmails' + path + '.html', 'killlistfeed:' + path);
+    pagepath = path;
+    loadKillmails('/site/killmails' + path + '.json', 'killlistfeed:' + path);
+    //apply('overview-killmails', '/site/killmails' + path + '.html', 'killlistfeed:' + path);
     apply('overview-information', '/site/information' + path + '.html');
     load_stats_box({
         path: path,
@@ -150,16 +150,26 @@ function loadOverview(path, type, id) {
     });
     ws_action('sub', 'statsfeed:' + path);
     showSection('overview');
-
-    /*<div id="overview-information"></div>
-        <div id="overview-statistics"></div>
-        <div id="overview-menu"></div>
-        <div id="overview-killmails"></div>
-        <div id="overview-weekly"></div>*/
 }
 
-function loadKillmail(killmail_id) {
-
+function loadKillmails(url, subscribe) {
+    $("#killlist").html($("#spinner").html());
+    fetch(url, {
+        signal: fetch_controller.signal
+    }).then(function (res) {
+        if (res.ok) {
+            res.text().then(function (text) {
+                var data = parseJSON(text);
+                if (data.length == 0) {
+                    $("#killlist").html("<i>Nothing to see here...</i>");
+                } else {
+                    $("#killlist").html('');
+                    load_killmail_rows(data);
+                }
+                if (subscribe) ws_action('sub', subscribe);
+            });
+        }
+    });
 }
 
 // Prevents the kill list from becoming too large and causing the browser to eat up too much memory
@@ -199,6 +209,7 @@ function applyRedGreen() {
 }
 
 function apply(element, path, subscribe, delay) {
+    console.log(path);
     if (typeof element == 'string') element = document.getElementById(element);
     // Clear the element
     if (delay != true) element.innerHTML = "";
@@ -267,9 +278,15 @@ function handleJSON(res) {
             for (var i = 0; i < keys.length; i++) {
                 var key = keys[i];
                 var value = data[key];
+
+                if (key == 'labels') {
+                    applyLabelToggles(value);
+                    continue;
+                }
+
                 var elem = document.getElementById(key);
                 if (elem == null) {
-                    //console.log('could not find ' + key);
+                    console.log('could not find ' + key);
                     continue;
                 }
                 var format = elem.getAttribute('format');
@@ -299,6 +316,23 @@ function handleJSON(res) {
             }
         });
     }
+}
+
+var ignored = ['all', 'killed', 'lost', 'pvp', 'npc'];
+
+function applyLabelToggles(labels) {
+    $(".ofilter").each(function () {
+        var btn = $(this);
+        var html = btn.html().toLowerCase();
+        if (ignored.indexOf(html) > -1) return;
+        btn.toggle(labels.indexOf(html) > -1);
+        /*if (labels.indexOf(html) > -1) {
+            btn.removeAttr("disabled"); // removeClass("btn-light").addClass("btn-secondary").
+        } else {
+            btn.attr("disabled", "true"); // removeClass("btn-secondary").addClass("btn-light").
+        }*/
+    });
+
 }
 
 /* By moving this into a function, the value of value is preserved 
@@ -441,7 +475,7 @@ function intToString(value) {
 
 function ws_connect() {
     try {
-        ws = new ReconnectingWebSocket('wss://zkillboard.com:2096/', '', {
+        ws = new ReconnectingWebSocket('wss://zkillboard.dev/websocket/', '', {
             maxReconnectAttempts: 15
         });
         ws.onmessage = function (event) {
@@ -450,6 +484,9 @@ function ws_connect() {
         ws.onopen = function (event) {
             console.log('Websocket connected');
             ws_action('sub', 'zkilljs:public');
+        }
+        ws.onclose = function (event) {
+            markChecked($("#feedbutton"), false);
         }
     } catch (e) {
         timeouts.push(setTimeout(ws_connect, 100));
@@ -476,15 +513,23 @@ function ws_clear_subs() {
 // Send an action through the websocket
 function ws_action(action, msg, iteration) {
     try {
+        var feedenabled = $("#feedbutton").hasClass("btn-primary");
         var text = JSON.stringify({
             'action': action,
             'channel': msg
         });
-        ws.send(text);
+
         if (action == 'sub') {
-            subscribed_channels.push(msg);
+            if (feedenabled || msg == 'zkilljs:public') {
+                ws.send(text);
+                subscribed_channels.push(msg);
+                console.log('ws_action: ', action, msg);
+            }
+        } else {
+            ws.send(text);
+            console.log('ws_action: ', action, msg);
         }
-        console.log('ws_action: ', action, msg);
+
     } catch (e) {
         iteration = (iteration || 0) + 1;
         if (iteration > 16) return;
@@ -500,7 +545,7 @@ function ws_message(msg) {
     json = JSON.parse(msg);
     switch (json.action) {
     case 'killlistfeed':
-        delayed_json_call(load_killmail_row, json);
+        delayed_json_call(load_killmail_rows, [json.killmail_id]);
         break;
     case 'statsfeed':
         delayed_json_call(load_stats_box, json);
@@ -525,14 +570,17 @@ function delayed_json_call(f, json) {
     }, delay));
 }
 
-function load_killmail_row(json) {
-    var killmail_id = json.killmail_id;
-    // Don't load the same kill twice
-    if ($(".kill-" + killmail_id).length > 0) return;
+function load_killmail_rows(killmail_ids) {
+    killmail_ids.sort();
+    for (var i = 0; i < killmail_ids.length; i++) {
+        var killmail_id = killmail_ids[i];
+        // Don't load the same kill twice
+        if ($(".kill-" + killmail_id).length > 0) return;
 
-    var url = '/cache/1hour/killmail/row/' + killmail_id + '.html';
-    var divraw = '<div fetch="' + url + '" unfetched="true" id="kill-' + killmail_id + '"></div>';
-    $("#killlist").prepend(divraw);
+        var url = '/cache/1hour/killmail/row/' + killmail_id + '.html';
+        var divraw = '<div fetch="' + url + '" unfetched="true" id="kill-' + killmail_id + '"></div>';
+        $("#killlist").prepend(divraw);
+    }
     loadUnfetched(document);
 }
 
@@ -643,6 +691,102 @@ function removeSvgAttribute(element, attr_name, attr_value) {
     var current_value = element.getAttribute(attr_name);
     if (current_value == null) current_value = '';
     element.setAttribute(attr_name, current_value.replace(attr_value, ''));
+}
+
+function filterchange(eventObject, buttonname) {
+    var selected = $(buttonname || this);
+    var parent = selected.parent();
+    var all_btn_checked = false;
+    var other_btn_checked = false;
+
+    var checked = selected.attr('pressed');
+    if (checked == undefined) checked = 'no';
+    parent.children().each(function () {
+        markChecked($(this), false);
+    })
+    markChecked(selected, !(checked == 'yes'));
+
+    $(".ofilter").each(function () {
+        var btn = $(this);
+        if (btn.attr('id') != 'allbtn' && btn.hasClass("btn-primary")) other_btn_checked = true;
+    });
+    if (selected.attr("id") == 'allbtn') {
+        all_btn_checked = true;
+        $(".ofilter").each(function () {
+            markChecked($(this), false);
+        });
+    } else all_btn_checked = !other_btn_checked;
+    markChecked($('#allbtn'), all_btn_checked);
+    if (!all_btn_checked) {
+        feedtoggle(false);
+    }
+
+    // Now build the filter
+    var modifiers = [];
+    $(".ofilter").each(function () {
+        var btn = $(this);
+        if (btn.attr("pressed") == "yes" && btn.attr('id') != 'allbtn') {
+            modifiers.push(btn.html().toLowerCase());
+        }
+    });
+    modifiers.sort();
+
+    var url = '/site/killmails' + pagepath + '.json';
+    if (modifiers.length > 0) url = url + '?modifiers=' + modifiers.join(',');
+    //apply('overview-killmails', url, null, true);
+    loadKillmails(url);
+}
+
+function resetFilters() {
+    $(".ofilter").each(function () {
+        var btn = $(this);
+        markChecked(btn, (btn.attr('id') == 'allbtn'));
+    });
+}
+
+function feedtoggle(enabled, doLoad) {
+    if (doLoad == undefined) doLoad = true;
+    var feedbutton = $("#feedbutton");
+    var checked = feedbutton.attr('pressed');
+    if (checked == undefined) checked = 'yes';
+    if (enabled == undefined) enabled = !(checked == 'yes');
+
+    markChecked(feedbutton, enabled);
+    $("#feedactive").toggle(enabled);
+    $("#feedinactive").toggle(!enabled);
+    if (enabled && doLoad) {
+        resetFilters();
+        loadKillmails('/site/killmails' + pagepath + '.json', 'killlistfeed:' + pagepath);
+        load_stats_box({
+            path: pagepath,
+            interval: 15
+        });
+        ws_action('sub', 'statsfeed:' + pagepath);
+    } else {
+        ws_clear_subs();
+    }
+}
+
+function filtertoggle() {
+    var filterbtn = $("#filtersbutton");
+    var enabled = !filterbtn.hasClass("btn-primary");
+    $("#overview-filters").toggle(enabled);
+    if (enabled) filterbtn.removeClass("btn-secondary").addClass("btn-primary");
+    else filterbtn.removeClass("btn-primary").addClass("btn-secondary");
+    filterbtn.blur();
+    if (!enabled) {
+        resetFilters();
+        loadKillmails('/site/killmails' + pagepath + '.json', 'killlistfeed:' + pagepath);
+        load_stats_box({
+            path: pagepath,
+            interval: 15
+        });
+    }
+}
+
+function markChecked(button, checked) {
+    if (checked == false) button.removeClass("btn-primary").addClass("btn-secondary").attr("pressed", "no").blur();
+    else button.removeClass("btn-secondary").addClass("btn-primary").attr("pressed", "yes").blur();
 }
 
 // Everything has loaded, let's go!

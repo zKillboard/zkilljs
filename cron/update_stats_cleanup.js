@@ -34,7 +34,7 @@ async function clear_kills(app, collection, epoch, max_epoch) {
 
             var killmail = await iter.next();
 
-            if (killmail.killmail_id < 0) await app.util.stats.wait_for_stats(app);
+            if (killmail.killmail_id < 0) await app.util.stats.wait_for_stats(app, epoch);
 
             if (killmail.stats == false || killmail.purging == true || killmail.killmail_id < 0) {
                 await app.db[collection].removeOne({

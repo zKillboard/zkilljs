@@ -38,7 +38,7 @@ module.exports = {
     remove: async function (app, collection, killmail, epoch) {
         var resets = [];
 
-        await app.util.stats.wait_for_stats(app);
+        await app.util.stats.wait_for_stats(app, epoch);
 
         var original_killmail_id = killmail.killmail_id;
         var purge_mail = killmail;
@@ -77,7 +77,7 @@ module.exports = {
             await update_stats_record(app, 'label', label, epoch, purge_mail.sequence);
         }
 
-        await app.util.stats.wait_for_stats(app);
+        await app.util.stats.wait_for_stats(app, epoch);
 
         await app.db[collection].removeOne({
             killmail_id: original_killmail_id

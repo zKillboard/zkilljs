@@ -24,8 +24,9 @@ var tasks = {
 
     // statistics
     'update_stats.js': createTaskSettings(1),
-    'update_stats_cleanup.js': createTaskSettings(1),
     'publish_stats_updates.js': createTaskSettings(15),
+    'update_stats_week_cleanup.js': createTaskSettings(3600),
+    'update_stats_recent_cleanup.js': createTaskSettings(86400),
 
     //'ztop.js': createTaskSettings(1),
 }
@@ -41,8 +42,8 @@ async function getApp() {
 
 var taskname = '';
 if (process.argv[2]) {
-    //debug(process.argv[2]);
-    //return;
+    debug(process.argv[2]);
+    return;
     var onetask = {};
     var keys = Object.keys(tasks);
     var tasknum = Number.parseInt(process.argv[2]);
@@ -158,3 +159,14 @@ watch('restart.txt', {
     await app.redis.set("RESTART", "true");
 });
 
+var max = 0;
+
+function memUsage() {
+    var used = Math.floor(process.memoryUsage().heapUsed / 1024 / 1024);
+    if (used > max) {
+        max = used;
+        console.log(used + ' MB', taskname);
+    }
+    setTimeout(memUsage, 1000);
+}
+memUsage();
