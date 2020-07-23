@@ -43,9 +43,9 @@ function documentReady() {
     ws_connect();
     is_jquery_loaded();
     loadPage();
-    $(".ofilter").unbind().click(filterchange);
-    $("#feedbutton").unbind().click(feedtoggle);
-    $("#filtersbutton").unbind().click(filtertoggle);
+    $(".ofilter").unbind().click(filter_change);
+    $("#feedbutton").unbind().click(feed_toggle);
+    $("#filtersbutton").unbind().click(filter_toggle);
 
     historyReady();
     toggleTooltips();
@@ -209,7 +209,6 @@ function applyRedGreen() {
 }
 
 function apply(element, path, subscribe, delay) {
-    console.log(path);
     if (typeof element == 'string') element = document.getElementById(element);
     // Clear the element
     if (delay != true) element.innerHTML = "";
@@ -226,7 +225,6 @@ function apply(element, path, subscribe, delay) {
 function handleResponse(res, element, path, subscribe) {
     if (res.ok) {
         res.text().then(function (html) {
-            //console.log(path);
             applyHTML(element, html);
             if (subscribe) ws_action('sub', subscribe);
         });
@@ -246,7 +244,6 @@ function applyJSON(path) {
     fetch(path, {
         signal: fetch_controller.signal
     }).then(function (res) {
-        console.log(path);
         handleJSON(res);
     });
 }
@@ -325,12 +322,12 @@ function applyLabelToggles(labels) {
         var btn = $(this);
         var html = btn.html().toLowerCase();
         if (ignored.indexOf(html) > -1) return;
-        btn.toggle(labels.indexOf(html) > -1);
-        /*if (labels.indexOf(html) > -1) {
+        //btn.toggle(labels.indexOf(html) > -1);
+        if (labels.indexOf(html) > -1) {
             btn.removeAttr("disabled"); // removeClass("btn-light").addClass("btn-secondary").
         } else {
             btn.attr("disabled", "true"); // removeClass("btn-secondary").addClass("btn-light").
-        }*/
+        }
     });
 
 }
@@ -486,7 +483,7 @@ function ws_connect() {
             ws_action('sub', 'zkilljs:public');
         }
         ws.onclose = function (event) {
-            markChecked($("#feedbutton"), false);
+            feed_toggle(null, false);
         }
     } catch (e) {
         timeouts.push(setTimeout(ws_connect, 100));
@@ -693,7 +690,7 @@ function removeSvgAttribute(element, attr_name, attr_value) {
     element.setAttribute(attr_name, current_value.replace(attr_value, ''));
 }
 
-function filterchange(eventObject, buttonname) {
+function filter_change(eventObject, buttonname) {
     var selected = $(buttonname || this);
     var parent = selected.parent();
     var all_btn_checked = false;
@@ -702,9 +699,9 @@ function filterchange(eventObject, buttonname) {
     var checked = selected.attr('pressed');
     if (checked == undefined) checked = 'no';
     parent.children().each(function () {
-        markChecked($(this), false);
+        mark_enabled($(this), false);
     })
-    markChecked(selected, !(checked == 'yes'));
+    mark_enabled(selected, !(checked == 'yes'));
 
     $(".ofilter").each(function () {
         var btn = $(this);
@@ -713,19 +710,19 @@ function filterchange(eventObject, buttonname) {
     if (selected.attr("id") == 'allbtn') {
         all_btn_checked = true;
         $(".ofilter").each(function () {
-            markChecked($(this), false);
+            mark_enabled($(this), false);
         });
     } else all_btn_checked = !other_btn_checked;
-    markChecked($('#allbtn'), all_btn_checked);
+    mark_enabled($('#allbtn'), all_btn_checked);
     if (!all_btn_checked) {
-        feedtoggle(false);
+        feed_toggle(null, false);
     }
 
     // Now build the filter
     var modifiers = [];
     $(".ofilter").each(function () {
         var btn = $(this);
-        if (btn.attr("pressed") == "yes" && btn.attr('id') != 'allbtn') {
+        if (btn.hasClass("btn-primary") && btn.attr('id') != 'allbtn') {
             modifiers.push(btn.html().toLowerCase());
         }
     });
@@ -740,18 +737,18 @@ function filterchange(eventObject, buttonname) {
 function resetFilters() {
     $(".ofilter").each(function () {
         var btn = $(this);
-        markChecked(btn, (btn.attr('id') == 'allbtn'));
+        mark_enabled(btn, (btn.attr('id') == 'allbtn'));
     });
 }
 
-function feedtoggle(enabled, doLoad) {
-    if (doLoad == undefined) doLoad = true;
+function feed_toggle(event, enabled, doLoad) {
     var feedbutton = $("#feedbutton");
-    var checked = feedbutton.attr('pressed');
-    if (checked == undefined) checked = 'yes';
-    if (enabled == undefined) enabled = !(checked == 'yes');
+    var isEnabled = feedbutton.hasClass("btn-primary");
 
-    markChecked(feedbutton, enabled);
+    enabled = (enabled == undefined ? !isEnabled : enabled);
+    if (doLoad == undefined) doLoad = true && enabled;
+
+    mark_enabled(feedbutton, enabled); 
     $("#feedactive").toggle(enabled);
     $("#feedinactive").toggle(!enabled);
     if (enabled && doLoad) {
@@ -767,14 +764,14 @@ function feedtoggle(enabled, doLoad) {
     }
 }
 
-function filtertoggle() {
+function filter_toggle() {
     var filterbtn = $("#filtersbutton");
     var enabled = !filterbtn.hasClass("btn-primary");
     $("#overview-filters").toggle(enabled);
     if (enabled) filterbtn.removeClass("btn-secondary").addClass("btn-primary");
     else filterbtn.removeClass("btn-primary").addClass("btn-secondary");
     filterbtn.blur();
-    if (!enabled) {
+    if (!enabled && !$("#allbtn").hasClass("btn-primary")) {
         resetFilters();
         loadKillmails('/site/killmails' + pagepath + '.json', 'killlistfeed:' + pagepath);
         load_stats_box({
@@ -784,9 +781,9 @@ function filtertoggle() {
     }
 }
 
-function markChecked(button, checked) {
-    if (checked == false) button.removeClass("btn-primary").addClass("btn-secondary").attr("pressed", "no").blur();
-    else button.removeClass("btn-secondary").addClass("btn-primary").attr("pressed", "yes").blur();
+function mark_enabled(button, checked) {
+    if (checked == false) button.removeClass("btn-primary").addClass("btn-secondary").blur();
+    else button.removeClass("btn-secondary").addClass("btn-primary").blur();
 }
 
 // Everything has loaded, let's go!
