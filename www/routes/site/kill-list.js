@@ -78,8 +78,6 @@ async function getData(req, res) {
                 if (type != 'label') query_or = [{
                     [key]: (-1 * id)
                 }];
-            } else if (modifier == 'npc') {
-                query['stats'] = false;
             } else if (modifier == 'pvp') {
                 query['stats'] = true;
             } else {
