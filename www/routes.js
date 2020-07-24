@@ -32,6 +32,8 @@ addGet('/api/mongo.json', 'api/mongo.js');
 addGet('/:type/:id', 'site/index', 'index.pug');
 addGet('/', 'site/index', 'index.pug');
 
+addGet('/robots.txt', 'site/robotstxt.js', 'robotstxt.pug');
+
 const pug = require('pug');
 var compiled = {};
 
@@ -44,6 +46,7 @@ async function doStuff(req, res, next, controllerFile, pugFile) {
         req.verify_query_params = verify_query_params;
         let result = await controller(req, res);
         var maxAge = (result == null ? 0 : (result.maxAge || 0));
+        if (result.content_type != undefined) res.setHeader("Content-Type", result.content_type)
 
         //res.set('Cache-Control', 'public, max-age=' + maxAge);
 
