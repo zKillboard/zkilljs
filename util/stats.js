@@ -51,7 +51,7 @@ const stats = {
             var avg_inv_cnt = (killed > 0 ? (record[epoch].inv_killed / killed) : null);
             var solo = (killed > 0 ? 100 * (solokills / killed) : null);
             var snuggly = (eff == null ? null : (100 - eff));
-            var score = (eff == null || avg_inv_cnt == null) ? null : Math.max(0, (eff - (snuggly / 2) - Math.sqrt(avg_inv_cnt - 1)));
+            var score = (eff == null || avg_inv_cnt == null) ? null : Math.max(0, (eff - Math.sqrt(snuggly) - Math.sqrt(avg_inv_cnt - 1)));
 
             record[epoch]['solo'] = solo;
             record[epoch]['eff'] = eff;
@@ -99,48 +99,38 @@ const stats = {
         let type = areKills ? 'killed' : 'lost';
         let key = 'top_' + type;
         if (record[epoch] == undefined) record[epoch] = {};
-        if (record[epoch][key] == undefined) record[epoch][key] = {};
-        let mins = this.getMins(record[epoch][key]);
+        if (record[epoch][key] == undefined) record[epoch][key] = [];
+        if (!Array.isArray(record[epoch][key])) record[epoch][key] = [];
+        let min = this.getMin(record[epoch][key]);
         let affected = false;
 
-        let size = Object.keys(record[epoch][key]).length;
+        let size = record[epoch][key].length;
         for (let row of agg) {
             row.total_value = (row.total_value || 0);
-            if (size < 10 || row.total_value > mins.value) {
-                record[epoch][key][row.killmail_id] = row.total_value;
+            if (row.total_value >= min) {
+                delete row._id;
+                record[epoch][key].push(row);
                 affected = true;
             }
         }
 
         if (affected) {
-            size = Object.keys(record[epoch][key]).length;
-            while (size > 10) {
-                mins = this.getMins(record[epoch][key]);
-
-                delete record[epoch][key][mins.key];
-                size = Object.keys(record[epoch][key]).length;
-            }
-        } else {
-            delete record[epoch][key]; // Don't save it to db since nothing changed
+            record[epoch][key].sort(function (a, b) {
+                return b.total_value - a.total_value;
+            });
+            if (record[epoch][key].length > 10) record[epoch][key].length = 10;
         }
 
         agg = null;
     },
 
-    getMins: function (arr) {
-        let minKey = '';
+    getMin: function (arr) {
+        if (arr.length == 0) return 0;
         let minValue = Number.MAX_VALUE;
-        let keys = Object.keys(arr);
-        for (let i = 0; i < keys.length; i++) {
-            if (arr[keys[i]] < minValue) {
-                minKey = keys[i];
-                minValue = arr[keys[i]];
-            }
+        for (let i of arr) {
+            minValue = Math.min(minValue, i.total_value);
         }
-        return {
-            key: minKey,
-            value: minValue
-        };
+        return minValue;
     },
 
     facet_query: async function (app, collection, match) {
@@ -156,11 +146,7 @@ const stats = {
                         $group: {
                             _id: null,
                             count: {
-                                $sum: {
-                                    $cond: [{
-                                        $eq: ['$purging', true]
-                                    }, -1, 1]
-                                }
+                                $sum: 1
                             },
                             isk: {
                                 $sum: '$total_value'
@@ -182,11 +168,7 @@ const stats = {
                         $group: {
                             _id: '$involved.group_id',
                             count: {
-                                $sum: {
-                                    $cond: [{
-                                        $eq: ['$purging', true]
-                                    }, -1, 1]
-                                }
+                                $sum: 1
                             },
                             isk: {
                                 $sum: '$total_value'
@@ -202,11 +184,7 @@ const stats = {
                             $group: {
                                 _id: '$labels',
                                 count: {
-                                    $sum: {
-                                        $cond: [{
-                                            $eq: ['$purging', true]
-                                        }, -1, 1]
-                                    }
+                                    $sum: 1
                                 },
                                 isk: {
                                     $sum: '$total_value'
@@ -226,18 +204,12 @@ const stats = {
                                 }, '$month']
                             },
                             count: {
-                                $sum: {
-                                    $cond: [{
-                                        $eq: ['$purging', true]
-                                    }, -1, 1]
-                                }
+                                $sum: 1
                             },
                             isk: {
                                 $sum: '$total_value'
                             },
                             inv: {
-
-
                                 $sum: '$involved_cnt'
                             }
                         }
@@ -271,12 +243,97 @@ const stats = {
         }
     },
 
+    group: async function (app, collection, match, type) {
+
+        const util = require('util');
+        var retval = [];
+
+        var agg = [{
+            $match: match
+        }, {
+            $unwind: '$involved.' + type
+        }, {
+            $match: {
+                ['involved.' + type]: {
+                    $gt: 0
+                }
+            }
+        }, {
+            $group: {
+                _id: '$involved.' + type,
+                count: {
+                    $sum: 1
+                }
+            }
+        }, {
+            $sort: {
+                count: -1
+            }
+        }, {
+            $limit: 10
+        }];
+
+        let result = await app.db[collection].aggregate(agg, {
+            allowDiskUse: true
+        });
+
+        while (await result.hasNext()) {
+            var row = await result.next();
+            row[type] = row._id;
+            delete row._id;
+            retval.push(row);
+        }
+        return retval;
+    },
+
+    topISK: async function (app, collection, match, limit = 10) {
+
+        const util = require('util');
+        var retval = [];
+
+        var agg = [{
+                $match: match
+            },
+            {
+                $project: {
+                    killmail_id: 1,
+                    total_value: 1
+                }
+            }, {
+                $match: {
+                    'total_value': {
+                        $gt: 10000
+                    }
+                }
+            }, {
+                $sort: {
+                    total_value: -1
+                }
+            }, {
+                $limit: limit
+            }
+        ];
+
+        return await app.db[collection].aggregate(agg, {
+            allowDiskUse: true
+        }).toArray();
+
+        while (await result.hasNext()) {
+            var row = await result.next();
+            row[type] = row._id;
+            delete row._id;
+            retval.push(row);
+        }
+        return retval;
+    },
+
     do_agg: async function (app, collection, aggregate, type) {
         let hint = {};
         if (type != 'label') {
             hint = "sequence_1_involved." + type + "_1";
             if (aggregate[0]['$match']['stats'] == true) hint = "stats_1_" + hint;
         }
+
 
         let result = await app.db[collection].aggregate(aggregate, {
             hint: hint

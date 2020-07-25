@@ -6,9 +6,10 @@ async function getData(req, res) {
 
     const app = req.app.app;
 
-    var epoch = Number.parseInt(req.query.epoch || 0);
-    epoch = epoch - (epoch % 15);
+    var epoch = Math.floor(Date.now() / 1000);
+    epoch = epoch - (epoch % 60);
     var valid = {
+        required: ['epoch'],
         epoch: epoch
     }
     var valid = req.verify_query_params(req, valid);

@@ -24,7 +24,7 @@ var tasks = {
 
     // statistics
     'update_stats.js': createTaskSettings(1),
-    'publish_stats_updates.js': createTaskSettings(15),
+    'publish_stats_updates.js': createTaskSettings(60),
     'update_stats_week_cleanup.js': createTaskSettings(3600),
     'update_stats_recent_cleanup.js': createTaskSettings(86400),
 

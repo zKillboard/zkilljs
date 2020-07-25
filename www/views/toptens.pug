@@ -1,0 +1,33 @@
+include mixins.pug
+
+div.row
+	each row in json.top10
+		div.topiskblock.col-xs-12.col-md-2
+			table.table.table-sm.table-borderless
+				tbody
+					tr
+						td.top10name
+							+show_link('span', 'item_id', row.item_id, row.item_name)
+					tr
+						td
+							+show_image('span', 'item_id', row.item_id, row.item_name, 128)
+					tr
+						td.top10name
+							+show_link('span', 'character_id', row.character_id, row.character_name)
+					tr
+						td.fnumber= row.total_value
+hr
+div.row
+	each arr,type in json.types
+		div.top10block.col-xs-12.col-md-3
+			- var name = type.replace('_id', '_name');
+			- var first = arr[0]
+			h6.top10title= type.replace('_id', 's').replace('_', ' ') 
+			+show_image('span', type, first[type], first[name], 128)
+			table.table.table-striped.table-hover.table-sm
+				each value in arr
+					tbody
+						tr
+							td.top10name
+								+show_link('span', type, value[type], value[name])
+							td.top10count.text-right.integer= value.count 

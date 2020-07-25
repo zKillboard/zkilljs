@@ -142,8 +142,8 @@ function loadOverview(path, type, id) {
     path = path.replace('/system/', '/solar_system/').replace('/type/', '/item/');
     pagepath = path;
     loadKillmails('/site/killmails' + path + '.json', 'killlistfeed:' + path);
-    //apply('overview-killmails', '/site/killmails' + path + '.html', 'killlistfeed:' + path);
     apply('overview-information', '/site/information' + path + '.html');
+    apply('overview-weekly', '/site/toptens' + path + '.html');
     load_stats_box({
         path: path,
         interval: 15
@@ -215,8 +215,10 @@ function apply(element, path, subscribe, delay) {
 
     if (path != null) {
         fetch(path, {
-            signal: fetch_controller.signal
+            signal: fetch_controller.signal,
+            //redirect: 'manual'
         }).then(function (res) {
+            //if (res.redirected) console.log('forward: ' + res.url);
             handleResponse(res, element, path, subscribe);
         });
     }
@@ -233,9 +235,11 @@ function handleResponse(res, element, path, subscribe) {
 
 function applyHTML(element, html) {
     if (typeof element == 'string') element = document.getElementById(element);
+    var x = document.documentElement.scrollTop
     element.innerHTML = html;
 
     $(element).show();
+    document.documentElement.scrollTop = x; // prevent screen from scrolling when content is added above current view
     postLoadActions(element);
 }
 
@@ -568,17 +572,21 @@ function delayed_json_call(f, json) {
 }
 
 function load_killmail_rows(killmail_ids) {
-    killmail_ids.sort();
-    for (var i = 0; i < killmail_ids.length; i++) {
-        var killmail_id = killmail_ids[i];
-        // Don't load the same kill twice
-        if ($(".kill-" + killmail_id).length > 0) return;
+    try {
+        killmail_ids.sort();
+        for (var i = 0; i < killmail_ids.length; i++) {
+            var killmail_id = killmail_ids[i];
+            // Don't load the same kill twice
+            if ($(".kill-" + killmail_id).length > 0) return;
 
-        var url = '/cache/1hour/killmail/row/' + killmail_id + '.html';
-        var divraw = '<div fetch="' + url + '" unfetched="true" id="kill-' + killmail_id + '"></div>';
-        $("#killlist").prepend(divraw);
+            var url = '/cache/1hour/killmail/row/' + killmail_id + '.html';
+            var divraw = '<div fetch="' + url + '" unfetched="true" id="kill-' + killmail_id + '"></div>';
+            $("#killlist").prepend(divraw);
+        }
+        loadUnfetched(document);
+    } catch (e) {
+       // window.location = window.location;
     }
-    loadUnfetched(document);
 }
 
 function load_stats_box(json) {
@@ -590,6 +598,8 @@ function load_stats_box(json) {
     var param = '?epoch=' + (now - (now % json.interval));
 
     applyJSON('/cache/1hour/stats_box' + json.path + '.json' + param);
+    apply('overview-weekly', '/site/toptens' + json.path + '.html', undefined, true);
+    //apply("#overview-weekly", '/site/toptens' + json.path + '.html', undefined, false);
 }
 
 function spaTheLinks() {
@@ -748,7 +758,7 @@ function feed_toggle(event, enabled, doLoad) {
     enabled = (enabled == undefined ? !isEnabled : enabled);
     if (doLoad == undefined) doLoad = true && enabled;
 
-    mark_enabled(feedbutton, enabled); 
+    mark_enabled(feedbutton, enabled);
     $("#feedactive").toggle(enabled);
     $("#feedinactive").toggle(!enabled);
     if (enabled && doLoad) {

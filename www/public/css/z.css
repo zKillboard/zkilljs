@@ -321,6 +321,28 @@ hr {
     display: none;
 }
 
+
+#overview-weekly {
+}
+
+.top10block table, .topiskblock table {
+    table-layout: fixed;
+}
+
+.top10title {
+    text-transform: capitalize;
+}
+
+.top10name {
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.top10count {
+    width: 5em;
+}
+
+
 .autocomplete-suggestions { border: 1px solid #ccc; background: #000; overflow: auto; cursor: default;}
 .autocomplete-suggestion { padding: 2px 5px; white-space: nowrap; overflow: hidden; cursor: pointer; }
 .autocomplete-selected { background: #007800; }

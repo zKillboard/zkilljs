@@ -93,6 +93,7 @@ async function update_record(app, collection, epoch, record) {
             },
         };
         if (min > 0) match.sequence['$gt'] = min;
+        if (record.type == 'label' && record.id == 'npc') match['stats'] = false; // Special exception for NPC label only
 
         // Update the stats based on the result, but don't clear the update_ field yet
         var set = {};
