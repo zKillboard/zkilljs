@@ -98,12 +98,6 @@ async function getData(req, res) {
     var killmails;
     var collections = ['killmails_7', 'killmails_90', 'killmails'];
     for (var i = 0; i < collections.length; i++) {
-        /*console.log(collections[i], query, await app.db[collections[i]].find(query)
-            .sort({
-                killmail_id: -1
-            })
-            .skip(page * 50) // faster without a limit... 
-            .batchSize(50).explain());*/
         let result = await app.db[collections[i]].find(query)
             .sort({
                 killmail_id: -1

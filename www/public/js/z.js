@@ -4,6 +4,7 @@ var subscribed_channels = [];
 var browserHistory = undefined;
 var server_started = 0;
 var jquery_loaded = false;
+var path_cache = {};
 
 var timeouts = [];
 
@@ -85,6 +86,9 @@ function loadPage(url) {
 
     // Clear subscriptions
     ws_clear_subs();
+
+    // Clear the JS global cache
+    clear_cache(); 
 
     // Cancel in flight fetches
     fetch_controller.abort();
@@ -216,9 +220,7 @@ function apply(element, path, subscribe, delay) {
     if (path != null) {
         fetch(path, {
             signal: fetch_controller.signal,
-            //redirect: 'manual'
         }).then(function (res) {
-            //if (res.redirected) console.log('forward: ' + res.url);
             handleResponse(res, element, path, subscribe);
         });
     }
@@ -235,6 +237,18 @@ function handleResponse(res, element, path, subscribe) {
 
 function applyHTML(element, html) {
     if (typeof element == 'string') element = document.getElementById(element);
+    if (path_cache[element.id] == html && element.innerHTML != "") {
+        console.log('cache match');
+        return;
+    }
+    path_cache[element.id] = html;
+    var child = document.createElement('div');
+    child.id = element.id + '-temp';
+    child.realid = element.id;
+    child.innerHTML = html;
+    var loadingzone = document.getElementById('loading-zone');
+    //loadingzone.appendChild(child);
+
     var x = document.documentElement.scrollTop
     element.innerHTML = html;
 
@@ -396,7 +410,7 @@ function loadUnfetched(element) {
         }, 1));
         return;
     }
-    timeouts.push(setTimeout(updateNumbers, 1));
+    updateNumbers();
 }
 
 // Iterates any elements with the number class and calls intToString to convert it
@@ -593,11 +607,8 @@ function load_stats_box(json) {
     if (json.path == undefined) {
         throw 'path is not defined';
     }
-    json.interval = json.interval || 15;
-    var now = Math.floor(Date.now() / 1000);
-    var param = '?epoch=' + (now - (now % json.interval));
 
-    applyJSON('/cache/1hour/stats_box' + json.path + '.json' + param);
+    applyJSON('/cache/1hour/stats_box' + json.path + '.json');
     apply('overview-weekly', '/site/toptens' + json.path + '.html', undefined, true);
     //apply("#overview-weekly", '/site/toptens' + json.path + '.html', undefined, false);
 }
@@ -766,7 +777,6 @@ function feed_toggle(event, enabled, doLoad) {
         loadKillmails('/site/killmails' + pagepath + '.json', 'killlistfeed:' + pagepath);
         load_stats_box({
             path: pagepath,
-            interval: 15
         });
         ws_action('sub', 'statsfeed:' + pagepath);
     } else {
@@ -798,3 +808,8 @@ function mark_enabled(button, checked) {
 
 // Everything has loaded, let's go!
 documentReady();
+
+function clear_cache() {
+    path_cache = {};
+}
+setInterval(clear_cache, 900000);

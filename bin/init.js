@@ -39,6 +39,8 @@ function redis_retry_strategy(options) {
 async function f() {
     const app = {};
 
+    app.md5 = require('md5');
+
     app.util = {
         entity: require('../util/entity.js'),
         info: require('../util/info.js'),

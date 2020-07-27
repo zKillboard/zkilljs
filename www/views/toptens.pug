@@ -10,7 +10,10 @@ div.row
 							+show_link('span', 'item_id', row.item_id, row.item_name)
 					tr
 						td
-							+show_image('span', 'item_id', row.item_id, row.item_name, 128)
+							-var category = (size <= 64 ? 'icon' : 'render')
+							-var url = '/killmail/' + row.killmail_id
+							-var image = 'https://images.evetech.net/types/' + row.item_id + '/' + category + '?size=128'
+							+tag_image(tag, url, image, row.item_name, 128)
 					tr
 						td.top10name
 							+show_link('span', 'character_id', row.character_id, row.character_name)

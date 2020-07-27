@@ -36,8 +36,6 @@ async function f(req, res) {
     }
     match['stats'] = true;
 
-    console.log(match);
-
     var ret = {
         types: {}
     };
@@ -61,7 +59,6 @@ async function f(req, res) {
     	row.item_id = getVictim(killmail, 'item_id');
     	ret.top10.push(await app.util.info.fill(app, row));
     }
-    console.log(ret.top10);
 
     return {
         json: ret
