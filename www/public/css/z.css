@@ -36,7 +36,13 @@ body {
 img.image {
     background-color: #111;
     margin-top: 5px;
-    border-bottom-right-radius: 15px;
+    border-bottom-right-radius: 5px;
+    border-bottom-left-radius: 5px;
+    border-top-right-radius: 5px;
+}
+
+#info-table tbody tr td:nth-child(1) {
+    width: 7.5em;
 }
 
 .killrow {
@@ -135,7 +141,6 @@ div#overview-information ul {
 }
 
 div#overview-information ul li {
-    float: left;
     list-style: none;
     margin: 0px;
 }
@@ -238,27 +243,6 @@ div#overview-information ul li {
     max-height: 100vw;
 }
 
-
-##killmail-fitting, #killmail-fitting-wheel {
-}  
-
-.killblock1 {
-    width: 650px;
-    height: 650px;
-}
-
-.killblock2 {
-    width: 400px;
-}
-
-.killblock3 {
-    width: 700px;
-}
-
-.killblock4 {
-    width: 400px;
-}
-
 #victim-images ul,
 .attackers-list ul, #killmail-cargo {
     display: inline;
@@ -267,6 +251,19 @@ div#overview-information ul li {
     overflow: hidden;
     padding: 5px;
     margin: 0px;
+}
+
+.cargoimage {
+    width: 32px;
+    max-width: 32px !important;
+}
+
+.cargoamount, .cargoprice {
+    width: 8em !important;
+}
+
+.cargoprice {
+    width: 15em !important;
 }
 
 

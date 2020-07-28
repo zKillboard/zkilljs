@@ -116,7 +116,7 @@ html
                         div#overview-killmails.col-sm-12.col-xl-6
                             div#killlist
                         div#overview-weekly.col-sm-12.col-xl-6
-                div#killmail.row.collapse
+                div#killmail.collapse
                 div#other.row.collapse
         div.clearfix.push
         div#footer
@@ -125,7 +125,13 @@ html
                     center
                         | Brought to you by 
                         a.override(href='/character/1633218082') Squizz Caphinator
+                        span.d-block.d-sm-none xs
+                        span.d-none.d-sm-block.d-md-none sm
+                        span.d-none.d-md-block.d-lg-none md
+                        span.d-none.d-lg-block.d-xl-none lg
+                        span.d-none.d-xl-block xl
                     center(data-toggle='tooltip' style='cursor: pointer; text-decoration: underline' title='EVE Online and the EVE logo are the registered trademarks of CCP hf. All rights are reserved worldwide. All other trademarks are the property of their respective owners. EVE Online, the EVE logo, EVE and all associated logos and designs are the intellectual property of CCP hf. All artwork, screenshots, characters, vehicles, storylines, world facts or other recognizable features of the intellectual property relating to these trademarks are likewise the intellectual property of CCP hf. CCP hf. has granted permission to evewho.com to use EVE Online and all associated logos and designs for promotional and information purposes on its website but does not endorse, and is not in any way affiliated with, evewho.com. CCP is in no way responsible for the content on or functioning of this website, nor can it be liable for any damage arising from the use of this website.')  All Eve Related Materials are Property of CCP Games
+
 div.collapse
     div#spinner
         div.lds-ring

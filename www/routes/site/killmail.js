@@ -76,7 +76,8 @@ async function getData(req, res) {
         item.flagclass = 'flag' + item.flag;
         var group_id = await app.util.info.get_info_field(app, 'item_id', item.item_type_id, 'group_id');
         var item_category = await app.util.info.get_info_field(app, 'group_id', group_id, 'category_id');
-        item.base = (item_category == 7 || item.slot == '3772') ? 'fitted' : 'charge';
+        console.log(item_category);
+        item.base = (item_category == 66 || item_category == 7 || item.slot == '3772') ? 'fitted' : 'charge';
         fittingwheel.push(item);
     }
     killmail.fittingwheel = fittingwheel;

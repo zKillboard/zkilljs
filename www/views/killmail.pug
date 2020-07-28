@@ -6,104 +6,105 @@ include mixins-attackers.pug
 - var victim = json.rawmail.victim;
 - var time = rawmail.killmail_time.replace('T', ' ').replace('Z', '');
 
-div.leftkillblockcontainer
-	div.killblock.killblock1.float-left
-		div#killmail-fitting
-			div#fittingwheelbox
-				object(id='fittingwheel' data='/img/tyrannis-plain.svg?v=' + server_started alt='Fitting wheel' type="image/svg+xml")
-	div.killblock.killblock2#killmail-information.float-left
-		div#victim-images
-			ul
-				+char_image('li', victim.character_id, victim.character_name, 128)
-				+corp_image('li', victim.corporation_id, victim.corporation_name, 64)
-				+alli_image('li', victim.alliance_id, victim.alliance_name, 64)
-				+corp_image('li', victim.faction_id, victim.faction_name, 64)
-		table#info-table.table.table-borderless.table-hover.table-striped.table-sm
-			tbody
-				+info_row_a('Character:', 'character', victim.character_id, victim.character_name)
-				+info_row_a('Corporation:', 'corporation', victim.corporation_id, victim.corporation_name)
-				+info_row_a('Alliance:', 'alliance', victim.alliance_id, victim.alliance_name)
-				+info_row_a('Faction:', 'faction', victim.faction_id, victim.faction_name)
-				+info_row_a('Item:', 'item', victim.ship_type_id, victim.ship_type_name)
-				+info_row_a('Group:', 'group', victim.group_id, victim.group_name)
-				+info_row_a('System:', 'system', rawmail.solar_system_id, rawmail.solar_system_name)
-				+info_row_a('Constellation:', 'constellation', rawmail.constellation_id, rawmail.constellation_name)
-				+info_row_a('Region:', 'region', rawmail.region_id, rawmail.region_name)
-				+info_row_a('Location:', 'location', rawmail.location_id, rawmail.location_name)
-				+info_row('Time:', time)
-				+info_row('Total Value:', killmail.total_value, 'isk')
+div.row
+	div#killleftside.col-12.col-xl-8.row
+		div#killmail-fitting-col.col-12.col-md-7.col-lg-8.col-xl-8
+			div#killmail-fitting
+				div#fittingwheelbox
+					object(id='fittingwheel' data='/img/tyrannis-plain.svg?v=' + server_started alt='Fitting wheel' type="image/svg+xml")
+		div#killmail-information.col-12.col-md-5.col-lg-4.col-xl-4
+			div#victim-images
+				ul
+					+char_image('li', victim.character_id, victim.character_name, 128)
+					+corp_image('li', victim.corporation_id, victim.corporation_name, 64)
+					+alli_image('li', victim.alliance_id, victim.alliance_name, 64)
+					+corp_image('li', victim.faction_id, victim.faction_name, 64)
+			table#info-table.table.table-borderless.table-hover.table-striped.table-sm
+				tbody
+					+info_row_a('Character:', 'character', victim.character_id, victim.character_name)
+					+info_row_a('Corporation:', 'corporation', victim.corporation_id, victim.corporation_name)
+					+info_row_a('Alliance:', 'alliance', victim.alliance_id, victim.alliance_name)
+					+info_row_a('Faction:', 'faction', victim.faction_id, victim.faction_name)
+					+info_row_a('Item:', 'item', victim.ship_type_id, victim.ship_type_name)
+					+info_row_a('Group:', 'group', victim.group_id, victim.group_name)
+					+info_row_a('System:', 'system', rawmail.solar_system_id, rawmail.solar_system_name)
+					+info_row_a('Constellation:', 'constellation', rawmail.constellation_id, rawmail.constellation_name)
+					+info_row_a('Region:', 'region', rawmail.region_id, rawmail.region_name)
+					+info_row_a('Location:', 'location', rawmail.location_id, rawmail.location_name)
+					+info_row('Time:', time)
+					+info_row('Total Value:', killmail.total_value, 'isk')
 
-	div.killblock.killblock3#killmail-cargo.table-responsive
-		table#cargotable.table.table-sm.table-hover.table-responsive-sm
-			tbody
-				each group in killmail.cargo_groups
+		div#killmail-cargo.col-12
+			table#cargotable.table.table-sm.table-hover.table-responsive-sm
+				tbody
+					each group in killmail.cargo_groups
+						tr
+							td(colspan='4')
+								h6= group
+						- var items = killmail.allslots[group]
+						each item in items
+							tr(class=item.class)
+								td.cargoimage
+									+type_image('span', item.item_type_id, item.item_type_name, 32)
+								td.cargoname
+									+type_id_link('span', 'item', item.item_type_id, item.item_type_name )
+								td.cargoamount.integer.text-right= item.total
+								td.cargoprice.integer.text-right= item.total_price
 					tr
 						td(colspan='4')
-							h6= group
-					- var items = killmail.allslots[group]
-					each item in items
-						tr(class=item.class)
+							h6 Ship		
+					tr(class='victimrow')
 							td
-								+type_image('span', item.item_type_id, item.item_type_name, 32)
+								+type_image('span', victim.ship_type_id, victim.ship_type_name, 32)
 							td
-								+type_id_link('span', 'item', item.item_type_id, item.item_type_name )
-							td.integer.text-right= item.total
-							td.integer.text-right= item.total_price
-				tr
-					td(colspan='4')
-						h6 Ship		
-				tr(class='victimrow')
+								+type_id_link('span', 'item', victim.ship_type_id, victim.ship_type_name)
+							td
+							td.integer.text-right= killmail.ship_price
+					tr
+						td(colspan='4')
+							h6 Totals
+					tr.aggressorrow
 						td
-							+type_image('span', victim.ship_type_id, victim.ship_type_name, 32)
+						td Dropped
 						td
-							+type_id_link('span', 'item', victim.ship_type_id, victim.ship_type_name)
+						td.integer.text-right= killmail.totals.dropped
+					tr.victimrow
 						td
-						td.integer.text-right= killmail.ship_price
-				tr
-					td(colspan='4')
-						h6 Totals
-				tr.aggressorrow
-					td
-					td Dropped
-					td
-					td.integer.text-right= killmail.totals.dropped
-				tr.victimrow
-					td
-					td Destroyed
-					td
-					td.integer.text-right= killmail.totals.destroyed
-				tr
-					td
-					td Total
-					td
-					td.integer.text-right= killmail.total_value
-
-div.rightkillblockcontainer
-	div.killblock.killblock4
-		div#killmail-involved.attackers-list
-			div#killmail-top-stats
-			if killmail.stats == false
-				+add_label('nostats')
-			each label in killmail.labels
-				+add_label(label)
-			hr
+						td Destroyed
+						td
+						td.integer.text-right= killmail.totals.destroyed
+					tr
+						td
+						td Total
+						td
+						td.integer.text-right= killmail.total_value
+	div.col-12.col-xl-4
+		div#overview-involved
 			div
-				span
-					span.integer= killmail.involved_cnt
-					| &nbsp;Involved
-				span.right
-					= 'Total Damage: '
-					span.integer= victim.damage_taken
-			hr
-			+display_attackers(rawmail.attackers)
-			
-			if killmail.involved_cnt > 10
-				div.text-center(style='margin-top: 1em;')
-					button#load-all-attackers.btn.btn-secondary Load Remaining Attackers
-				div#remainingattackers.d-none
-					+spinner
-		div#killmail-comments
-div.clearfix
+				div#killmail-involved.attackers-list
+					div#killmail-top-stats
+					if killmail.stats == false
+						+add_label('nostats')
+					each label in killmail.labels
+						+add_label(label)
+					hr
+					div
+						span
+							span.integer= killmail.involved_cnt
+							| &nbsp;Involved
+						span.right
+							= 'Total Damage: '
+							span.integer= victim.damage_taken
+					hr
+					+display_attackers(rawmail.attackers)
+						
+					if killmail.involved_cnt > 10
+						div.text-center(style='margin-top: 1em;')
+							button#load-all-attackers.btn.btn-secondary Load Remaining Attackers
+						div#remainingattackers.d-none
+							+spinner
+					br
+				div#killmail-comments
 
 - //var fwDoc = document.getElementById("fittingwheel").contentDocument
 - var fw = JSON.stringify(json.killmail.fittingwheel, undefined)
