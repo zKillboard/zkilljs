@@ -111,6 +111,7 @@ async function update_record(app, collection, epoch, record) {
             // Update the redis ranking
             await app.redis.zrem(redisRankKey, record.id);
         } else {
+            result.update_top = true;
             set[epoch] = result;
             await app.db.statistics.updateOne({
                 _id: record._id,

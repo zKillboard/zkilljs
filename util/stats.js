@@ -16,7 +16,7 @@ const stats = {
             this.apply(record, epoch, fquery, false, 'groups');
             this.apply(record, epoch, fquery, false, 'labels');
             this.apply(record, epoch, fquery, false, 'months');
-            this.applyTop10(record, epoch, fquery, false);
+            //this.applyTop10(record, epoch, fquery, false);
         }
 
         if (record.type == 'label' & record.id == 'all') {
@@ -31,7 +31,7 @@ const stats = {
         this.apply(record, epoch, fquery, true, 'groups');
         this.apply(record, epoch, fquery, true, 'labels');
         this.apply(record, epoch, fquery, true, 'months');
-        this.applyTop10(record, epoch, fquery, true);
+        //this.applyTop10(record, epoch, fquery, true);
 
         var killed = record[epoch].killed || 0;
         var lost = record[epoch].lost || 0;
@@ -214,7 +214,7 @@ const stats = {
                             }
                         }
                     }],
-                    'topisk': [{
+                    /*'topisk': [{
                         $project: {
                             killmail_id: 1,
                             total_value: 1
@@ -231,11 +231,11 @@ const stats = {
                         }
                     }, {
                         $limit: 10
-                    }]
+                    }]*/
                 }
             }, ], {
                 allowDiskUse: true
-            }).toArray();
+            }).maxTimeMS(3600000).toArray();
 
             return result.length == 0 ? {} : result[0];
         } finally {
@@ -275,7 +275,7 @@ const stats = {
 
         let result = await app.db[collection].aggregate(agg, {
             allowDiskUse: true
-        });
+        }).maxTimeMS(3600000);
 
         while (await result.hasNext()) {
             var row = await result.next();
@@ -316,7 +316,7 @@ const stats = {
 
         return await app.db[collection].aggregate(agg, {
             allowDiskUse: true
-        }).toArray();
+        }).maxTimeMS(3600000).toArray();
 
         while (await result.hasNext()) {
             var row = await result.next();
