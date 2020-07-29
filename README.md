@@ -12,10 +12,6 @@ A rewrite of zkillboard using JavaScript Node and NPM packages.
 - implement scope cleanup
 - fetch insurance
 - fetch implant slots (is this in esi item info now?)
-- implement alltime ranking
-- implement recent ranking (last 90 days)
-- implement weekly ranking (last 7 days) 
-- implement top all time
 - implement ganked detection
 - (install) implement zkbsetup for wormhole classes (zkbsetup.php)
 - implement redisq output
@@ -23,6 +19,10 @@ A rewrite of zkillboard using JavaScript Node and NPM packages.
 - implement sponsorships
 
 #### Done
+- implement alltime ranking
+- implement recent ranking (last 90 days)
+- implement weekly ranking (last 7 days) 
+- implement top all time
 - Implemented Cron Instance (crinstance). Allows to the second cron type scheduling ensuring only one instance of a function is executing at a time.
 - Fetch Dailies (from php zkill)
 - Fetch location information (Thank you FuzzySteve)
@@ -45,24 +45,21 @@ A rewrite of zkillboard using JavaScript Node and NPM packages.
 - implement ztop
 - implement sitemap (xml still?)
 - implement job for queueRelated
-- active php 
+- active pvp 
 - Loot Fairy
-- Top chars, corps, allis, ships
 - golden wrecks list
-- Map (will need a complete overhaul, so big big maybe)
 - Menu with Abyssal, Abyssal PVP, Awox, Big Kills, Citadels, Ganked, Solo, Sponsored, Highsec, Lowsec, Nullsec, W-Space, 5b+, 10b+, Capitals, Freighters, Rorquals, Supers
 - Tracker, based on logged in char, corp, alli, etc. allow for any entity type
 - Post killmails \o/
 - Golden Wreck page
 - Favorites (oh crap forgot about this completely)
 - LastHour page (does anyone even use this?!)
-- Searching
 - Login/Logout
 - API removal
 - Tickets
 - Payments history
 - Other account settings
-- Added random hull destruction sound
+- Add random hull destruction sound
 
 #### Overview Page
 - Statistics, Ships, ISK, Involved Pct, Ranks for each w/ Kills/Losses, Dangerous/Snuggly Bar, Gangs/Solo Bar
@@ -73,9 +70,13 @@ A rewrite of zkillboard using JavaScript Node and NPM packages.
 - Menu: All, Kills, Losses, Trophies(?), Top, Ranks, Stats (use label dropdown?), Supers (maybe? alliances)
 
 #### Done
+- Searching
 - implement redis searching for names
 - Char Info
+- Top chars, corps, allis, ships
+
 
 ### Probably won't do
+- Map (will need a complete overhaul, so big big maybe)
 - trophies
 - implement hasSupers to show hasSupers on alli/corp pages (maybe, really only used by an elite few)
