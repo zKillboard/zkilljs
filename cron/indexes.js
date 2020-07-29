@@ -25,6 +25,9 @@ async function applyIndexes(app) {
     await createIndex(app.db.collection('statistics'), {type: 1, update_week: 1}, {});
     await createIndex(app.db.collection('statistics'), {'recent.last_sequence': 1}, {sparse: true});
     await createIndex(app.db.collection('statistics'), {'week.last_sequence': 1}, {sparse: true});
+    await createIndex(app.db.collection('statistics'), {'alltime.update_top': 1}, {sparse: true});
+    await createIndex(app.db.collection('statistics'), {'recent.update_top': 1}, {sparse: true});
+    await createIndex(app.db.collection('statistics'), {'week.update_top': 1}, {sparse: true});
 
     await app.db.createCollection('prices');
     await createIndex(app.db.prices, {item_id: 1}, {unique: true});

@@ -93,6 +93,7 @@ const stats = {
     },
 
     applyTop10: function (record, epoch, result, areKills) {
+        return;
         let agg = result.topisk;
         if (agg == undefined || agg.length == 0) return;
 

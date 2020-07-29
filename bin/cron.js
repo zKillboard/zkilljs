@@ -27,6 +27,7 @@ var tasks = {
     'publish_stats_updates.js': createTaskSettings(60),
     'update_stats_week_cleanup.js': createTaskSettings(3600),
     'update_stats_recent_cleanup.js': createTaskSettings(86400),
+    'update_stats_top_lists.js': createTaskSettings(1),
 
     //'ztop.js': createTaskSettings(1),
 }

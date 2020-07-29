@@ -41,6 +41,10 @@ img.image {
     border-top-right-radius: 5px;
 }
 
+#info-box li {
+    float: left;
+}
+
 #info-table tbody tr td:nth-child(1) {
     width: 7.5em;
 }

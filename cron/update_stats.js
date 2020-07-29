@@ -71,9 +71,16 @@ async function update_record(app, collection, epoch, record) {
     concurrent++;
     try {
         // Are we resetting this record's epoch?
+        var killed_top = undefined,
+            lost_top = undefined,
+            hash_killed_top = undefined;
         if (record[epoch] == undefined || record[epoch].last_sequence == undefined || record[epoch].reset == true) {
+            if (record[epoch]) {
+                killed_top = record[epoch].killed_top;
+                lost_top = record[epoch].lost_top;
+                hash_killed_top = record[epoch].hash_killed_top;
+            }
             record[epoch] = {};
-            //console.log('Resetting: ', epoch, record.type, record.id);
         }
         record[epoch].reset = false;
 
@@ -113,6 +120,10 @@ async function update_record(app, collection, epoch, record) {
         } else {
             result.update_top = true;
             set[epoch] = result;
+            if (killed_top) set[epoch].killed_top = killed_top;
+            if (lost_top) set[epoch].lost_top = lost_top;
+            if (hash_killed_top) set[epoch].hash_killed_top = hash_killed_top;
+
             await app.db.statistics.updateOne({
                 _id: record._id,
             }, {

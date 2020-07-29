@@ -82,6 +82,8 @@ async function doStuff(req, res, next, controllerFile, pugFile) {
             } else if (result.json !== undefined) res.json(result.json);
         } else if (typeof result == "string") {
             res.redirect(result);
+        } else if (result === 204) {
+            res.status(204);
         }
         res.end();
         result = {}; // Clear it out for quicker GC

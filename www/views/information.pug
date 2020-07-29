@@ -2,14 +2,7 @@ include mixins.pug
 
 span.page-title= page_title
 ul#info-box
-	if json.type == 'character_id'
-		+char_image('li', json.id, json.name, 128)
-	else if json.type == 'corporation_id'
-		+corp_image('li', json.id, json.name, 128)
-	else if json.type == 'alliance_id'
-		+alli_image('li', json.id, json.name, 128)
-	else if json.type == 'item_id' 
-		+type_image('li', json.item_id, json.item_name, 128)
+	+show_image('li', json.type, json.id, json.name, 128)
 
 	li
 		table#info-table.table.table-borderless.table-hover.table-sm

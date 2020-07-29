@@ -6,15 +6,6 @@ async function getData(req, res) {
 
     const app = req.app.app;
 
-    var epoch = Math.floor(Date.now() / 1000);
-    epoch = epoch - (epoch % 60);
-    var valid = {
-        required: ['epoch'],
-        epoch: epoch
-    }
-    var valid = req.verify_query_params(req, valid);
-    if (valid !== true) return valid;
-
     let query = {
         type: (req.params.type == 'label' ? 'label' : req.params.type + '_id'),
         id: (req.params.type == 'label' ? req.params.id : Math.abs(parseInt(req.params.id)))
@@ -27,6 +18,16 @@ async function getData(req, res) {
     await add(app, result, data, 'recent');
     await add(app, result, data, 'week');
     data.labels = Object.keys(data.labels).sort();
+
+    var hash = app.md5(JSON.stringify(data));
+
+    if (req.query.current_hash == hash) return 204;
+    var valid = {
+        required: ['hash'],
+        hash: hash
+    }
+    var valid = req.verify_query_params(req, valid);
+    if (valid !== true) return valid;
 
     return {
         json: data,

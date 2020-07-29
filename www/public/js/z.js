@@ -5,6 +5,7 @@ var browserHistory = undefined;
 var server_started = 0;
 var jquery_loaded = false;
 var path_cache = {};
+var path_hash = {};
 
 var timeouts = [];
 
@@ -84,11 +85,15 @@ function loadPage(url) {
     var path = url == undefined ? window.location.pathname : url;
     var fetch;
 
+    // Clear caches
+    path_cache = {};
+    path_hash = {};
+
     // Clear subscriptions
     ws_clear_subs();
 
     // Clear the JS global cache
-    clear_cache(); 
+    clear_cache();
 
     // Cancel in flight fetches
     fetch_controller.abort();
@@ -147,11 +152,8 @@ function loadOverview(path, type, id) {
     pagepath = path;
     loadKillmails('/site/killmails' + path + '.json', 'killlistfeed:' + path);
     apply('overview-information', '/site/information' + path + '.html');
-    apply('overview-weekly', '/site/toptens' + path + '.html');
-    load_stats_box({
-        path: path,
-        interval: 15
-    });
+    apply('overview-weekly', '/site/toptens' + path + '.html', 'toplistsfeed:' + path);
+    load_stats_box();
     ws_action('sub', 'statsfeed:' + path);
     showSection('overview');
 }
@@ -213,14 +215,27 @@ function applyRedGreen() {
 }
 
 function apply(element, path, subscribe, delay) {
+    var fetchpath = path;
+    if (path_hash[path]) {
+        fetchpath = path + '?current_hash=' + path_hash[path];
+    }
+
+
     if (typeof element == 'string') element = document.getElementById(element);
     // Clear the element
     if (delay != true) element.innerHTML = "";
 
     if (path != null) {
-        fetch(path, {
+        fetch(fetchpath, {
             signal: fetch_controller.signal,
         }).then(function (res) {
+            if (res.redirected) {
+                var params = getParams(res.url);
+                path_hash[path] = params.hash;
+            }
+            if (res.status == 204) {
+                return;
+            }
             handleResponse(res, element, path, subscribe);
         });
     }
@@ -259,9 +274,21 @@ function applyHTML(element, html) {
 
 
 function applyJSON(path) {
-    fetch(path, {
+    var fetchpath = path;
+    if (path_hash[path]) {
+        fetchpath = path + '?current_hash=' + path_hash[path];
+    }
+    fetch(fetchpath, {
         signal: fetch_controller.signal
     }).then(function (res) {
+        if (res.redirected) {
+            var params = getParams(res.url);
+            path_hash[path] = params.hash;
+            console.log(res);
+        }
+        if (res.status == 204) {
+            return;
+        }
         handleJSON(res);
     });
 }
@@ -565,6 +592,9 @@ function ws_message(msg) {
     case 'statsfeed':
         delayed_json_call(load_stats_box, json);
         break;
+    case 'toplistsfeed':
+        delayed_json_call(load_toplists_box);
+        break;
     case 'server_started':
         var started = json.server_started;
         if (server_started == 0) server_started = started;
@@ -599,18 +629,17 @@ function load_killmail_rows(killmail_ids) {
         }
         loadUnfetched(document);
     } catch (e) {
-       // window.location = window.location;
+        // window.location = window.location;
     }
 }
 
 function load_stats_box(json) {
-    if (json.path == undefined) {
-        throw 'path is not defined';
-    }
+    applyJSON('/cache/1hour/stats_box' + pagepath + '.json');
+}
 
-    applyJSON('/cache/1hour/stats_box' + json.path + '.json');
-    apply('overview-weekly', '/site/toptens' + json.path + '.html', undefined, true);
-    //apply("#overview-weekly", '/site/toptens' + json.path + '.html', undefined, false);
+function load_toplists_box(json) {
+    console.log('updating top lists');
+    apply('overview-weekly', '/site/toptens' + pagepath + '.html', null, true);
 }
 
 function spaTheLinks() {
@@ -796,7 +825,6 @@ function filter_toggle() {
         loadKillmails('/site/killmails' + pagepath + '.json', 'killlistfeed:' + pagepath);
         load_stats_box({
             path: pagepath,
-            interval: 15
         });
     }
 }
@@ -812,4 +840,24 @@ documentReady();
 function clear_cache() {
     path_cache = {};
 }
+
+/**
+ * Get the URL parameters
+ * source: https://css-tricks.com/snippets/javascript/get-url-variables/
+ * @param  {String} url The URL
+ * @return {Object}     The URL parameters
+ */
+var getParams = function (url) {
+    var params = {};
+    var parser = document.createElement('a');
+    parser.href = url;
+    var query = parser.search.substring(1);
+    var vars = query.split('&');
+    for (var i = 0; i < vars.length; i++) {
+        var pair = vars[i].split('=');
+        params[pair[0]] = decodeURIComponent(pair[1]);
+    }
+    return params;
+};
+
 setInterval(clear_cache, 900000);
