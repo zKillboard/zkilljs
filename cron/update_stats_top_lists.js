@@ -79,7 +79,6 @@ async function do_update(app, epoch, row) {
                 [epoch + '.update_top']: false
             }
         });
-        if (row.type == 'label' && row.id == 'all') console.log('hashes: ', oldhash, newhash);
         if (n.matchedCount > 0 && epoch == 'week' && oldhash != newhash) {
             let redis_base = JSON.stringify({
                 type: row.type,
