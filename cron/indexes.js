@@ -64,6 +64,9 @@ async function applyIndexes(app) {
     await createIndex(app.db.collection('rawmails'), {killmail_id: 1}, {unique: true});
     await createIndex(app.db.collection('killmails'), {killmail_id: 1}, {unique: true});
 
+    await create_collection(app, 'settings');
+    await createIndex(app.db.collection('settings'), {key: 1}, {unique: true});
+    
     console.log('done');
 }
 
