@@ -80,37 +80,39 @@ html
                     div.clearfix
                     
                     div.row#overview-menu
-                        div.btn-toolbar(role="tooolbar" aria-label="Overview Menu")
-                            div.btn-group.mr-2
-                                button#feedbutton.btn.btn-primary(type='button')
-                                    svg#feedactive.bi.bi-play-fill(width='1em', height='1em', viewbox='0 0 16 16', fill='currentColor', xmlns='http://www.w3.org/2000/svg')
-                                        path(d='M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z')
-                                    svg#feedinactive.collapse.bi.bi-pause-fill(width='1em', height='1em', viewbox='0 0 16 16', fill='currentColor', xmlns='http://www.w3.org/2000/svg')
-                                        path(d='M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z')
-                                    | Feed
-                                button#filtersbutton.btn.btn-secondary(type='button' toggle='#overview-filters' data-toggle="button") Filters
+                        div.col-12
+                            div.btn-toolbar(role="tooolbar" aria-label="Overview Menu")
+                                div.btn-group.mr-2
+                                    button#feedbutton.btn.btn-primary(type='button')
+                                        svg#feedactive.bi.bi-play-fill(width='1em', height='1em', viewbox='0 0 16 16', fill='currentColor', xmlns='http://www.w3.org/2000/svg')
+                                            path(d='M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z')
+                                        svg#feedinactive.collapse.bi.bi-pause-fill(width='1em', height='1em', viewbox='0 0 16 16', fill='currentColor', xmlns='http://www.w3.org/2000/svg')
+                                            path(d='M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z')
+                                        | Feed
+                                    button#filtersbutton.btn.btn-secondary(type='button' toggle='#overview-filters' data-toggle="button") Filters
                     div.row#overview-filters.collapse(style='margin-top: 1em;')
-                        div.btn-toolbar(role="tooolbar" aria-label="Overview Filter")
-                            div.btn-group.mr-2
-                                button#allbtn.ofilter.btn.btn-primary(type='button') All
-                                button.ofilter.btn.btn-secondary(type='button') Killed
-                                button.ofilter.btn.btn-secondary(type='button') Lost
-                            div.btn-group.mr-2
-                                button.ofilter.btn.btn-secondary(type='button') HIGHSEC
-                                button.ofilter.btn.btn-secondary(type='button') LOWSEC
-                                button.ofilter.btn.btn-secondary(type='button') NULLSEC
-                                button.ofilter.btn.btn-secondary(type='button') W-SPACE
-                                button.ofilter.btn.btn-secondary(type='button') Abyssal
-                            div.btn-group.mr-2
-                                button.ofilter.btn.btn-secondary(type='button') NPC
-                                button.ofilter.btn.btn-secondary(type='button') PVP
-                                button.ofilter.btn.btn-secondary(type='button') Solo
-                                button.ofilter.btn.btn-secondary(type='button') Abyssal-PVP
-                                button.ofilter.btn.btn-secondary(type='button') 100+
-                                button.ofilter.btn.btn-secondary(type='button') 1000+
-                                button.ofilter.btn.btn-secondary(type='button') BIGISK
-                                button.ofilter.btn.btn-secondary(type='button') EXTREMEISK
-                                button.ofilter.btn.btn-secondary(type='button') INSANEISK
+                        div.col-12
+                            div.btn-toolbar(role="tooolbar" aria-label="Overview Filter")
+                                div.btn-group.mr-2
+                                    button#allbtn.ofilter.btn.btn-primary(type='button') All
+                                    button.ofilter.btn.btn-secondary(type='button') Killed
+                                    button.ofilter.btn.btn-secondary(type='button') Lost
+                                div.btn-group.mr-2
+                                    button.ofilter.btn.btn-secondary(type='button') HIGHSEC
+                                    button.ofilter.btn.btn-secondary(type='button') LOWSEC
+                                    button.ofilter.btn.btn-secondary(type='button') NULLSEC
+                                    button.ofilter.btn.btn-secondary(type='button') W-SPACE
+                                    button.ofilter.btn.btn-secondary(type='button') Abyssal
+                                div.btn-group.mr-2
+                                    button.ofilter.btn.btn-secondary(type='button') NPC
+                                    button.ofilter.btn.btn-secondary(type='button') PVP
+                                    button.ofilter.btn.btn-secondary(type='button') Solo
+                                    button.ofilter.btn.btn-secondary(type='button') Abyssal-PVP
+                                    button.ofilter.btn.btn-secondary(type='button') 100+
+                                    button.ofilter.btn.btn-secondary(type='button') 1000+
+                                    button.ofilter.btn.btn-secondary(type='button') BIGISK
+                                    button.ofilter.btn.btn-secondary(type='button') EXTREMEISK
+                                    button.ofilter.btn.btn-secondary(type='button') INSANEISK
                     br   
                     div.row
                         div#overview-killmails.col-sm-12.col-xl-6
