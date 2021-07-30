@@ -517,7 +517,7 @@ function intToString(value) {
 
 function ws_connect() {
     try {
-        ws = new ReconnectingWebSocket('wss://zkillboard.dev/websocket/', '', {
+        ws = new ReconnectingWebSocket('/websocket/', '', {
             maxReconnectAttempts: 15
         });
         ws.onmessage = function (event) {
