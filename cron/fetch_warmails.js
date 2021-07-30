@@ -7,6 +7,8 @@ const match = {
 var firstRun = true;
 
 async function f(app) {
+    if (process.env.fetch_wars != true) return;
+
     if (firstRun) {
         sw.start(app, app.db.information, match, fetchWarMails, 10);
         firstRun = false;

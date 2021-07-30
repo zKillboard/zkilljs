@@ -2,7 +2,7 @@
 
 
 module.exports = {
-    async start(app, collection, match, f, limit) {
+    async start(app, collection, match, f, limit, sort = {}) {
         const streamConfig = {
             fullDocument: 'updateLookup'
         };
@@ -15,7 +15,7 @@ module.exports = {
             });
 
             // Process any existing that match
-            count = await iterate(app, await collection.find(match).batchSize(1000), f, limit, false, set);
+            count = await iterate(app, await collection.find(match).batchSize(1000).sort(sort), f, limit, false, set);
 
             // Now process any in the oplog that match
             /*streamConfig.startAtOperationTime = hostInfo.operationTime;

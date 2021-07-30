@@ -1,0 +1,3 @@
+listen_redisq = true
+fetch_wars = false
+fetch_dailies = false

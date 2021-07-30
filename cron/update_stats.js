@@ -52,7 +52,7 @@ async function update_stats(app, collection, epoch, type, find) {
 
             var record = await iter.next();
             if (record.id !== NaN) {
-                if (app.delay_stats) await app.sleep(50);
+                if (app.delay_stats) await app.sleep(100);
                 await update_record(app, collection, epoch, record);
                 iterated = true;
             }

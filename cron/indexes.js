@@ -76,44 +76,9 @@ async function createIndex(collection, index, options) {
 }
 
 async function create_collection(app, collection) {
-    await app.db.createCollection(collection);
-
-    var index = {
-        sequence: 1,
-        labels: 1
-
-    };
-    await createIndex(app.db.collection(collection), index, {background: true});
-    var index = {
-        killmail_id: -1,
-        labels: 1
-
-    };
-    await createIndex(app.db.collection(collection), index, {background: true});
-        
-    await createIndex(app.db[collection], {padhash: 1}, {});
-    await createIndex(app.db[collection], {killmail_id: 1}, {unique: true});
-    await createIndex(app.db[collection], {sequence: 1}, {unique: true});
-    await createIndex(app.db[collection], index, bg);
-    for (let i of ind) {
-        var key = 'involved.' + i;
-        index = {};
-        index[key] = 1;
-        await createIndex(app.db.collection(collection), index, bg);
-        
-        index = {
-            stats: 1,
-            sequence: 1,
-        };
-        index[key] = 1;
-        await createIndex(app.db.collection(collection), index, bg);
-
-        index = {
-            killmail_id: -1
-        };
-        index[key] = 1;
-        await createIndex(app.db.collection(collection), index, bg);
-    }
+    if (typeof app.db[collection] != 'undefined') return;
+    console.log('Creating collection', collection);
+    app.db[collection] = await app.db.createCollection(collection);
 }
 
 //'labels'

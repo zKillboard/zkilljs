@@ -1,7 +1,12 @@
 'use strict';
 
 async function f(app) {
-    if (app.delay_fetches || app.delay_stats) return;
+    //if (app.delay_fetches || app.delay_stats) return;
+
+    console.log(process.env.fetch_dailies);
+    if (process.env.fetch_dailies != true) return;
+
+    return;
 
     let now = Math.floor(Date.now() / 1000);
     let today = now - (now % 86400);
@@ -24,7 +29,10 @@ async function f(app) {
     }
 
     while (await app.redis.scard("zkb:dailies") > 0) {
-        let key = await app.redis.srandmember("zkb:dailies");
+        let members = await app.redis.smembers("zkb:dailies");
+        members.sort().reverse();
+        let key = members[0];
+
         if (key == undefined || key == null) return;
 
         let currentCount = await app.redis.hget("zkb:dailies_count", key);

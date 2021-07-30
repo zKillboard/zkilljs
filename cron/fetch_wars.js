@@ -4,6 +4,8 @@ let max_war_id = 0;
 
 async function f(app) {
     if (app.no_parsing) return;
+
+    if (process.env.fetch_wars != true) return;
     
     let res, json, min_id = 9999999999, max_id = 0;
     do {

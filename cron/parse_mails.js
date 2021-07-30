@@ -20,7 +20,7 @@ const match = {
 
 async function f(app) {
     if (firstRun) {
-        sw.start(app, app.db.killhashes, match, parse_mail, 10);
+        sw.start(app, app.db.killhashes, match, parse_mail, 10, {killmail_id: -1});
         firstRun = false;
     }
 }

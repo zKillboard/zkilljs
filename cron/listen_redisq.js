@@ -3,6 +3,7 @@ module.exports = f;
 let url = 'https://redisq.zkillboard.com/listen.php?ttw=1';
 
 async function f(app) {
+    if (process.env.listen_redisq != true) return;
 
     try {
         do {

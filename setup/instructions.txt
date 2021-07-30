@@ -7,14 +7,16 @@ nginx		# for web access
 mongodb		# primary database
 redis		# for fast caching
 
-Run these in app root
-
-npm upgrade
-node bin/cron.js indexes # Will need to run several times to finish properly (for now)
-
-
 Run these as root for ufw filewall
 
 ufw 443
 ufw 18888
 ufw enable
+
+Run these as the zkilljs user (or whatever user you picked) in the app root
+
+cp setup/env .env  		# env file, edit as necessary
+npm upgrade			# Installs libraries
+node bin/cron.js indexes 	# Will need to run several times to finish properly (for now)
+
+

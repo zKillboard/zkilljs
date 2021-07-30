@@ -56,7 +56,7 @@ async function populateSet(app, typeValue) {
             type: typeValue
         }).sort({
             last_updated: 1
-        }).limit(100); // Limit so we reset this query often
+        }).limit(10); // Limit so we reset this query often
 
         while (await rows.hasNext()) {
             if (app.bailout == true || app.no_api == true) break;
@@ -122,6 +122,7 @@ async function fetch(app, row) {
             if (row.type == 'character_id' || row.type == 'corporation_id' || row.type == 'alliance_id') {
                 body.alliance_id = body.alliance_id || 0;
                 body.faction_id = body.faction_id || 0;
+                await app.sleep(1000);
             }
 
             await app.redis.hset('zkilljs:info:' + row.type, row.id, JSON.stringify(body));
@@ -175,8 +176,8 @@ async function fetch(app, row) {
             break;
         case 420:
             app.no_api = true;
-            setTimeout(clear_no_api, 1000 + (Date.now() % 60000));
-            console.log("420'ed");
+            setTimeout(function() {clear_no_api(app);}, 1000 + (Date.now() % 60000));
+            console.log("420'ed in information: " + row.type + " " + row.id);
             break;
         case 500:
             console.log(row.type, row.id, '500 received');
