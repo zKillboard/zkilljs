@@ -129,8 +129,8 @@ async function f() {
 
     // Special case, killhashes will be mapped to original zkillboard's esimails collection
     // We don't need to double this data set on the server.... 
-    var zdb = client.db('zkillboard');
-    app.db.rawmails = zdb.collection('esimails');
+    //var zdb = client.db('zkillboard');
+    //app.db.rawmails = zdb.collection('esimails');
 
     globalapp = app;
     return app;
