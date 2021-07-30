@@ -517,7 +517,7 @@ function intToString(value) {
 
 function ws_connect() {
     try {
-        ws = new ReconnectingWebSocket('/websocket/', '', {
+        ws = new ReconnectingWebSocket('wss://' + window.location.hostname + '/websocket/', '', {
             maxReconnectAttempts: 15
         });
         ws.onmessage = function (event) {
