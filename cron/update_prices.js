@@ -21,7 +21,7 @@ async function f(app) {
         
         promises.push(update_price(app, row, todays_price_key));
         await app.sleep(1);
-        while (set.size > 50) await app.sleep(1);
+        while (set.size > 5) await app.sleep(1);
     }
     await app.waitfor(promises, 'update_prices');
 }
