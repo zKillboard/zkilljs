@@ -1,8 +1,7 @@
 'use strict';
 
 async function f(app) {
-    
-    if (await app.db.killhashes.countDocuments({status: 'fetched'}) > 10) return; // Too many documents to retrieve, come back later
+    if (app.delay_fetches || app.delay_stats) return;
 
     let now = Math.floor(Date.now() / 1000);
     let today = now - (now % 86400);

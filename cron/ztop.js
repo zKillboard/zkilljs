@@ -4,11 +4,12 @@ var fs = require('fs');
 var util = require('util');
 
 async function f(app) {
-    //await ztop(app);
+    await ztop(app);
 }
 
 async function ztop(app) {
     /*let keys = Object.keys(app.ztop).sort();
+    console.log(keys); return;
     let out = '\n';
     for (key of keys) {
     	out += key + ': ' + app.ztop[key] + '\n';

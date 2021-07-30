@@ -26,8 +26,14 @@ async function f(app) {
 }
 
 async function parse_mail(app, killhash) {
+    if (app.delay_parse) await app.sleep(100); // parse, but go slow
+
     var killmail = {};
+    const now = Math.floor(Date.now() / 1000);
+
     try {
+        //if (await app.db.prices.countDocuments({waiting: true}) > 3) return await app.sleep(1000); // Wait for prices to fetch, resume later
+
         // just so we can reuse the sequence number
         var prev_parsed_mail = undefined;
         /*await app.db.killmails.findOne({
@@ -50,8 +56,6 @@ async function parse_mail(app, killhash) {
         const rawmail = await app.db.rawmails.findOne({
             killmail_id: killhash.killmail_id
         });
-
-
 
         if (rawmail == null) {
             // wth?
@@ -150,7 +154,6 @@ async function parse_mail(app, killhash) {
 
         await app.db.killmails.insertOne(killmail);
 
-        const now = Math.floor(Date.now() / 1000);
         if (killmail.epoch > (now - (90 * 86400))) await app.db.killmails_90.insertOne(killmail);
         if (killmail.epoch > (now - (7 * 86400))) await app.db.killmails_7.insertOne(killmail);
         await app.db.killhashes.updateOne(killhash, parsed);
@@ -163,7 +166,7 @@ async function parse_mail(app, killhash) {
             }
         });
     } finally {
-        publishToKillFeed(app, killmail);
+        if (killmail.epoch > (now - (90 * 86400))) publishToKillFeed(app, killmail);
         killmail = null; // memory leak protection
     }
 }

@@ -41,6 +41,10 @@ async function f() {
 
     app.md5 = require('md5');
 
+    app.delay_fetches = true; // default to looking busy
+    app.delay_parse = true; // default to looking busy
+    app.delay_stats = true; // default to looking busy
+
     app.util = {
         entity: require('../util/entity.js'),
         info: require('../util/info.js'),

@@ -10,7 +10,7 @@ const match = {
 
 async function f(app) {
     if (firstRun) {
-        sw.start(app, app.db.killhashes, match, fetch, 100);
+        sw.start(app, app.db.killhashes, match, fetch, 50);
         firstRun = false;
     }
 }

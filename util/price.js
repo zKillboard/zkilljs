@@ -172,9 +172,9 @@ async function fetch(app, item_id, date, skip_fetch) {
         }
         if (marketHistory.last_fetched != todays_key && skip_fetch != true) {
             iterations++;
-            if (iterations > 10) throw 'too many price check waits';
-            console.log("Price check waiting", item_id, date, marketHistory.last_fetched);
-            await app.sleep(iterations * 1000);
+            //if (iterations > 30) throw 'too many price check waits';
+            //console.log("Price check waiting", item_id, date, marketHistory.last_fetched);
+            await app.sleep(1000);
         }
     } while (marketHistory.last_fetched != todays_key && skip_fetch != true);
 

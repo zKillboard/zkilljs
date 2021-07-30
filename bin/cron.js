@@ -7,15 +7,13 @@ var tasks = {
     'update_factions.js': createTaskSettings(60),
     'update_information.js': createTaskSettings(1),
     'fetch_locations.js': createTaskSettings(5),
-    'update_alliance_membercounts.js': createTaskSettings(3600),
-    'populate_ranks.js': createTaskSettings(86400),
     'status_change.js': createTaskSettings(1),
 
     // killmail producers
     'listen_redisq.js': createTaskSettings(15),
     'fetch_wars.js': createTaskSettings(9600),
     'fetch_warmails': createTaskSettings(1),
-    'fetch_dailies': createTaskSettings(86400, 0, -43200),
+    'fetch_dailies': createTaskSettings(60),
 
     // killmail consumers
     'fetch_mails.js': createTaskSettings(1),
@@ -24,12 +22,15 @@ var tasks = {
 
     // statistics
     'update_stats.js': createTaskSettings(1),
-    'publish_stats_updates.js': createTaskSettings(60),
+    'publish_stats_updates.js': createTaskSettings(5),
     'update_stats_week_cleanup.js': createTaskSettings(3600),
     'update_stats_recent_cleanup.js': createTaskSettings(86400),
     'update_stats_top_lists.js': createTaskSettings(1),
+    'populate_ranks.js': createTaskSettings(86400),
+    'update_alliance_membercounts.js': createTaskSettings(3600),
 
     //'ztop.js': createTaskSettings(1),
+    'balance_resources': createTaskSettings(5),
 }
 
 var app = undefined;

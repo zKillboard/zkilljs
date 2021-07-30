@@ -33,7 +33,7 @@ async function f(app) {
                     type: type
                 };
                 find['update_' + epoch] = true;
-                update_stats(app, epochs[epoch], epoch, type, find);
+                await update_stats(app, epochs[epoch], epoch, type, find);
             }
         }
         first_run = false;
@@ -42,21 +42,21 @@ async function f(app) {
 
 async function update_stats(app, collection, epoch, type, find) {
     var iterated = false;
-    var promises = [];
+
     try {
         if (app.bailout == true || app.no_stats == true) return;
 
-        var iter = await app.db.statistics.find(find).limit(10000);
+        var iter = await app.db.statistics.find(find).limit(1000);
         while (await iter.hasNext()) {
             if (app.bailout == true || app.no_stats == true) break;
 
             var record = await iter.next();
             if (record.id !== NaN) {
+                if (app.delay_stats) await app.sleep(50);
                 await update_record(app, collection, epoch, record);
                 iterated = true;
             }
         }
-        await app.waitfor(promises);
     } catch (e) {
         console.log(e);
     } finally {
@@ -67,8 +67,9 @@ async function update_stats(app, collection, epoch, type, find) {
 }
 
 async function update_record(app, collection, epoch, record) {
-    while (concurrent >= 10) await app.sleep(1);
-    concurrent++;
+    var result = null; 
+    var set = null;
+
     try {
         // Are we resetting this record's epoch?
         var killed_top = undefined,
@@ -103,8 +104,8 @@ async function update_record(app, collection, epoch, record) {
         if (record.type == 'label' && record.id == 'npc') match['stats'] = false; // Special exception for NPC label only
 
         // Update the stats based on the result, but don't clear the update_ field yet
-        var set = {};
-        var result = await app.util.stats.update_stat_record(app, collection, epoch, record, match, max);
+        set = {};
+        result = await app.util.stats.update_stat_record(app, collection, epoch, record, match, max);
         const redisRankKey = 'zkilljs:ranks:' + record.type + ':' + epoch;
         if (result == null) {
             await app.db.statistics.updateOne({
@@ -150,10 +151,10 @@ async function update_record(app, collection, epoch, record) {
         // announce that the stats have been updated
         await app.redis.sadd('zkilljs:stats:publish', redis_base);
 
+    } finally {
         record = null; // memory leak prevention
         result = null; // memory leak prevention
-    } finally {
-        concurrent--;
+        set = null;
     }
 }
 

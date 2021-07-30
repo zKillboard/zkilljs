@@ -1,5 +1,7 @@
 Required
 
+node		# for running the app of course
+npm		# for library installs
 mysql 		# for fast text searching
 nginx		# for web access
 mongodb		# primary database
