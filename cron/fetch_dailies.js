@@ -1,6 +1,9 @@
 'use strict';
 
 async function f(app) {
+    
+    if (await app.db.killhashes.countDocuments({status: 'fetched'}) > 10) return; // Too many documents to retrieve, come back later
+
     let now = Math.floor(Date.now() / 1000);
     let today = now - (now % 86400);
     let todaysKey = "zkb:daily_fetched:" + today;
@@ -16,12 +19,13 @@ async function f(app) {
 
             await app.redis.sadd("zkb:dailies", key);
             await app.redis.hset("zkb:dailies_count", key, value);
+            break;
         }
         await app.redis.setex(todaysKey, 86400, "true");
     }
 
     while (await app.redis.scard("zkb:dailies") > 0) {
-        let key = await app.redis.spop("zkb:dailies");
+        let key = await app.redis.srandmember("zkb:dailies");
         if (key == undefined || key == null) return;
 
         let currentCount = await app.redis.hget("zkb:dailies_count", key);
@@ -34,7 +38,9 @@ async function f(app) {
                 await app.util.killmails.add(app, parseInt(id), hash);
             }
         }
-        await app.redis.hset("zkb:dailies_lastcount", key, currentCount); 
+        await app.redis.hset("zkb:dailies_lastcount", key, currentCount);
+        await app.redis.srem("zkb:dailies", key);
+        return;
     }
 }
 
