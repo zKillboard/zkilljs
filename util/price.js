@@ -141,10 +141,12 @@ async function fetch(app, item_id, date, skip_fetch) {
     let key = date + ':' + item_id;
     if (app.cache.prices[key] != undefined) return app.cache.prices[key];
 
-    let marketHistory, count = 0;
+    let marketHistory;
     let todays_key = app.util.price.get_todays_price_key();
     var iterations = 0;
     do {
+        if (app.bailout == true) throw 'Price check bailing';
+
         marketHistory = await app.db.prices.findOne({
             item_id: item_id
         });
@@ -156,9 +158,9 @@ async function fetch(app, item_id, date, skip_fetch) {
                     waiting: true
                 });
             } catch (e) {}
-            marketHistory = {};
+            marketHistory = {waiting: true};
         }
-        if (marketHistory.last_fetched != todays_key) {
+        if (marketHistory.waiting != true && marketHistory.last_fetched != todays_key) {
             await app.db.prices.updateOne({
                 item_id: item_id,
             }, {
@@ -166,15 +168,13 @@ async function fetch(app, item_id, date, skip_fetch) {
                     waiting: true
                 }
             });
-            count++;
-            if (app.bailout) throw 'Price check bailing';
-            //console.log('Waiting on price fetch for: ', item_id);
-            if (skip_fetch != true) await app.sleep(1000);
+            if (skip_fetch != true) await app.sleep(3000);
         }
         if (marketHistory.last_fetched != todays_key && skip_fetch != true) {
             iterations++;
             if (iterations > 10) throw 'too many price check waits';
             console.log("Price check waiting", item_id, date, marketHistory.last_fetched);
+            await app.sleep(iterations * 1000);
         }
     } while (marketHistory.last_fetched != todays_key && skip_fetch != true);
 
