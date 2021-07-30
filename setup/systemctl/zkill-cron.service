@@ -7,8 +7,8 @@ Restart=always
 User=zkill
 Group=zkill
 Environment=PATH=/usr/bin:/usr/local/bin
-EnvironmentFile=/home/zkill/Dropbox/zkilljs/.env
-WorkingDirectory=/home/zkill/Dropbox/zkilljs
+EnvironmentFile=/home/zkill/zkilljs/.env
+WorkingDirectory=/home/zkill/zkilljs
 
 [Install]
 WantedBy=multi-user.target

@@ -1,0 +1,15 @@
+One mysql table used for searching as it does text searching very fast
+
+CREATE TABLE `autocomplete` (
+  `type` varchar(16) DEFAULT NULL,
+  `id` int DEFAULT NULL,
+  `name` varchar(512) DEFAULT NULL,
+  `ticker` varchar(8) DEFAULT NULL,
+  UNIQUE KEY `type_id` (`type`,`id`),
+  KEY `type_2` (`type`),
+  KEY `id` (`id`),
+  KEY `name` (`name`),
+  KEY `ticker` (`ticker`),
+  KEY `type_ticker` (`type`,`ticker`),
+  KEY `type_name` (`type`,`name`)
+)
