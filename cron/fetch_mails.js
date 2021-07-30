@@ -28,14 +28,6 @@ async function fetch(app, mail) {
             });
             return;
         }
-        await app.db.killhashes.updateOne(mail, {
-                $set: {
-                    status: 'error',
-                    success: false
-                }
-            });
-            return;
-        return;
 
         let url = app.esi + '/v1/killmails/' + mail.killmail_id + '/' + mail.hash + '/';
         let res = await app.phin(url);
