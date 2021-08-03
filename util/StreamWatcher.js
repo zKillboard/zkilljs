@@ -15,7 +15,7 @@ module.exports = {
             });
 
             // Process any existing that match
-            count = await iterate(app, await collection.find(match).batchSize(1000).sort(sort), f, limit, false, set);
+            count = await iterate(app, await collection.find(match).sort(sort), f, limit, false, set);
 
             // Now process any in the oplog that match
             /*streamConfig.startAtOperationTime = hostInfo.operationTime;
@@ -27,7 +27,7 @@ module.exports = {
         } finally {
             while (set.size > 0) await app.sleep(1);            
             if (count == 0) await app.sleep(1000);
-            this.start(app, collection, match, f, limit); // start again
+            this.start(app, collection, match, f, limit, sort); // start again
         }
     }
 }
@@ -47,9 +47,10 @@ function createStreamMatch(match) {
 async function iterate(app, iterator, f, limit, isStream, set) {
     let count = 0;
     while (await iterator.hasNext()) {
-        while (set.size >= limit) await app.sleep(1); // don't flood the stack        
+        while (set.size >= 10) await app.sleep(1); // don't flood the stack        
         call(app, f, (isStream ? (await iterator.next()).fullDocument : await iterator.next()), set);
         count++;
+        if (count >= limit) break;
     }
     return count;
 }

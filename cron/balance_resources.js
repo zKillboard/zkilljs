@@ -5,35 +5,26 @@ var past_parse_remaining = 0;
 var past_stats_reamining = 0;
 
 async function f(app) {
-	let fetch_ramaining = await app.db.killhashes.countDocuments({status: 'pending'});
+    app.delay_parse = await hasMinimum(app.db.killhashes, {status: 'pending'}, 25);
+    app.delay_prep = app.delay_parse || await hasMinimum(app.db.killhashes, {status: 'fetched'}, 25);
+    app.delay_stat = app.delay_prep || await hasMinimum(app.db.killhashes, {status: 'parsed'}, 25);
 
-    let parse_remaining = await app.db.killhashes.countDocuments({status: 'fetched'});
-    
-    let stats_remaining = await app.db.statistics.countDocuments({update_alltime: true});
-    stats_remaining += await app.db.statistics.countDocuments({update_recent: true});
-
-    let fetch_diff = fetch_ramaining - past_fetch_remaining;
-	let parse_diff = parse_remaining - past_parse_remaining;
-	let stats_diff = stats_remaining - past_stats_reamining;
-
-    app.delay_parse = (fetch_ramaining > 100);
-    app.delay_stats = app.delay_parse || (parse_remaining > 100);
-    app.delay_fetches = app.delay_stats || (stats_remaining > 1000);
-
-    console.log([
-    		text('fetch', fetch_ramaining, fetch_diff),
-    		text('parse', parse_remaining, parse_diff),
-			text('stats', stats_remaining, stats_diff)
-    	].join(', '));
-
-    past_fetch_remaining = fetch_ramaining;
-    past_parse_remaining = parse_remaining;
-    past_stats_reamining = stats_remaining;
+    var no_fetch_dailies = app.delay_parse || app.delay_prep || app.delay_stat;
+    if (no_fetch_dailies == false) no_fetch_dailies = await hasMinimum(app.db.statistics, {update_week: true}, 100);
+    if (no_fetch_dailies == false) no_fetch_dailies = await hasMinimum(app.db.statistics, {update_recent: true}, 100);
+    if (no_fetch_dailies == false) no_fetch_dailies = await hasMinimum(app.db.statistics, {update_alltime: true}, 100);
+    app.no_fetch_dailies = no_fetch_dailies;
 }
 
-function text(key, now, delta) {
-	return key + ': ' + now + ' (' + delta + ')';
+async function hasMinimum(collection, query, min) {
+    var cursor = await collection.find(query);
+    var count = 0;
+    while (await cursor.hasNext()) {
+        await cursor.next(); // throw it away
+        count++;
+        if (count > min) return true;
+    }
+    return false;
 }
-
 
 module.exports = f;

@@ -5,7 +5,7 @@ ul#info-box
 	+show_image('li', json.type, json.id, json.name, 128)
 
 	li
-		table#info-table.table.table-borderless.table-hover.table-sm
+		table#info-table.table.table-borderless.table-hover.table-sm.w-100
 			-var founded = (json.founded == undefined ? '' : ('' + json.date_founded).replace('T', ' ').replace('Z', ''))
 			+info_row_a('Label:', 'label', json.label_id, json.label_id, 'uppercase') 
 			+info_row_a('Character:', 'character', json.character_id, json.character_name)
@@ -17,6 +17,7 @@ ul#info-box
 			+info_row_a('Group:', 'group', json.group_id, json.group_name)
 			+info_row('Members:', json.member_count, 'integer')
 			+info_row('Founded:', founded)
+			+info_row_a('Location: ', 'location', json.location_id, json.location_name)
 			+info_row_a('System:', 'system', json.solar_system_id, json.solar_system_name)
 			+info_row_a('Constellation:', 'constellation', json.constellation_id, json.constellation_name)
 			+info_row_a('Region:', 'region', json.region_id, json.region_name)

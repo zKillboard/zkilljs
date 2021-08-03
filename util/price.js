@@ -1,5 +1,10 @@
 let price_cache = {};
 
+setInterval(function () {
+    console.log('clearing price cache');
+    price_cache = {};
+}, 36000000);
+
 const price = {
     async get(app, item_id, date, skip_fetch) {
         if (date == undefined) throw "Must provide date";
@@ -7,10 +12,14 @@ const price = {
         if (typeof date == 'string') date = date.substr(0, 10);
         else date = this.format_date(date);
         let rkey = date + ':' + item_id;
-        let cached = await app.redis.get(rkey);
-        if (cached != null) {
-            return parseFloat(cached);
-        }
+
+        let cached = price_cache[rkey];
+        if (!isNaN(cached)) return this.cacheIt(app, rkey, cached);
+        
+        /*cached = await app.redis.get(rkey);
+        if (!isNaN(cached)) {
+            // return await this.cacheIt(app, rkey, cached);
+        }*/
 
         const fixed_price = await price.get_fixed_price(app, item_id);
         if (fixed_price != undefined) return this.cacheIt(app, rkey, fixed_price);
@@ -24,9 +33,17 @@ const price = {
         return this.cacheIt(app, rkey, await fetch(app, item_id, date, skip_fetch));
     },
 
+    getFloat(rkey, price) {
+        var orig = price;
+        price = parseFloat(price);
+        if (isNaN(price)) console.log(rkey + ' converted to NaN: ', orig);
+        return price;
+    },
+
     cacheIt(app, rkey, price) {
-        //price_cache[rkey] = price;
-        app.redis.setex(rkey, 3600, price);
+        price = this.getFloat(rkey, price);
+        price_cache[rkey] = price;
+        // app.redis.setex(rkey, 3600, price);
 
         return price;
     },
@@ -145,8 +162,6 @@ async function fetch(app, item_id, date, skip_fetch) {
     let todays_key = app.util.price.get_todays_price_key();
     var iterations = 0;
     do {
-        if (app.bailout == true) throw 'Price check bailing';
-
         marketHistory = await app.db.prices.findOne({
             item_id: item_id
         });
@@ -173,7 +188,7 @@ async function fetch(app, item_id, date, skip_fetch) {
         if (marketHistory.last_fetched != todays_key && skip_fetch != true) {
             iterations++;
             //if (iterations > 30) throw 'too many price check waits';
-            //console.log("Price check waiting", item_id, date, marketHistory.last_fetched);
+            console.log(iterations + " Price check waiting", item_id, date, marketHistory.last_fetched);
             await app.sleep(1000);
         }
     } while (marketHistory.last_fetched != todays_key && skip_fetch != true);

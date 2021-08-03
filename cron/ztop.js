@@ -8,13 +8,27 @@ async function f(app) {
 }
 
 async function ztop(app) {
-    /*let keys = Object.keys(app.ztop).sort();
-    console.log(keys); return;
-    let out = '\n';
-    for (key of keys) {
-    	out += key + ': ' + app.ztop[key] + '\n';
-    	app.ztop[key] = 0;
+    let out = [];
+
+    out.push([
+        text('Fetching', false), 
+        text('Parsing', app.delay_parse), 
+        text('Prepping', app.delay_prep), 
+        text('Statting', app.delay_stat), 
+        text('Dailies', app.no_fetch_dailies)
+        ].join(', '));
+
+    let values = [];
+    let keys = await app.redis.keys("zkb:ztop:*");
+    keys.sort();
+    for (let key of keys) {
+        values[key] = await app.redis.get(key);
+        await app.redis.decrby(key, values[key]);
+        out.push(values[key] + '\t' + key.replace('zkb:ztop:', ''));
     }
-    fs.writeFileSync('/tmp/ztop.json', out, 'utf-8');*/
-    //console.log(await app.redis.hgetall('ztop'));
+    await fs.writeFileSync('/tmp/ztop.txt', out.join('\n'), 'utf-8');
+}
+
+function text(key, isDelayed) {
+    return key + (isDelayed ? ' n': ' Y');
 }

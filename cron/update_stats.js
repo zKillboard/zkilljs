@@ -33,7 +33,7 @@ async function f(app) {
                     type: type
                 };
                 find['update_' + epoch] = true;
-                await update_stats(app, epochs[epoch], epoch, type, find);
+                update_stats(app, epochs[epoch], epoch, type, find);
             }
         }
         first_run = false;
@@ -46,16 +46,17 @@ async function update_stats(app, collection, epoch, type, find) {
     try {
         if (app.bailout == true || app.no_stats == true) return;
 
-        var iter = await app.db.statistics.find(find).limit(1000);
+        var iter = await app.db.statistics.find(find).limit(10000);
         while (await iter.hasNext()) {
             if (app.bailout == true || app.no_stats == true) break;
+            if (app.delay_stat) await app.randomSleep(1000, 3000);
 
             var record = await iter.next();
             if (record.id !== NaN) {
-                if (app.delay_stats) await app.sleep(100);
                 await update_record(app, collection, epoch, record);
                 iterated = true;
             }
+            app.zincr('stats_calced_' + epoch);
         }
     } catch (e) {
         console.log(e);
@@ -89,19 +90,18 @@ async function update_record(app, collection, epoch, record) {
             type: record.type,
             id: record.id
         });
-        await app.redis.srem('zkilljs:stats:publish', redis_base);
 
         var min = (record[epoch].last_sequence || 0);
-        var max = Math.min(min + 100000000, record.sequence);
+        var max = Math.min(min + 1000000, record.sequence);
 
         let match = {
-            stats: true,
             sequence: {
                 '$lte': max,
             },
         };
         if (min > 0) match.sequence['$gt'] = min;
-        if (record.type == 'label' && record.id == 'npc') match['stats'] = false; // Special exception for NPC label only
+
+        // if (record.type == 'label' && record.id == 'npc') match['stats'] = false; // Special exception for NPC label only
 
         // Update the stats based on the result, but don't clear the update_ field yet
         set = {};

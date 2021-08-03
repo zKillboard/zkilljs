@@ -2,6 +2,12 @@
 
 module.exports = f;
 
+const involved_add_cache = {};
+const added_cache = {};
+const price_cache = {};
+const universe_cache = {};
+
+
 const no_solo_ships = [29, 31, 237];
 const parsed = {
     $set: {
@@ -20,25 +26,20 @@ const match = {
 
 async function f(app) {
     if (firstRun) {
-        sw.start(app, app.db.killhashes, match, parse_mail, 10, {killmail_id: -1});
+        sw.start(app, app.db.killhashes, match, parse_mail, 99, {killmail_id: -1});
         firstRun = false;
     }
 }
 
 async function parse_mail(app, killhash) {
-    if (app.delay_parse) await app.sleep(100); // parse, but go slow
+    if (app.delay_parse) await app.randomSleep(0, 100);
 
     var killmail = {};
     const now = Math.floor(Date.now() / 1000);
 
     try {
-        //if (await app.db.prices.countDocuments({waiting: true}) > 3) return await app.sleep(1000); // Wait for prices to fetch, resume later
-
         // just so we can reuse the sequence number
         var prev_parsed_mail = undefined;
-        /*await app.db.killmails.findOne({
-                   killmail_id: killhash.killmail_id
-               });*/
 
         let remove_alltime = app.db.killmails.removeOne({
             killmail_id: killhash.killmail_id
@@ -85,9 +86,21 @@ async function parse_mail(app, killhash) {
         promises.push(addInvolved(app, involved, rawmail.victim, true));
         for (let inv of rawmail.attackers) promises.push(addInvolved(app, involved, inv, false));
 
-        const system = await app.util.entity.info(app, 'solar_system_id', rawmail.solar_system_id, true);
-        const constellation = await app.util.entity.info(app, 'constellation_id', system.constellation_id, true);
-        const region = await app.util.entity.info(app, 'region_id', constellation.region_id, true);
+        let system = universe_cache[rawmail.solar_system_id];
+        if (system == undefined) {
+            system = await app.util.entity.info(app, 'solar_system_id', rawmail.solar_system_id, true);
+            universe_cache[rawmail.solar_system_id] = system;
+        }
+        let constellation = universe_cache[system.constellation_id];
+        if (constellation == undefined) {
+            constellation = await app.util.entity.info(app, 'constellation_id', system.constellation_id, true);
+            universe_cache[system.constellation_id] = constellation;
+        }
+        let region = universe_cache[constellation.region_id];
+        if (region == undefined) {
+            region = await app.util.entity.info(app, 'region_id', constellation.region_id, true);
+            universe_cache[constellation.region_id] = region;
+        }
 
         addTypeId(app, involved, 'solar_system_id', system.id);
         addTypeId(app, involved, 'constellation_id', constellation.id);
@@ -110,7 +123,11 @@ async function parse_mail(app, killhash) {
         const npc = isNPC(rawmail);
         const labels = [];
         if (npc === true) labels.push('npc');
-        else if (await isSolo(app, rawmail) === true) labels.push('solo');
+        else {
+            labels.push('pvp');
+            if (await isSolo(app, rawmail) === true) labels.push('solo');
+        }
+        if (rawmail.attackers.length >= 10) labels.push('10+');
         if (rawmail.attackers.length >= 100) labels.push('100+');
         if (rawmail.attackers.length >= 1000) labels.push('1000+');
 
@@ -121,7 +138,11 @@ async function parse_mail(app, killhash) {
         if (region.id >= 12000000 && region.id < 13000000) labels.push('abyssal');
         if (region.id >= 12000000 && region.id < 13000000 && !npc) labels.push('abyssal-pvp');
 
-        killmail.total_value = Math.round(await ship_price + await item_prices);
+        killmail.total_value = Math.round(parseFloat(await ship_price) + parseFloat(await item_prices));
+        if (isNaN(killmail.total_value)) {
+            console.log('isNaN on killmail ' + killhash.killmail_id);
+            return await app.sleep(1000);
+        }
 
         if (killmail.total_value >= 10000000000) labels.push('bigisk');
         if (killmail.total_value >= 100000000000) labels.push('extremeisk');
@@ -225,12 +246,17 @@ async function addInvolved(app, object, involved, is_victim) {
 
         const id = involved[type];
         if (type == 'weapon_type_id') {
+            if (involved_add_cache['item_id:' + id] == true) continue;
             await app.util.entity.add(app, 'item_id', id);
+            involved_add_cache['item_id:' + id] = true;
             continue;
         }
         if (type == 'ship_type_id') type = 'item_id';
 
-        await app.util.entity.add(app, type, id);
+        if (involved_add_cache[type + ':' + id] != true) {
+            await app.util.entity.add(app, type, id);
+            involved_add_cache[type + ':' + id] = true;
+        }
         addTypeId(app, object, type, (is_victim ? -1 * id : id));
 
         if (type == 'item_id') {
@@ -291,8 +317,6 @@ async function isSolo(app, rawmail) {
     return (numPlayers == 1);
 }
 
-var added = [];
-
 async function get_item_prices(app, items, date, in_container = false) {
     let total = 0;
     let promises = [];
@@ -306,9 +330,9 @@ async function get_item_prices(app, items, date, in_container = false) {
 }
 
 async function get_item_price(app, item, date, in_container) {
-    if (added.indexOf(item.item_type_id) == -1) {
+    if (added_cache[item.item_type_id] != true) {
         await app.util.entity.add(app, 'item_id', item.item_type_id);
-        added.push(item.item_type_id);
+        added_cache[item.item_type_id] = true;
     }
 
     let total = 0;
@@ -327,8 +351,11 @@ async function get_item_price(app, item, date, in_container) {
         }
     }
 
-    const item_price = item.singleton != 0 ? 0.01 : await app.util.price.get(app, item.item_type_id, date);
+    const item_price = (item.singleton != 0 ? 0.01 : await app.util.price.get(app, item.item_type_id, date));
     const qty = (item.quantity_dropped || 0) + (item.quantity_destroyed || 0);
+
+    if (isNaN(item_price)) console.log('isNaN price on ', item);
+
     total += (qty * item_price);
 
     return total;
@@ -348,6 +375,8 @@ async function check_for_padding(app, rawmail) {
     return count;
 }
 
+const padhash_ship_2_group = {};
+
 // https://forums.eveonline.com/default.aspx?g=posts&m=4900335#post4900335
 async function get_pad_hash(app, rawmail, killmail) {
     let victim = rawmail.victim;
@@ -356,9 +385,12 @@ async function get_pad_hash(app, rawmail, killmail) {
     let shipTypeID = victim.ship_type_id || 0;
     if (shipTypeID == 0) return undefined;
 
-    let item = await app.util.entity.info(app, 'item_id', shipTypeID);
-    let group = await app.util.entity.info(app, 'group_id', item.group_id);
-    if (group.category_id != 6) return undefined;
+    if (padhash_ship_2_group[shipTypeID] == undefined) {
+        let item = await app.util.entity.info(app, 'item_id', shipTypeID);
+        let group = await app.util.entity.info(app, 'group_id', item.group_id);
+        padhash_ship_2_group[shipTypeID] = group.category_id;
+    }
+    if (padhash_ship_2_group[shipTypeID] != 6) return undefined;
 
     let attackers = rawmail.attackers;
     let attacker = null;

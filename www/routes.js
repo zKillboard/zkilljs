@@ -51,6 +51,7 @@ async function doStuff(req, res, next, controllerFile, pugFile) {
         if (result.content_type != undefined) res.setHeader("Content-Type", result.content_type)
 
         //res.set('Cache-Control', 'public, max-age=' + maxAge);
+        res.set('Cache-Control', 'public, max-age=' + 0); // TODO remove this for production
 
         if (result === null || result === undefined) {
             res.sendStatus(404);

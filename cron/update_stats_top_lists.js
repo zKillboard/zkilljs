@@ -20,7 +20,7 @@ var collections = {
 var sequential = 0;
 
 async function f(app) {
-    try {
+    try {        
         app.toptens = true;
 
         var epochs = Object.keys(collections);
@@ -32,11 +32,13 @@ async function f(app) {
                 [epoch + '.update_top']: true,
             }).batchSize(50);
             while (await result.hasNext()) {
+                if (app.delay_stat) await app.randomSleep(1000, 3000);
                 if (app.bailout) throw 'bailout';
 
                 var row = await result.next();
                 while (sequential > 10) await app.sleep(1);
-                do_update(app, epoch, row);
+                await do_update(app, epoch, row);
+                app.zincr('stats_toplist_' + epoch);
             }
         }
         while (sequential > 0) await app.sleep(1);

@@ -56,7 +56,7 @@ async function populateSet(app, typeValue) {
             type: typeValue
         }).sort({
             last_updated: 1
-        }).limit(10); // Limit so we reset this query often
+        }).limit(1000); // Limit so we reset this query often
 
         while (await rows.hasNext()) {
             if (app.bailout == true || app.no_api == true) break;
@@ -99,7 +99,7 @@ async function fetch(app, row) {
         let res = await app.phin({
             url: url,
             headers: {
-                'If-None-Match': (row.type == 'alliance_id' ? '' : row.etag || '')
+                // 'If-None-Match': (row.type == 'alliance_id' ? '' : row.etag || '')
             }
         });
 
@@ -129,8 +129,9 @@ async function fetch(app, row) {
             await app.db.information.updateOne(row, {
                 $set: body
             });
-            //if (row.name != body.row) console.log('Added ' + row.type + ' ' + row.id + ' ' + body.name);
+
             app.zincr('esi_fetched');
+            app.zincr('info_' + row.type);
 
             let keys = Object.keys(body);
             for (let key of keys) {
@@ -155,6 +156,7 @@ async function fetch(app, row) {
             var searchname = row.name;
             if (row.type =='character_id' && row.corporation_id == 1000001) searchname = searchname + ' (recycled)';
             else if ((row.type == 'corporation_id' || row.type == 'alliance_id') && row.membercount == 0) searchname = searchname + ' (closed)';
+
             await app.mysql.query('replace into autocomplete values (?, ?, ?, ?)', [row.type, row.id, searchname, row.ticker]);
 
             return true;

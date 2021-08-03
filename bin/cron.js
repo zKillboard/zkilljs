@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 
 var tasks = {
+    'balance_resources': createTaskSettings(1),
+    'ztop': createTaskSettings(5),
+
     // maintenance fun
     'trigger_price_checks': createTaskSettings(60),
     'update_prices': createTaskSettings(1),
@@ -8,6 +11,7 @@ var tasks = {
     'update_information.js': createTaskSettings(1),
     'fetch_locations.js': createTaskSettings(5),
     'status_change.js': createTaskSettings(1),
+    'update_alliance_membercounts.js': createTaskSettings(3600),
 
     // killmail producers
     'listen_redisq.js': createTaskSettings(15),
@@ -21,16 +25,12 @@ var tasks = {
     'update_stats_prepare.js': createTaskSettings(1),
 
     // statistics
-    'update_stats.js': createTaskSettings(1),
-    'publish_stats_updates.js': createTaskSettings(5),
+    'update_stats.js': createTaskSettings(60),
+    'publish_stats_updates.js': createTaskSettings(1),
     'update_stats_week_cleanup.js': createTaskSettings(3600),
-    'update_stats_recent_cleanup.js': createTaskSettings(86400),
-    'update_stats_top_lists.js': createTaskSettings(1),
+    'update_stats_recent_cleanup.js': createTaskSettings(86400, 0, -9000),
+    'update_stats_top_lists.js': createTaskSettings(900),
     'populate_ranks.js': createTaskSettings(86400),
-    'update_alliance_membercounts.js': createTaskSettings(3600),
-
-    //'ztop.js': createTaskSettings(1),
-    'balance_resources': createTaskSettings(5),
 }
 
 var app = undefined;
@@ -169,6 +169,7 @@ function memUsage() {
         max = used;
         console.log(used + ' MB', taskname);
     }
-    setTimeout(memUsage, 1000);
+    if (used > 3000) app.redis.set("RESTART", "true"); // memory leak somewhere... 
+    else setTimeout(memUsage, 1000);
 }
 memUsage();

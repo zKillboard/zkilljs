@@ -9,14 +9,16 @@ module.exports = {
             killmail_id: killmail_id,
             hash: hash
         };
-        if (await app.db.killhashes.countDocuments(key) > 0) return;
+        if (await app.db.killhashes.countDocuments(key) > 0) return 0;
         key['status'] = 'pending';
         try {
             await app.db.killhashes.insertOne(key);
+	    return 1;
         } catch (e) {
             if (e.code != 11000) { // Ignore duplicate entry error
                 console.log(e);
             }
+	    return 0;
         }
     },
 

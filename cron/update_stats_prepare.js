@@ -22,9 +22,11 @@ async function populateSet(app) {
 
         while (await killhashes.hasNext()) {
             if (app.no_stats) break;
+            if (app.delay_prep) await app.randomSleep(3000, 8000);
 
             prepStats(app, await killhashes.next());
             while (prepSet.size >= 10) await app.sleep(1);
+            await app.sleep(1);
             prepped++;
             app.zincr('stats_prepped');
         }
@@ -100,6 +102,7 @@ setInterval(function () {
 
 async function addKM(app, killmail, type, id) {
     if (typeof id != 'string') id = Math.abs(id);
+
     let addKey = type + ':' + id;
     try {
         if (!addSet.has(addKey)) {
@@ -107,8 +110,8 @@ async function addKM(app, killmail, type, id) {
                 type: type,
                 id: id,
                 update_alltime: true,
-                update_week: true,
                 update_recent: true,
+                update_week: true,
                 sequence: killmail.sequence
             });
             addSet.add(addKey);
@@ -122,6 +125,19 @@ async function addKM(app, killmail, type, id) {
         }
     }
 
+    const now = Math.floor(Date.now() / 1000);
+    var update_recent = (killmail.epoch > (now - (90 * 86400)));
+    var update_week =  (killmail.epoch > (now - (7 * 86400)));
+
+    var set = {
+                update_alltime: true,
+                update_recent: update_recent,
+                update_week: update_week,
+                sequence: killmail.sequence
+        };
+    if (update_recent) set.update_recent = true;
+    if (update_week) set.update_week = true;
+
     let previousSequence = sequenceUpdates.get(addKey);
     if (previousSequence == undefined || killmail.sequence > previousSequence) {
 
@@ -132,12 +148,7 @@ async function addKM(app, killmail, type, id) {
                 $lt: killmail.sequence
             }
         }, {
-            $set: {
-                update_alltime: true,
-                update_week: true,
-                update_recent: true,
-                sequence: killmail.sequence
-            },
+            $set: set,
         });
         sequenceUpdates.set(addKey, killmail.sequence);
     }

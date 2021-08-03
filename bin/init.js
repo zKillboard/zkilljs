@@ -41,9 +41,10 @@ async function f() {
 
     app.md5 = require('md5');
 
-    app.delay_fetches = true; // default to looking busy
-    app.delay_parse = true; // default to looking busy
-    app.delay_stats = true; // default to looking busy
+    app.delay_parse = true;
+    app.delay_prep = true;
+    app.delay_stat = true;
+    app.no_fetch_dailies = true;
 
     app.util = {
         entity: require('../util/entity.js'),
@@ -86,6 +87,22 @@ async function f() {
         });
     }
 
+    app.randomSleep = async function(min, max = -1) {
+        min = Math.abs(min);
+        if (max == -1) {
+            min = 0;
+            max = min;
+        } else if (max < min) {
+            throw 'max cannot be greather than min ' + min + ' ' + max;
+        }
+
+        let base = min;
+        let diff = max - min;
+        var random = Math.floor(Math.random() * diff);
+
+        await app.sleep(base + random);
+    }
+
     const MongoClient = require('mongodb').MongoClient;
     const url = 'mongodb://localhost:27017?maxPoolSize=500';
     const dbName = 'zkilljs';
@@ -120,15 +137,7 @@ async function f() {
     app.mysql = mysql;
 
     app.zincr = function (key) {
-        let now = Math.floor(Date.now() / 1000) * 1000;
-        if (lastsecond != now) {
-            lastsecond = now;
-            zincrcount = 0;
-        }
-        if (ztopindexes.indexOf(key) == -1) ztopindexes.push(key);
-        zincrcount++;
-        let z = now + zincrcount;
-        app.redis.zadd('zkb:ztop:' + key, z, z);
+        app.redis.incr('zkb:ztop:' + key);
     };
 
     // Special case, killhashes will be mapped to original zkillboard's esimails collection
@@ -144,25 +153,3 @@ let lastsecond = 0;
 let zincrcount = 0;
 let ztopindexes = [];
 let globalapp = undefined;
-
-setTimeout(clearIndexes, 1001);
-
-async function clearIndexes() {
-    try {
-        if (globalapp == undefined) return;
-        let app = globalapp;
-
-        let now = Math.floor(Date.now() / 1000) * 1000;
-
-        for (let i of ztopindexes) {
-            let key = 'zkb:ztop:' + i;
-            await app.redis.zremrangebyscore(key, '-inf', now - 300000);
-            let size = await app.redis.zcard('zkb:ztop:' + i);
-            await app.redis.hset('ztop', i, size);
-        }
-    } catch (e) {
-        console.log(e);
-    }
-    setTimeout(clearIndexes, 1001);
-}
-

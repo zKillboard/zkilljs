@@ -1,5 +1,8 @@
 'use strict';
 
+const util = require('util')
+
+
 const negatives = ['character_id', 'corporation_id', 'alliance_id', 'faction_id', 'item_id', 'group_id', 'category_id',
     'war_id'
 ];
@@ -9,17 +12,8 @@ const stats = {
     update_stat_record: async function (app, collection, epoch, record, match, max) {
         let fquery;
 
-        if (negatives.includes(record.type)) {
-            match['involved.' + record.type] = -1 * record.id;
-            fquery = await this.facet_query(app, collection, match);
-
-            this.apply(record, epoch, fquery, false, 'groups');
-            this.apply(record, epoch, fquery, false, 'labels');
-            this.apply(record, epoch, fquery, false, 'months');
-            //this.applyTop10(record, epoch, fquery, false);
-        }
-
         if (record.type == 'label' & record.id == 'all') {
+            // console.log(epoch, match);
             // no match, we want all of the killmails
         } else if (record.type == 'label') {
             match['labels'] = record.id;
@@ -28,10 +22,26 @@ const stats = {
         }
 
         fquery = await this.facet_query(app, collection, match);
+
         this.apply(record, epoch, fquery, true, 'groups');
         this.apply(record, epoch, fquery, true, 'labels');
         this.apply(record, epoch, fquery, true, 'months');
-        //this.applyTop10(record, epoch, fquery, true);
+
+        if (negatives.includes(record.type)) {
+            match['involved.' + record.type] = -1 * record.id;
+
+            /*if (match.labels === undefined) {
+                match.labels = 'pvp';
+            } else if (typeof match.labels == 'string') {
+                match.labels = {'$and' : [match.labels, 'pvp']};
+            } else throw 'unknown labels condition ' + typeof match.labels;*/
+
+            fquery = await this.facet_query(app, collection, match);
+
+            this.apply(record, epoch, fquery, false, 'groups');
+            this.apply(record, epoch, fquery, false, 'labels');
+            this.apply(record, epoch, fquery, false, 'months');
+        }
 
         var killed = record[epoch].killed || 0;
         var lost = record[epoch].lost || 0;
@@ -135,8 +145,11 @@ const stats = {
     },
 
     facet_query: async function (app, collection, match) {
-        //while (app.fquery >= 5) await app.sleep(1); // poor man's sempahore
+        while (app.fquery >= 5) await app.sleep(1); // poor man's sempahore
         app.fquery++;
+
+        //console.log(collection);
+        //console.log(util.inspect(match, false, null, true /* enable colors */))
 
         try {
             let result = await app.db[collection].aggregate([{
@@ -237,6 +250,8 @@ const stats = {
             }, ], {
                 allowDiskUse: true
             }).maxTimeMS(3600000).toArray();
+
+            //console.log(util.inspect(result, false, null, true /* enable colors */));
 
             return result.length == 0 ? {} : result[0];
         } finally {

@@ -38,14 +38,22 @@ async function getData(req, res) {
 
     if (result.length == 0) return null;
 
+
+    result = result[0];
+
+    if (result.name == undefined) {
+        result.name = req.params.type + ' ' + req.params.id;
+    }
+
     var ret = {
-        json: result[0],
-        page_title: result[0].name,
+        json: result,
+        page_title: result.name,
         maxAge: 3600
     };
 
     ret.json = await app.util.info.fill(app, ret.json);
     ret.json[req.params.type + '_id'] = ret.json.id;
     ret.json[req.params.type + '_name'] = ret.json.name;
+
     return ret;
 }
