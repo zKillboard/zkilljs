@@ -5,7 +5,7 @@ var tasks = {
     'ztop': createTaskSettings(5),
 
     // maintenance fun
-    'trigger_price_checks': createTaskSettings(60),
+    // 'trigger_price_checks': createTaskSettings(60),
     'update_prices': createTaskSettings(1),
     'update_factions.js': createTaskSettings(60),
     'update_information.js': createTaskSettings(1),
@@ -160,16 +160,3 @@ watch('restart.txt', {
 }, async function (evt, name) {
     await app.redis.set("RESTART", "true");
 });
-
-var max = 0;
-
-function memUsage() {
-    var used = Math.floor(process.memoryUsage().heapUsed / 1024 / 1024);
-    if (used > max) {
-        max = used;
-        console.log(used + ' MB', taskname);
-    }
-    if (used > 3000) app.redis.set("RESTART", "true"); // memory leak somewhere... 
-    else setTimeout(memUsage, 1000);
-}
-memUsage();

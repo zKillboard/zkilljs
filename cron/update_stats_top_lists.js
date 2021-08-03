@@ -33,7 +33,7 @@ async function f(app) {
             }).batchSize(50);
             while (await result.hasNext()) {
                 if (app.delay_stat) await app.randomSleep(1000, 3000);
-                if (app.bailout) throw 'bailout';
+                if (app.bailout) return;
 
                 var row = await result.next();
                 while (sequential > 10) await app.sleep(1);

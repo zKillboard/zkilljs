@@ -10,6 +10,7 @@ async function f(app) {
 async function ztop(app) {
     let out = [];
 
+    out.push(memUsage(app));
     out.push([
         text('Fetching', false), 
         text('Parsing', app.delay_parse), 
@@ -32,3 +33,9 @@ async function ztop(app) {
 function text(key, isDelayed) {
     return key + (isDelayed ? ' n': ' Y');
 }
+
+function memUsage(app) {
+    var used = Math.floor(process.memoryUsage().heapUsed / 1024 / 1024);
+    if (used > 3000) app.redis.set("RESTART", "true"); // memory leak somewhere... 
+    return used + ' MB';
+};

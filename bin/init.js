@@ -123,7 +123,7 @@ async function f() {
     app.db = client.db(dbName);
     var collections = await app.db.listCollections().toArray();
     for (let i = 0; i < collections.length; i++) {
-        console.log('Prepping ' + collections[i].name);
+        //console.log('Prepping ' + collections[i].name);
         app.db[collections[i].name] = app.db.collection(collections[i].name);
     }
 

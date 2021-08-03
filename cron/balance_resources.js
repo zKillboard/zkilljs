@@ -10,9 +10,9 @@ async function f(app) {
     app.delay_stat = app.delay_prep || await hasMinimum(app.db.killhashes, {status: 'parsed'}, 25);
 
     var no_fetch_dailies = app.delay_parse || app.delay_prep || app.delay_stat;
-    if (no_fetch_dailies == false) no_fetch_dailies = await hasMinimum(app.db.statistics, {update_week: true}, 100);
-    if (no_fetch_dailies == false) no_fetch_dailies = await hasMinimum(app.db.statistics, {update_recent: true}, 100);
-    if (no_fetch_dailies == false) no_fetch_dailies = await hasMinimum(app.db.statistics, {update_alltime: true}, 100);
+    //if (no_fetch_dailies == false) no_fetch_dailies = await hasMinimum(app.db.statistics, {update_week: true}, 100);
+    //if (no_fetch_dailies == false) no_fetch_dailies = await hasMinimum(app.db.statistics, {update_recent: true}, 100);
+    //if (no_fetch_dailies == false) no_fetch_dailies = await hasMinimum(app.db.statistics, {update_alltime: true}, 100);
     app.no_fetch_dailies = no_fetch_dailies;
 }
 
