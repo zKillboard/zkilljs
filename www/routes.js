@@ -10,6 +10,7 @@ addGet('/site/information/:type/:id.html', 'site/information.js', 'information.p
 addGet('/site/killmails/:type/:id.json', 'site/kill-list.js', 'kill-list.pug');
 addGet('/site/statistics/:type/:id.html', 'site/statistics.js', 'statistics.pug');
 addGet('/site/toptens/:type/:id.html', 'site/toptens.js');
+addGet('/site/ztop.txt', 'site/ztop.js', 'ztop.pug');
 
 // Cached endpoints
 addGet('/cache/1hour/killmail/:id.html', 'site/killmail.js', 'killmail.pug');

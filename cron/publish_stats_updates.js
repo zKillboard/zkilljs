@@ -6,7 +6,6 @@ async function f(app) {
 }
 
 async function publish_key(app, action, rediskey) {
-    await app.sleep(1000);
     var copy = rediskey + '_copy';
     if (await app.redis.exists(rediskey) > 0) {
         await app.redis.rename(rediskey, copy);

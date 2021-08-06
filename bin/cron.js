@@ -5,7 +5,7 @@ var tasks = {
     'ztop': createTaskSettings(5),
 
     // maintenance fun
-    // 'trigger_price_checks': createTaskSettings(60),
+     'trigger_price_checks': createTaskSettings(60),
     'update_prices': createTaskSettings(1),
     'update_factions.js': createTaskSettings(60),
     'update_information.js': createTaskSettings(1),
@@ -26,10 +26,10 @@ var tasks = {
 
     // statistics
     'update_stats.js': createTaskSettings(60),
-    'publish_stats_updates.js': createTaskSettings(1),
+    'publish_stats_updates.js': createTaskSettings(5),
     'update_stats_week_cleanup.js': createTaskSettings(3600),
     'update_stats_recent_cleanup.js': createTaskSettings(86400, 0, -9000),
-    'update_stats_top_lists.js': createTaskSettings(900),
+    'update_stats_top_lists.js': createTaskSettings(15),
     'populate_ranks.js': createTaskSettings(86400),
 }
 

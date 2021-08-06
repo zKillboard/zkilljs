@@ -16,7 +16,7 @@ var maps = {
 var urls = {
     'item_id': '/v3/universe/types/:id/',
     'group_id': '/v1/universe/groups/:id/',
-    'character_id': '/v4/characters/:id/',
+    'character_id': '/v5/characters/:id/',
     'corporation_id': '/v4/corporations/:id/',
     'alliance_id': '/v4/alliances/:id/',
     'category_id': '/v1/universe/categories/:id/',

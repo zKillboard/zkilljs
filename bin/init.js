@@ -147,9 +147,23 @@ async function f() {
 
     globalapp = app;
     return app;
+
+    gc(app);
 }
 
 let lastsecond = 0;
 let zincrcount = 0;
 let ztopindexes = [];
 let globalapp = undefined;
+
+function gc(app) {
+    var used = Math.floor(process.memoryUsage().heapUsed / 1024 / 1024);
+    if (used > 2500) {
+        if (global.gc) {
+            global.gc();
+            var used_now = Math.floor(process.memoryUsage().heapUsed / 1024 / 1024);
+            console.log('Garbage collected ' + (used - used_now) + ' MB');
+        }
+    }
+    setTimeout(function(app) { gc(app); }, app.randomSleep(15000, 20000));
+}

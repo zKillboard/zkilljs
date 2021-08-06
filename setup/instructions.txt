@@ -13,6 +13,17 @@ ufw 443
 ufw 18888
 ufw enable
 
+// Create a nginx self signed cert
+// copy over nginx configurations, edit as needed
+
+// setup systemctl configurations
+
+systemctl daemon-reload
+systemctl enable zkill-www
+systemctl start zkill-www
+systemctl enable zkill-cron
+systemctl start zkill-cron
+
 Run these as the zkilljs user (or whatever user you picked) in the app root
 
 cp setup/env .env  		# env file, edit as necessary

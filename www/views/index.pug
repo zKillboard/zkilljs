@@ -5,6 +5,7 @@ html
         meta(name='viewport' content='width=device-width, initial-scale=1')
         title= json.title
         link(rel='stylesheet' href='/css/cyborg.css')
+        link(rel='stylesheet' href='https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css')
         link(rel='stylesheet' href='/css/spinner.css?v=' + server_started)
         link(rel='stylesheet' href='/css/z.css?v=' + server_started)
 
@@ -16,9 +17,17 @@ html
                         img.d-inline-block(src="/img/zkill.png" width="30" height="30" alt="zKillboard wreck icon")
                         span.d-none.d-md-inline-block.text-dark &nbsp;zKillboard (alpha)
                     ul.navbar-nav.mr-auto
-                    form.form-inline.my-2.my-lg-0(onsubmit='return false;')
-                        input#autocomplete.form-control.mr-sm-2(type='Search' placeholder='Search' aria-label='Search')
+                    ul.navbar-nav
+                        li.navbar-item
+                            a.nav-link(href='#' onclick='return toggleZTop();')
+                                i.bi.bi-server.navbar-item
+                    ul.navbar-nav
+                        form.form-inline.my-2.my-lg-0(onsubmit='return false;')
+                            input#autocomplete.form-control.mr-sm-2(type='Search' placeholder='Search' aria-label='Search')
                 hr
+                div.row
+                    div#ztop-block.col-12
+                        code#ztop
                 div#overview.collapse.container-fluid
                     div.row
                         div#overview-information.col-sm-12.col-xl-6

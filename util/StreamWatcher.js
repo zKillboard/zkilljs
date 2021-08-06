@@ -23,7 +23,7 @@ module.exports = {
             count += await iterate(app, stream, f, limit, true);*/
         } catch (e) {
             // 136 is stream died, ignore it and restart in a second
-            if (e.code != 136) console.log(e);
+            if (e.code != 136) console.log('StremWatcher exception', '\n', match, '\n', e);
         } finally {
             while (set.size > 0) await app.sleep(1);            
             if (count == 0) await app.sleep(1000);

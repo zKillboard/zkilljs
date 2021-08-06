@@ -25,9 +25,11 @@ async function ztop(app) {
     for (let key of keys) {
         values[key] = await app.redis.get(key);
         await app.redis.decrby(key, values[key]);
-        out.push(values[key] + '\t' + key.replace('zkb:ztop:', ''));
+        out.push(('        ' + values[key]).slice(-5) + '   ' + key.replace('zkb:ztop:', ''));
     }
-    await fs.writeFileSync('/tmp/ztop.txt', out.join('\n'), 'utf-8');
+    var output = out.join('\n');
+    await app.redis.setex("server-information", 60, output);
+    await fs.writeFileSync('/tmp/ztop.txt', output, 'utf-8');
 }
 
 function text(key, isDelayed) {

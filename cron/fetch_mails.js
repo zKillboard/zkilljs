@@ -10,9 +10,24 @@ const match = {
 
 async function f(app) {
     if (firstRun) {
+        // clear failure reasons on mails that are successful
+        app.db.killhashes.updateMany({status: 'done', failure_reason : { $exists: true}}, {$unset: {failure_reason : 1}}, {multi: true});
+        
+        resetBadMails(app);
+
         sw.start(app, app.db.killhashes, match, fetch, 1000, {killmail_id: -1});
         firstRun = false;
     }
+}
+
+const http_codes_reattempt = [502, 503, 504];
+async function resetBadMails(app) {
+    for (i = 0; i < http_codes_reattempt.length; i++) {
+        let code = http_codes_reattempt[i];
+        await app.db.killhashes.updateMany({status: 'failed', failure_reason: 'http ' + code}, {$set: {status: 'pending'}}, {multi: true});
+    }
+
+    setTimeout(function() { resetBadMails(app); }, 60000);
 }
 
 async function fetch(app, mail) {
@@ -60,7 +75,8 @@ async function fetch(app, mail) {
                 $set: {
                     status: 'failed',
                     killmail_id: parseInt(mail.killmail_id),
-                    success: false
+                    success: false,
+                    failure_reason: 'http ' + res.statusCode
                 }
             });
         }

@@ -45,11 +45,12 @@ async function update_stats(app, collection, epoch, type, find) {
 
     try {
         if (app.bailout == true || app.no_stats == true) return;
+        if (app.delay_stat) return await app.randomSleep(1000, 3000);
 
         var iter = await app.db.statistics.find(find).limit(10000);
         while (await iter.hasNext()) {
             if (app.bailout == true || app.no_stats == true) break;
-            if (app.delay_stat) await app.randomSleep(1000, 3000);
+            if (app.delay_stat) return await app.randomSleep(1000, 3000);
 
             var record = await iter.next();
             if (record.id !== NaN) {

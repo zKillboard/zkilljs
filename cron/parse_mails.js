@@ -187,7 +187,7 @@ async function parse_mail(app, killhash) {
             }
         });
     } finally {
-        if (killmail.epoch > (now - (90 * 86400))) publishToKillFeed(app, killmail);
+        if (killmail.epoch > (now - (7 * 86400))) publishToKillFeed(app, killmail);
         killmail = null; // memory leak protection
     }
 }

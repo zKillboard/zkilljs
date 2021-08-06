@@ -77,15 +77,21 @@ async function update_price(app, row, todays_price_key) {
             await app.db.prices.updateOne(row, {
                 '$set': updates
             });
+            app.zincr('price_fetch');
         } else if (res.statusCode == 404) {
             updates.no_fetch = true;
             await app.db.prices.updateOne(row, {
                 '$set': updates
             });
             //console.log('Marking price check for ' + item_id + ' as no_fetch');
+            app.zincr('esi_error');
+            app.zincr('price_fetch_error');
             await app.sleep(1000);
         } else {
             console.log('Price fetch ended in error: ' + res.statusCode, url);
+            app.zincr('esi_error');
+            app.zincr('price_fetch_error');
+            await app.sleep(1000);
         }
     } finally {
         set.delete(s);

@@ -9,8 +9,7 @@ async function f(app) {
         populateSet(app);
     }
 
-    await app.sleep(1000);
-    while (app.no_stats && prepSet.size > 0) await app.sleep(1000);
+    while (prepSet.size > 0) await app.sleep(1000);
 }
 
 async function populateSet(app) {
@@ -18,11 +17,11 @@ async function populateSet(app) {
     try {
         let killhashes = await app.db.killhashes.find({
             status: 'parsed'
-        });
+        }).sort({sequence: -1});
 
         while (await killhashes.hasNext()) {
             if (app.no_stats) break;
-            if (app.delay_prep) await app.randomSleep(3000, 8000);
+            if (app.delay_prep) return await app.randomSleep(1000, 2000);
 
             prepStats(app, await killhashes.next());
             while (prepSet.size >= 10) await app.sleep(1);

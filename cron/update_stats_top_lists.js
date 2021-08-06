@@ -30,14 +30,14 @@ async function f(app) {
 
             var result = await app.db.statistics.find({
                 [epoch + '.update_top']: true,
-            }).batchSize(50);
+            });
             while (await result.hasNext()) {
-                if (app.delay_stat) await app.randomSleep(1000, 3000);
+                //if (app.delay_stat) return await app.randomSleep(1000, 3000);
                 if (app.bailout) return;
 
                 var row = await result.next();
                 while (sequential > 10) await app.sleep(1);
-                await do_update(app, epoch, row);
+                do_update(app, epoch, row);
                 app.zincr('stats_toplist_' + epoch);
             }
         }

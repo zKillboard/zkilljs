@@ -81,6 +81,26 @@ function toggleTooltips() {
     }
 }
 
+var stats_subbed = false;
+function toggleZTop() {
+    stats_subbed = !stats_subbed;
+    if (stats_subbed == true) {
+        console.log('loading ztop');
+        loadZTop();
+    } else {
+        console.log('clearing ztop');
+        $("#ztop").html("");
+    }
+    return false;
+}
+
+function loadZTop() {
+    if (stats_subbed) {
+        apply("ztop", "/site/ztop.txt", null, true);
+        setTimeout(loadZTop, 5000);
+    }
+}
+
 function loadPage(url) {
     var path = url == undefined ? window.location.pathname : url;
     var fetch;
@@ -219,7 +239,6 @@ function apply(element, path, subscribe, delay) {
     if (path_hash[path]) {
         fetchpath = path + '?current_hash=' + path_hash[path];
     }
-
 
     if (typeof element == 'string') element = document.getElementById(element);
     // Clear the element
