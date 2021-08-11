@@ -28,7 +28,7 @@ redis.on("pmessage", (pattern, channel, message) => {
 redis.psubscribe("*");
 
 ws.on('connect', (connection) => {
-    console.log('Websocket: Client connected');
+    // console.log('Websocket: Client connected');
 	connection.on('message', function(message) {
 		if (message.type === 'utf8') {
 			try {

@@ -6,15 +6,15 @@ include mixins-attackers.pug
 - var victim = json.rawmail.victim;
 - var time = rawmail.killmail_time.replace('T', ' ').replace('Z', '');
 
-div.row
-	div#killleftside.col-12.col-xl-8.row
-		div#killmail-fitting-col.col-12.col-md-7.col-lg-8.col-xl-8
+div.row.m-0.p-0
+	div#killleftside.col-12.col-xl-8.row.m-0.p-0
+		div#killmail-fitting-col.col-12.col-md-7
 			div#killmail-fitting
 				div#fittingwheelbox
 					object(id='fittingwheel' data='/img/tyrannis-plain.svg?v=' + server_started alt='Fitting wheel' type="image/svg+xml")
-		div#killmail-information.col-12.col-md-5.col-lg-4.col-xl-4
+		div#killmail-information.col-12.col-md-5
 			div#victim-images
-				ul
+				ul.p-0.m-0
 					+char_image('li', victim.character_id, victim.character_name, 128)
 					+corp_image('li', victim.corporation_id, victim.corporation_name, 64)
 					+alli_image('li', victim.alliance_id, victim.alliance_name, 64)
@@ -33,25 +33,45 @@ div.row
 					+info_row_a('Location:', 'location', rawmail.location_id, rawmail.location_name)
 					+info_row('Time:', time)
 					+info_row('Total Value:', killmail.total_value, 'isk')
+					tr
+						td Labels
+						td
+							if killmail.stats == false
+								+add_label('nostats')
+							each label in killmail.labels
+								+add_label(label)
+
 
 		div#killmail-cargo.col-12
 			table#cargotable.table.table-sm.table-hover.table-responsive-sm
 				tbody
+					tr.border-0#master-sort-row
+						td.border-0.cargoimage
+							button.btn.group-toggle.p-0.m-0(type='button',data-toggle='collapse',data-target='.item-group',aria-expanded="true" )
+						td.border-0.cargoname
+							button.sort-trigger.collapse#sort-reset Reset Sort
+						td.border-0.text-right.cargoamount 
+							button.sort-trigger Qty
+						td.border-0.text-right.cargo-price
+							button.sort-trigger Value
 					each group in killmail.cargo_groups
-						tr
-							td(colspan='4')
-								h6= group
+						tr.group-name
+							td
+								button.btn.group-toggle.p-0.m-0(type='button',data-toggle='collapse',data-target='.group-' + group,aria-expanded="true" )
+							td(colspan='3')
+								h6= killmail.group_names[group]
 						- var items = killmail.allslots[group]
 						each item in items
-							tr(class=item.class)
+							tr.item-group.show(class=item.class, class='group-' + group)
 								td.cargoimage
 									+type_image('span', item.item_type_id, item.item_type_name, 32)
-								td.cargoname
+								td.cargoname(col-value=item_type_name)
 									+type_id_link('span', 'item', item.item_type_id, item.item_type_name )
-								td.cargoamount.integer.text-right= item.total
-								td.cargoprice.integer.text-right= item.total_price
+								td.cargoamount.integer.text-right(col-value=item.total)= item.total
+								td.cargoprice.integer.text-right(col-value=item.total_price)= item.total_price
 					tr
-						td(colspan='4')
+						td
+						td(colspan='3')
 							h6 Ship		
 					tr(class='victimrow')
 							td
@@ -61,7 +81,8 @@ div.row
 							td
 							td.integer.text-right= killmail.ship_price
 					tr
-						td(colspan='4')
+						td
+						td(colspan='3')
 							h6 Totals
 					tr.aggressorrow
 						td
@@ -83,10 +104,6 @@ div.row
 			div
 				div#killmail-involved.attackers-list
 					div#killmail-top-stats
-					if killmail.stats == false
-						+add_label('nostats')
-					each label in killmail.labels
-						+add_label(label)
 					hr
 					div
 						span

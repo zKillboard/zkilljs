@@ -93,7 +93,8 @@ async function update_record(app, collection, epoch, record) {
         });
 
         var min = (record[epoch].last_sequence || 0);
-        var max = Math.min(min + 1000000, record.sequence);
+        let increment = (epoch == 'week' ? 100000000 : 1000000);
+        var max = Math.min(min + increment, record.sequence);
 
         let match = {
             sequence: {

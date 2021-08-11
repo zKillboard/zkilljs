@@ -61,11 +61,9 @@ async function populateSet(app, typeValue) {
         while (await rows.hasNext()) {
             if (app.bailout == true || app.no_api == true) break;
 
+            // limit to 10/s 
+            if (typeValue == 'character_id' || typeValue == 'corporation_id' || typeValue == 'alliance_id') await app.sleep(100);
             var p = fetch(app, await rows.next());
-            if (typeValue == 'alliance_id') {
-                await p;
-                await app.sleep(1000);
-            }
             let wait = 20;
             while (set.size > 100) {
                 wait--;
@@ -93,6 +91,24 @@ async function fetch(app, row) {
         const orow = row;
         set.add(row);
 
+        let now = Math.floor(Date.now() / 1000);
+
+
+        if (row.last_updated > 0 && row.type == 'character_id') {
+            // Do they have a recent killmail?
+            let recent_match = {}
+            recent_match['involved.' + row.type] = row.id;
+            let recent_count = await app.db.killmails_90.countDocuments(recent_match);
+            if (recent_count == 0) {
+                recent_match['involved.' + row.type] = -1 * row.id;
+                recent_count = await app.db.killmails_90.countDocuments(recent_match);
+            }
+            if (recent_count == 0) {
+                await app.db.information.updateOne(row, {$set : { last_updated: now, inactive: true }});
+                return;  // nothing to update, move on
+            }
+        }
+
         await app.redis.hset('zkilljs:info:' + row.type, row.id, JSON.stringify(row));
 
         let url = app.esi + urls[row.type].replace(':id', row.id);
@@ -107,10 +123,10 @@ async function fetch(app, row) {
             esi_err_log(app);
         }
 
-        let now = Math.floor(Date.now() / 1000);
         switch (res.statusCode) {
         case 200:
             var body = JSON.parse(res.body);
+            body.inactive = false;
             body.last_updated = now;
             body.etag = res.headers.etag;
             if (row.type == 'war_id') {
@@ -162,8 +178,7 @@ async function fetch(app, row) {
             return true;
             break;
         case 304: // ETAG match
-            await app.db.information.updateOne(row, {
-                $set: {
+            await app.db.information.updateOne(row, {                $set: {
                     last_updated: now
                 }
             });

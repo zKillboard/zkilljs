@@ -100,7 +100,9 @@ setInterval(function () {
 }, 3600000);
 
 async function addKM(app, killmail, type, id) {
+    if (id == undefined || id == null) return;
     if (typeof id != 'string') id = Math.abs(id);
+    if (id <= 0) return;
 
     let addKey = type + ':' + id;
     try {

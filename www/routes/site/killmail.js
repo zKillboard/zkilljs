@@ -55,19 +55,22 @@ async function getData(req, res) {
         if (infernoFlags.get(item.slot) != undefined) fittingwheelitems.push(item);
     }
     killmail.allslots = slots;
+    killmail.cargo_groups = [];
+    killmail.group_names = {};
     // Rearrange slots into proper order
     var rearranged = new Map();
     for (let [key, value] of effectToSlot) {
         var items = slots[key];
-        if (items != undefined) rearranged.set(value, items);
+        if (items != undefined) {
+            rearranged.set(value, items);
+            killmail.cargo_groups.push(key);
+            killmail.group_names[key] = effectToSlot.get(key);
+        }
     }
     killmail.slotkeys = Array.from(rearranged.keys());
     killmail.slots = rearranged;
 
-    killmail.cargo_groups = Object.keys(slots);
-
     // Iterate the items for fitting wheel population
-    // infernoFlags.set('12', [27, 34]); // Highs
     var fittingwheel = [];
     for (let item of fittingwheelitems) {
         let group = infernoFlags.get(item.slot);
@@ -76,7 +79,6 @@ async function getData(req, res) {
         item.flagclass = 'flag' + item.flag;
         var group_id = await app.util.info.get_info_field(app, 'item_id', item.item_type_id, 'group_id');
         var item_category = await app.util.info.get_info_field(app, 'group_id', group_id, 'category_id');
-        console.log(item_category);
         item.base = (item_category == 66 || item_category == 7 || item.slot == '3772') ? 'fitted' : 'charge';
         fittingwheel.push(item);
     }
@@ -108,7 +110,7 @@ function get_negative(arr) {
 }
 
 function get_inferno_slot(flag_id) {
-    const flag_str = '' + flag_id;
+    let flag_str = '' + flag_id;
     for (let [key, values] of infernoFlags) {
         var low = values[0];
         var high = values[1];

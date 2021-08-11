@@ -225,8 +225,8 @@ div#overview-information ul li {
 
 /* Killmail detail page */
 #killmail {
-/*    width: 100%;
-    max-width: 1400px;*/
+    width: 100%;
+    max-width: 1400px;
 }
 
 .leftkillblockcontainer {
@@ -273,7 +273,8 @@ div#overview-information ul li {
 
 #victim-images ul li {
     list-style: none;
-    margin: 5px;
+    margin: 0px !important;
+    padding: 3px !important;
 }
 
 .attackers-list ul li {
@@ -359,3 +360,23 @@ hr {
     transition: none;
 }
 
+.ztop-box {
+    min-width: 200px;
+    width: 250px !important;
+    display: inline-block;
+    margin:  1em;
+}
+
+.group-toggle[aria-expanded='true']::after {
+  content: "-";
+}
+.group-toggle[aria-expanded='false']::after {
+  content: "+";
+}
+
+.group-toggle-full[aria-expanded='true']::after {
+  content: "- Collapse All";
+}
+.group-toggle-full[aria-expanded='false']::after {
+  content: "+ Expand All";
+}

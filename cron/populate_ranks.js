@@ -15,6 +15,7 @@ async function f(app) {
     while (await result.hasNext()) {
         if (app.bailout) return;
         row = await result.next();
+        if (row.id == undefined) continue;
 
         await add_killed(app, row, 'week', formatted_date_now, formatted_date_week_ago);
         await add_killed(app, row, 'recent', formatted_date_now, formatted_date_week_ago);

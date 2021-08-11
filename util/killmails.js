@@ -32,6 +32,7 @@ module.exports = {
         }, {
             upsert: true,
             returnNewDocument: true,
+            useFindAndModify: false,
             returnOriginal: false // seriously driver... come on just respect returnNewDocument
         });
         return next.value.value;

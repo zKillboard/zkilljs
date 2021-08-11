@@ -33,7 +33,7 @@ async function ztop(app) {
 }
 
 function text(key, isDelayed) {
-    return key + (isDelayed ? ' n': ' Y');
+    return /*key +*/ (isDelayed ? ' n': ' Y');
 }
 
 function memUsage(app) {

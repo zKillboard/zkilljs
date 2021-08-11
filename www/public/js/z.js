@@ -457,6 +457,8 @@ function loadUnfetched(element) {
         return;
     }
     updateNumbers();
+        $(".sort-trigger").on('click', sortColumn);
+
 }
 
 // Iterates any elements with the number class and calls intToString to convert it
@@ -880,3 +882,72 @@ var getParams = function (url) {
 };
 
 setInterval(clear_cache, 900000);
+
+var sortColumns = [0, 'Reset Sort', 'Qty', 'Value'];
+function sortColumn(eventObject) {
+    var index = sortColumns.indexOf($(this).text());
+    let cargotable = $("#cargotable");
+
+    if (cargotable.attr('prepped') != 'true') {
+        let rows = $('#cargotable tr');
+
+        if (rows.length > 1000) return;
+
+        for (i = 0; i < rows.length; i++) {
+            let row = rows[i];
+            let td1 = $(row).find('td:eq(1)');
+            let td3 = $(row).find('td:eq(3)');
+
+            td1.attr('col-value', rows.length - i);
+            if (td3.attr('col-value') == undefined) $(row).addClass('no-sort-row');
+        }
+        cargotable.attr('prepped', 'true');
+    }
+
+    if (index != 1) {
+        $("#sort-reset").show();
+        $(".item-group").show();
+        $(".group-name").hide();
+        $('.no-sort-row').hide();
+    } else {
+        $("#sort-reset").hide();
+        $(".item-group").show();
+        $(".group-name").show();
+        $('.no-sort-row').show();
+    }
+
+    // TODO find a better way to implement this sorting
+    // Let's do a horrible sort!
+    let sort_occured = false;
+    let iterations = 1000;
+    do {
+        sort_occured = false;
+        let rows = $('#cargotable tr:visible');
+        var numOfVisibleRows = rows.length;
+
+        for (i = 0; i < (numOfVisibleRows - 1); i++) {
+            let row1 = rows[i];
+            let row2 = rows[i + 1];
+
+            let td1 = $(row1).find('td:eq(' + index + ')');
+            let td2 = $(row2).find('td:eq(' + index + ')');
+
+            let value1 = td1.attr('col-value');
+            let value2 = td2.attr('col-value');
+
+            if (value1 == '' || value2 == '') continue;
+
+            value1 = parseInt(value1);
+            value2 = parseInt(value2);
+
+            if (value1 < value2) {
+                $(row2).next().after(row1);
+                sort_occured = true;
+            }
+        }
+        iterations -= 1;
+        if (iterations == 0) break;
+    } while (sort_occured == true);
+
+    $('#master-sort-row').show();
+}
