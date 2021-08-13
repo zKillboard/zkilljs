@@ -891,17 +891,33 @@ function sortColumn(eventObject) {
     if (cargotable.attr('prepped') != 'true') {
         let rows = $('#cargotable tr');
 
-        if (rows.length > 1000) return;
-
         for (i = 0; i < rows.length; i++) {
             let row = rows[i];
             let td1 = $(row).find('td:eq(1)');
+            let td2 = $(row).find('td:eq(2)');
             let td3 = $(row).find('td:eq(3)');
 
-            td1.attr('col-value', rows.length - i);
-            if (td3.attr('col-value') == undefined) $(row).addClass('no-sort-row');
+            td1.attr('col-value', (i == 0 ? Number.MAX_VALUE : rows.length - i));
+            if (i == 0) td2.attr('col-value', (i == 0 ? Number.MAX_VALUE : rows.length - i));
+            if (i == 0) td3.attr('col-value', (i == 0 ? Number.MAX_VALUE : rows.length - i));
+            if (i == 0 || td3.attr('col-value') == undefined) $(row).addClass('no-sort-row');
         }
         cargotable.attr('prepped', 'true');
+    }
+
+    const table = $('#cargotable');
+    const rows = $('#cargotable tbody tr');
+
+    // Sort the rows based on the index selected
+    rows.sort( function(x, y) {
+        let valuex = (x.cells[index] ? x.cells[index].getAttribute('col-value') : -1);
+        let valuey = (y.cells[index] ? y.cells[index].getAttribute('col-value') : -1);
+        return valuey - valuex;
+    } );
+
+    // and after sorting, rearrange the table
+    for (let i = 0; i < rows.length; i++) {
+        $("#cargotable tr:eq(" + i + ")").next().after(rows[i]);
     }
 
     if (index != 1) {
@@ -915,39 +931,5 @@ function sortColumn(eventObject) {
         $(".group-name").show();
         $('.no-sort-row').show();
     }
-
-    // TODO find a better way to implement this sorting
-    // Let's do a horrible sort!
-    let sort_occured = false;
-    let iterations = 1000;
-    do {
-        sort_occured = false;
-        let rows = $('#cargotable tr:visible');
-        var numOfVisibleRows = rows.length;
-
-        for (i = 0; i < (numOfVisibleRows - 1); i++) {
-            let row1 = rows[i];
-            let row2 = rows[i + 1];
-
-            let td1 = $(row1).find('td:eq(' + index + ')');
-            let td2 = $(row2).find('td:eq(' + index + ')');
-
-            let value1 = td1.attr('col-value');
-            let value2 = td2.attr('col-value');
-
-            if (value1 == '' || value2 == '') continue;
-
-            value1 = parseInt(value1);
-            value2 = parseInt(value2);
-
-            if (value1 < value2) {
-                $(row2).next().after(row1);
-                sort_occured = true;
-            }
-        }
-        iterations -= 1;
-        if (iterations == 0) break;
-    } while (sort_occured == true);
-
     $('#master-sort-row').show();
 }

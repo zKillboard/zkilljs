@@ -32,31 +32,35 @@ async function getData(req, res) {
     var slots = {};
     if (rawmail.victim.items == undefined) rawmail.victim.items = [];
     var fittingwheelitems = [];
-    for (var item of rawmail.victim.items) {
+    var last_slot = undefined;
+    for (var item of get_all_items(rawmail.victim.items)) {
+        var flag = item.flag;
+        item.slot = get_inferno_slot(flag);
+        if (infernoFlags.get(item.slot) != undefined) fittingwheelitems.push(item);
+
+        // Get item price and determine quantities
+        item.price = await app.util.price.get(app, item.item_type_id, km_date, true);
         item.quantity_destroyed = item.quantity_destroyed || 0;
         item.quantity_dropped = item.quantity_dropped || 0;
-
-        var flag = item.flag;
-        item.price = await app.util.price.get(app, item.item_type_id, km_date, true);
-        item.slot = get_inferno_slot(flag);
-
         item.destroyed = (item.quantity_destroyed > 0);
         item.class = item.destroyed ? 'victimrow' : 'aggressorrow';
         item.total = item.quantity_destroyed + item.quantity_dropped;
         item.total_price = item.total * item.price;
-
-        if (slots[item.slot] == undefined) slots[item.slot] = [];
-        slots[item.slot].push(item);
-
         if (item.destroyed) killmail.totals.destroyed += item.total_price;
         else killmail.totals.dropped += item.total_price;
         killmail.totals.total += item.total_price;
 
-        if (infernoFlags.get(item.slot) != undefined) fittingwheelitems.push(item);
+        if (item.in_container) item.slot = last_slot;
+
+        if (effectToSlot.get(item.slot) == undefined) effectToSlot.set(item.slot, item.slot);
+
+        if (slots[item.slot] == undefined) slots[item.slot] = [];
+        slots[item.slot].push(item);
+        last_slot = item.slot;
     }
-    killmail.allslots = slots;
     killmail.cargo_groups = [];
     killmail.group_names = {};
+
     // Rearrange slots into proper order
     var rearranged = new Map();
     for (let [key, value] of effectToSlot) {
@@ -68,12 +72,43 @@ async function getData(req, res) {
         }
     }
     killmail.slotkeys = Array.from(rearranged.keys());
+
+    // Iterate and reduce the slots/items into like categories
+    let items_compressed = {};
+    for (let [key, value] of rearranged) {
+        let new_value = {};
+        for (let i = 0; i < value.length; i++) {
+            let v = value[i];
+            let value_key = v.item_type_id + (v.quantity_destroyed > 0 ? ':1' : ':0');
+            // Unless it's an item or in a container, then it is
+            // all or nothing anyway
+            if (v.items != undefined || v.in_container == true) {
+                delete v.items;
+                value_key = 'item:' + i;
+            }
+
+            let vv = new_value[value_key];
+            if (vv == undefined) {
+                vv = JSON.parse(JSON.stringify(v));
+            } else {
+                vv.quantity_destroyed += v.quantity_destroyed;
+                vv.quantity_dropped += v.quantity_dropped;
+                vv.total += v.total;
+                vv.total_price += v.total_price;
+            }
+            new_value[value_key] = vv;
+        }
+        items_compressed[key] = Object.values(new_value);
+    }
+
     killmail.slots = rearranged;
+    killmail.group_items = items_compressed;
 
     // Iterate the items for fitting wheel population
     var fittingwheel = [];
     for (let item of fittingwheelitems) {
         let group = infernoFlags.get(item.slot);
+        if (group == undefined) continue;
         var low = group[0];
         var slot = item.flag - low + 1;
         item.flagclass = 'flag' + item.flag;
@@ -95,7 +130,7 @@ async function getData(req, res) {
             rawmail: rawmail,
             killmail: killmail
         },
-        maxAge: 1
+        maxAge: 0
     };
 
     ret.json = await app.util.info.fill(app, ret.json);
@@ -120,6 +155,23 @@ function get_inferno_slot(flag_id) {
     return '-1'; // Unknown
 }
 
+function get_all_items(arr) {
+    let ret = [];
+    if (arr == undefined) return ret;
+    for (let i = 0; i < arr.length; i++) {
+        let item = arr[i];
+        ret.push(item);
+        if (item.items != undefined) {
+            let containered = get_all_items(item.items);
+            for (let j = 0; j < containered.length; j++) {
+                containered[j].in_container = true;
+                ret.push(containered[j]);
+            }
+        }
+    }
+    return ret;
+}
+
 const infernoFlags = new Map();
 infernoFlags.set('4', [116, 121]); // ???
 infernoFlags.set('12', [27, 34]); // Highs
@@ -138,6 +190,8 @@ effectToSlot.set('2663', 'Rigs');
 effectToSlot.set('3772', 'SubSystems');
 effectToSlot.set('87', 'Drone Bay');
 effectToSlot.set('5', 'Cargo');
+// effectToSlot.set('Cargo', 'Cargo');
+// effectToSlot.set('Fleet Hangar', 'Fleet Hangar');
 effectToSlot.set('4', 'Corporate Hangar');
 effectToSlot.set('0', 'Corporate  Hangar'); // Yes); two spaces); flag 0 is wierd and should be 4
 effectToSlot.set('89', 'Implants');

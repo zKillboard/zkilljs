@@ -122,8 +122,10 @@ async function parse_mail(app, killhash) {
 
         const npc = isNPC(rawmail);
         const labels = [];
-        if (npc === true) labels.push('npc');
-        else {
+        if (npc === true) {
+            labels.push('npc');
+            labels.push('nostats');
+        } else {
             labels.push('pvp');
             if (await isSolo(app, rawmail) === true) labels.push('solo');
         }

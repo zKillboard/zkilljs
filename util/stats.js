@@ -2,11 +2,9 @@
 
 const util = require('util')
 
-
 const negatives = ['character_id', 'corporation_id', 'alliance_id', 'faction_id', 'item_id', 'group_id', 'category_id',
     'war_id'
 ];
-
 
 const stats = {
     update_stat_record: async function (app, collection, epoch, record, match, max) {
@@ -19,6 +17,7 @@ const stats = {
             match['labels'] = record.id;
         } else {
             match['involved.' + record.type] = record.id;
+            match.labels = {'$ne' : 'nostats'};
         }
 
         fquery = await this.facet_query(app, collection, match);
@@ -29,12 +28,6 @@ const stats = {
 
         if (negatives.includes(record.type)) {
             match['involved.' + record.type] = -1 * record.id;
-
-            /*if (match.labels === undefined) {
-                match.labels = 'pvp';
-            } else if (typeof match.labels == 'string') {
-                match.labels = {'$and' : [match.labels, 'pvp']};
-            } else throw 'unknown labels condition ' + typeof match.labels;*/
 
             fquery = await this.facet_query(app, collection, match);
 
