@@ -252,8 +252,15 @@ const stats = {
         }
     },
 
-    group: async function (app, collection, match, type) {
+    group: async function (app, collection, match, type, killed_lost = 'killed') {
+        var unwind_match = {};
+        if (killed_lost == 'lost' && negatives.indexOf(type) != -1) unwind_match['$lt'] = 0;
+        else unwind_match['$gt'] = 0;
 
+        if (match.labels == undefined) {
+            match.labels = {'$ne' : 'nostats'};
+        }
+        
         const util = require('util');
         var retval = [];
 
@@ -263,9 +270,7 @@ const stats = {
             $unwind: '$involved.' + type
         }, {
             $match: {
-                ['involved.' + type]: {
-                    $gt: 0
-                }
+                ['involved.' + type]: unwind_match
             }
         }, {
             $group: {
@@ -289,6 +294,7 @@ const stats = {
         while (await result.hasNext()) {
             var row = await result.next();
             row[type] = row._id;
+            if (row[type] < 0) row[type] = -1 * row[type];
             delete row._id;
             retval.push(row);
         }

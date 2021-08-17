@@ -9,7 +9,7 @@ addGet('/index.html', 'site/index', 'index.pug');
 addGet('/site/information/:type/:id.html', 'site/information.js', 'information.pug');
 addGet('/site/killmails/:type/:id.json', 'site/kill-list.js', 'kill-list.pug');
 addGet('/site/statistics/:type/:id.html', 'site/statistics.js', 'statistics.pug');
-addGet('/site/toptens/:type/:id.html', 'site/toptens.js');
+addGet('/site/toptens/:epoch/:killed_lost/:type/:id.html', 'site/toptens.js');
 addGet('/site/ztop.txt', 'site/ztop.js', 'ztop.pug');
 
 // Cached endpoints
@@ -17,7 +17,7 @@ addGet('/cache/1hour/killmail/:id.html', 'site/killmail.js', 'killmail.pug');
 addGet('/cache/1hour/killmail/:id/remaining.html', 'site/killmail-remaining.js', 'killmail-remaining.pug');
 addGet('/cache/1hour/killmail/row/:id.html', 'site/killmail-row.js', 'killmail-row.pug');
 addGet('/cache/1hour/killmails/:type/:id.json', 'site/kill-list.js');
-addGet('/cache/1hour/toptens/:type/:id.html', 'site/toptens.js', 'toptens.pug');
+addGet('/cache/1hour/toptens/:epoch/:killed_lost/:type/:id.html', 'site/toptens.js', 'toptens.pug');
 addGet('/cache/1hour/autocomplete/', 'site/autocomplete.js');
 
 addGet('/cache/1hour/api/information/:type/:id/:field.html', 'site/information', 'raw.pug');

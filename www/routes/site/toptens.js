@@ -14,29 +14,40 @@ var types = [
 async function f(req, res) {
     const app = req.app.app;
 
+    let epoch = req.params.epoch;
+    console.log(epoch);
+    if (epoch == undefined) epoch = 'week';
+    if (epoch != 'week' && epoch != 'recent' && epoch != 'alltime') epoch = 'week';
+    
+    var killed_lost = req.params.killed_lost;
+    if (killed_lost != 'killed' && killed_lost != 'lost') killed_lost = 'killed';
+
     let query = {
         type: (req.params.type == 'label' ? 'label' : req.params.type + '_id'),
         id: (req.params.type == 'label' ? req.params.id : Math.abs(parseInt(req.params.id)))
     };
 
     var record = await app.db.statistics.findOne(query);
-    if (record.week == undefined) record.week = {};
-    if (record.week.hash_killed_top == undefined) record.week.hash_killed_top = 'none';
+    if (record[epoch] == undefined) record[epoch] = {};
+    if (record[epoch].hash_killed_top == undefined) record[epoch].hash_killed_top = 'none';
 
-    if (req.query.current_hash == record.week.hash_killed_top) return 204;
+    // if (req.query.current_hash == record[epoch].hash_killed_top) return 204;
     var valid = {
         required: ['hash'],
-        hash: record.week.hash_killed_top
+        hash: record[epoch].hash_killed_top
     }
-    req.alternativeUrl = '/cache/1hour/toptens/' + req.params.type + '/' + req.params.id + '.html';
+    req.alternativeUrl = '/cache/1hour/toptens/' + epoch + '/' + killed_lost + '/' + req.params.type + '/' + req.params.id + '.html';
     var valid = req.verify_query_params(req, valid);
     if (valid !== true) return valid;
 
-    if (record.week.killed_top == undefined) return {
+    if (record[epoch].killed_top == undefined) return {
         json: {}
     }; // empty, do nothing
 
-    var ret = await app.util.info.fill(app, record.week.killed_top);
+    var key_top = killed_lost + '_top';
+    var ret = await app.util.info.fill(app, record[epoch][key_top]);
+    ret.numDays = (epoch == 'week' ? '7' : (epoch == 'recent' ? '90' : 'Alltime'));
+    ret.killed_lost = killed_lost;
     var topisk = [];
     if (ret.topisk != undefined) {
         for (var i = 0; i < ret.topisk.length; i++) {

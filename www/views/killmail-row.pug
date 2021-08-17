@@ -15,7 +15,11 @@ div.killrow(victims=json.victims)
 		ul.info1
 			li
 				| !{time}
-			li.fnumber= json.rawmail.total_value
+			li
+				span.killmail-icon
+					i.bi.bi-check.aggressor
+					i.bi.bi-x.victim
+				span.fnumber= json.rawmail.total_value
 		ul.info2
 			+type_id_link('li', 'system', json.rawmail.solar_system_id, json.rawmail.solar_system_name)
 			+type_id_link('li', 'constellation', json.rawmail.constellation_id, json.rawmail.constellation_name)

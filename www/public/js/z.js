@@ -49,6 +49,9 @@ function documentReady() {
     $("#feedbutton").unbind().click(feed_toggle);
     $("#filtersbutton").unbind().click(filter_toggle);
 
+    $(".stats-epoch").on('click', setSelectedStatsEpoch);
+    $(".stats-killed-lost").on('click', setSelectedStatsKL);
+
     historyReady();
     toggleTooltips();
 
@@ -172,7 +175,7 @@ function loadOverview(path, type, id) {
     pagepath = path;
     loadKillmails('/site/killmails' + path + '.json', 'killlistfeed:' + path);
     apply('overview-information', '/site/information' + path + '.html');
-    apply('overview-weekly', '/site/toptens' + path + '.html', 'toplistsfeed:' + path);
+    apply('overview-toptens', '/site/toptens/' + getSelectedStats() + path + '.html', 'toplistsfeed:' + path);
     load_stats_box();
     ws_action('sub', 'statsfeed:' + path);
     showSection('overview');
@@ -660,7 +663,7 @@ function load_stats_box(json) {
 
 function load_toplists_box(json) {
     console.log('updating top lists');
-    apply('overview-weekly', '/site/toptens' + pagepath + '.html', null, true);
+    apply('overview-toptens', '/site/toptens/' + getSelectedStats() + pagepath + '.html', null, true);
 }
 
 function spaTheLinks() {
@@ -855,9 +858,6 @@ function mark_enabled(button, checked) {
     else button.removeClass("btn-secondary").addClass("btn-primary").blur();
 }
 
-// Everything has loaded, let's go!
-documentReady();
-
 function clear_cache() {
     path_cache = {};
 }
@@ -883,9 +883,10 @@ var getParams = function (url) {
 
 setInterval(clear_cache, 900000);
 
-var sortColumns = [0, 'Reset Sort', 'Qty', 'Value'];
+var sortColumns = [0, ' ', 'Qty', 'Value'];
 function sortColumn(eventObject) {
     var index = sortColumns.indexOf($(this).text());
+    if (index == -1) index = 1;
     let cargotable = $("#cargotable");
 
     if (cargotable.attr('prepped') != 'true') {
@@ -917,7 +918,7 @@ function sortColumn(eventObject) {
 
     // and after sorting, rearrange the table
     for (let i = 0; i < rows.length; i++) {
-        $("#cargotable tr:eq(" + i + ")").next().after(rows[i]);
+        $("#cargotable tr:eq(" + i + ")").after(rows[i]);
     }
 
     if (index != 1) {
@@ -925,11 +926,45 @@ function sortColumn(eventObject) {
         $(".item-group").show();
         $(".group-name").hide();
         $('.no-sort-row').hide();
+        $('.group-toggle').hide();
     } else {
         $("#sort-reset").hide();
         $(".item-group").show();
-        $(".group-name").show();
+        $(".group-name").show()
         $('.no-sort-row').show();
+        //$('.group-toggle').show().attr('aria-expanded', 'true');
     }
     $('#master-sort-row').show();
 }
+
+function getSelectedStats() {
+    return getSelectedStatsEpoch() + '/' + getSelectedStatsKL();
+}
+
+function getSelectedStatsEpoch() {
+    let text = $(".stats-epoch.btn-primary").text();
+    if (text == '7') return 'week';
+    if (text == '90') return 'recent';
+    return 'alltime';
+}
+
+function getSelectedStatsKL() {
+    let text = $(".stats-killed-lost.btn-primary").text();
+    if (text == 'Killed') return 'killed';
+    return 'lost';
+}
+
+function setSelectedStatsEpoch() {
+    $(".stats-epoch").removeClass("btn-primary").addClass("btn-secondary");
+    $(this).removeClass("btn-secondary").addClass("btn-primary").blur();
+    load_toplists_box();
+}
+
+function setSelectedStatsKL() {
+    $(".stats-killed-lost").removeClass("btn-primary").addClass("btn-secondary");
+    $(this).removeClass("btn-secondary").addClass("btn-primary").blur();
+    load_toplists_box();
+}
+
+// Everything has loaded, let's go!
+documentReady();

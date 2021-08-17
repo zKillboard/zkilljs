@@ -20,7 +20,7 @@ async function f(app) {
     }
 }
 
-const http_codes_reattempt = [502, 503, 504];
+const http_codes_reattempt = [420, 502, 503, 504];
 async function resetBadMails(app) {
     for (i = 0; i < http_codes_reattempt.length; i++) {
         let code = http_codes_reattempt[i];

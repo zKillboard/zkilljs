@@ -13,7 +13,7 @@ async function f(app) {
     if (no_fetch_dailies == false) no_fetch_dailies = await hasMinimum(app.db.statistics, {update_week: true}, 100);
     if (no_fetch_dailies == false) no_fetch_dailies = await hasMinimum(app.db.statistics, {update_recent: true}, 100);
     if (no_fetch_dailies == false) no_fetch_dailies = await hasMinimum(app.db.statistics, {update_alltime: true}, 100);
-    if (no_fetch_dailies == false) no_fetch_dailies = await hasMinimum(app.db.statistics, {'week.update_top': true}, 100);
+    // if (no_fetch_dailies == false) no_fetch_dailies = await hasMinimum(app.db.statistics, {'week.update_top': true}, 100);
     app.no_fetch_dailies = no_fetch_dailies;
 }
 

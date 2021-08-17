@@ -4,7 +4,9 @@ html
         meta(charset='UTF-8')
         meta(name='viewport' content='width=device-width, initial-scale=1')
         title= json.title
+        link(rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous")
         link(rel='stylesheet' href='/css/cyborg.css')
+
         link(rel='stylesheet' href='https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css')
         link(rel='stylesheet' href='/css/spinner.css?v=' + server_started)
         link(rel='stylesheet' href='/css/z.css?v=' + server_started)
@@ -13,91 +15,28 @@ html
         div.wrapper.container-fluid
             div#content
                 nav#toptoptop.navbar.navbar-expand-lg
-                    a.navbar-brand.override(href='/')
+                    a.navbar-brand.override(href='/label/all')
                         img.d-inline-block(src="/img/zkill.png" width="30" height="30" alt="zKillboard wreck icon")
                         span.d-none.d-md-inline-block.text-dark &nbsp;zKillboard (alpha)
                     ul.navbar-nav.mr-auto
+                    ul.navbar-nav
+                        li.btn-group
+                            button#filtersbutton.btn.btn-secondary(type='button' toggle='#overview-filters' data-toggle="button") Advanced Search
+                            button#feedbutton.btn.btn-primary(type='button')
+                                i#feedactive.bi.bi-play-fill
+                                i#feedinactive.bi.bi-pause-fill.collapse
+                                | Feed
                     ul.navbar-nav
                         li.navbar-item
                             a.nav-link(href='#' onclick='return toggleZTop();')
                                 i.bi.bi-server.navbar-item
                     ul.navbar-nav
                         form.form-inline.my-2.my-lg-0(onsubmit='return false;')
-                            input#autocomplete.form-control.mr-sm-2(type='Search' placeholder='Search' aria-label='Search')
+                            input#autocomplete.form-control.mr-sm-2(type='Search' placeholder='Quick Search' aria-label='Quick Search')
                 hr
                 div.row
                     div.col-12#ztop
                 div#overview.collapse.container-fluid
-                    div.row
-                        div#overview-information.col-sm-12.col-xl-6
-                        div#overview-statistics.col-sm-12.col-xl-6
-                            div.table-responsive.float-right
-                                table#stats-table.table.table-hover.table-sm.table-responsive
-                                    thead
-                                        tr
-                                            th.timespan Days
-                                            th.w-integer Killed
-                                            th.w-isk ISK
-                                            th.w-integer Lost
-                                            th.w-isk ISK
-                                            th.w-decimal Eff
-                                            th.w-decimal Snuggly
-                                            th.w-decimal Solo
-                                            th.w-decimal Inv Avg
-                                            th.w-decimal Score
-                                            th.w-decimal Rank
-                                    tbody
-                                        tr
-                                            th ∞
-                                            td#alltime-kills.clearbeforeload.green(format='integer')
-                                            td#alltime-isk-killed.clearbeforeload.green(format='fnumber')
-                                            td#alltime-lost.clearbeforeload.red(format='integer')
-                                            td#alltime-isk-lost.clearbeforeload.red(format='fnumber')
-                                            td#alltime-eff.clearbeforeload(format='percentage')
-                                            td#alltime-dangerlevel.clearbeforeload(format='percentage')
-                                            td#alltime-solopct.clearbeforeload(format='percentage')
-                                            td#alltime-avg-inv-cnt.clearbeforeload(format='decimal')
-                                            td#alltime-zscore.clearbeforeload(format='percentage')
-                                            td#alltime-rank.clearbeforeload(format='integer')
-                                        tr
-                                            th 90
-                                            td#recent-kills.clearbeforeload.green(format='integer')
-                                            td#recent-isk-killed.clearbeforeload.green(format='fnumber')
-                                            td#recent-lost.clearbeforeload.red(format='integer')
-                                            td#recent-isk-lost.clearbeforeload.red(format='fnumber')
-                                            td#recent-eff.clearbeforeload(format='percentage')
-                                            td#recent-dangerlevel.clearbeforeload(format='percentage')
-                                            td#recent-solopct.clearbeforeload(format='percentage')
-                                            td#recent-avg-inv-cnt.clearbeforeload(format='decimal')
-                                            td#recent-zscore.clearbeforeload(format='percentage')
-                                            td#recent-rank.clearbeforeload(format='integer')
-                                        tr
-                                            th 7
-                                            td#week-kills.clearbeforeload.green(format='integer')
-                                            td#week-isk-killed.clearbeforeload.green(format='fnumber')
-                                            td#week-lost.clearbeforeload.red(format='integer')
-                                            td#week-isk-lost.clearbeforeload.red(format='fnumber')
-                                            td#week-eff.clearbeforeload(format='percentage')
-                                            td#week-dangerlevel.clearbeforeload(format='percentage')
-                                            td#week-solopct.clearbeforeload(format='percentage')
-                                            td#week-avg-inv-cnt.clearbeforeload(format='decimal')
-                                            td#week-zscore.clearbeforeload(format='percentage')
-                                            td#week-rank.clearbeforeload(format='integer')
-                                        
-
-                    div.clearfix
-                    
-                    div.row#overview-menu
-                        div.col-12
-                            div.btn-toolbar(role="tooolbar" aria-label="Overview Menu")
-                                div.btn-group.mr-2
-                                    button#feedbutton.btn.btn-primary(type='button')
-                                        svg#feedactive.bi.bi-play-fill(width='1em', height='1em', viewbox='0 0 16 16', fill='currentColor', xmlns='http://www.w3.org/2000/svg')
-                                            path(d='M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z')
-                                        svg#feedinactive.collapse.bi.bi-pause-fill(width='1em', height='1em', viewbox='0 0 16 16', fill='currentColor', xmlns='http://www.w3.org/2000/svg')
-                                            path(d='M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5zm5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5z')
-                                        | Feed
-                                    button#filtersbutton.btn.btn-secondary(type='button' toggle='#overview-filters' data-toggle="button") Filters
                     div.row#overview-filters.collapse(style='margin-top: 1em;')
                         div.col-12
                             div.btn-toolbar(role="tooolbar" aria-label="Overview Filter")
@@ -121,11 +60,72 @@ html
                                     button.ofilter.btn.btn-secondary(type='button') BIGISK
                                     button.ofilter.btn.btn-secondary(type='button') EXTREMEISK
                                     button.ofilter.btn.btn-secondary(type='button') INSANEISK
-                    br   
                     div.row
-                        div#overview-killmails.col-sm-12.col-xl-6
-                            div#killlist
-                        div#overview-weekly.col-sm-12.col-xl-6
+                        div.col-sm-12.col-xl-6
+                            div#overview-information
+                            div#overview-killmails
+                                div#killlist
+                                div.m-5
+                        div.col-sm-12.col-xl-6
+                            div#overview-statistics
+                                div.table-responsive.float-right
+                                    table#stats-table.table.table-hover.table-sm.table-responsive
+                                        thead
+                                            tr
+                                                th.timespan Days
+                                                th.w-integer
+                                                    button.stats-killed-lost.btn.btn-primary.btn-small.py-0.text-right Killed
+                                                th.w-isk ISK
+                                                th.w-integer
+                                                    button.stats-killed-lost.btn.btn-secondary.btn-small.py-0.text-right Lost
+                                                th.w-isk ISK
+                                                th.w-decimal Eff
+                                                th.w-decimal Snuggly
+                                                th.w-decimal Solo
+                                                th.w-decimal Inv Avg
+                                                th.w-decimal Score
+                                                th.w-decimal Rank
+                                        tbody
+                                            tr
+                                                th
+                                                    button.stats-epoch.btn.btn-secondary.btn-small.btn-block.py-0 ∞
+                                                td#alltime-kills.clearbeforeload.green(format='integer')
+                                                td#alltime-isk-killed.clearbeforeload.green(format='fnumber')
+                                                td#alltime-lost.clearbeforeload.red(format='integer')
+                                                td#alltime-isk-lost.clearbeforeload.red(format='fnumber')
+                                                td#alltime-eff.clearbeforeload(format='percentage')
+                                                td#alltime-dangerlevel.clearbeforeload(format='percentage')
+                                                td#alltime-solopct.clearbeforeload(format='percentage')
+                                                td#alltime-avg-inv-cnt.clearbeforeload(format='decimal')
+                                                td#alltime-zscore.clearbeforeload(format='percentage')
+                                                td#alltime-rank.clearbeforeload(format='integer')
+                                            tr
+                                                th 
+                                                    button.stats-epoch.btn.btn-secondary.btn-small.btn-block.py-0 90
+                                                td#recent-kills.clearbeforeload.green(format='integer')
+                                                td#recent-isk-killed.clearbeforeload.green(format='fnumber')
+                                                td#recent-lost.clearbeforeload.red(format='integer')
+                                                td#recent-isk-lost.clearbeforeload.red(format='fnumber')
+                                                td#recent-eff.clearbeforeload(format='percentage')
+                                                td#recent-dangerlevel.clearbeforeload(format='percentage')
+                                                td#recent-solopct.clearbeforeload(format='percentage')
+                                                td#recent-avg-inv-cnt.clearbeforeload(format='decimal')
+                                                td#recent-zscore.clearbeforeload(format='percentage')
+                                                td#recent-rank.clearbeforeload(format='integer')
+                                            tr
+                                                th
+                                                    button.stats-epoch.btn.btn-small.btn-primary.btn-block.py-0 7
+                                                td#week-kills.clearbeforeload.green(format='integer')
+                                                td#week-isk-killed.clearbeforeload.green(format='fnumber')
+                                                td#week-lost.clearbeforeload.red(format='integer')
+                                                td#week-isk-lost.clearbeforeload.red(format='fnumber')
+                                                td#week-eff.clearbeforeload(format='percentage')
+                                                td#week-dangerlevel.clearbeforeload(format='percentage')
+                                                td#week-solopct.clearbeforeload(format='percentage')
+                                                td#week-avg-inv-cnt.clearbeforeload(format='decimal')
+                                                td#week-zscore.clearbeforeload(format='percentage')
+                                                td#week-rank.clearbeforeload(format='integer')
+                            div#overview-toptens
                 div#killmail.collapse
                 div#other.row.collapse
         div.clearfix.push

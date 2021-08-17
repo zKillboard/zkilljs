@@ -1,5 +1,14 @@
 include mixins.pug
 
+if json.numDays
+	h4.text-capitalize
+		if json.numDays == 'Alltime'
+			span= 'top ' + json.killed_lost + ': alltime'
+		else
+			span= 'top ' + json.killed_lost + ': past ' + json.numDays + ' days'
+else
+	i nothing to see here... 
+
 if json.topisk
 	hr
 	div.row

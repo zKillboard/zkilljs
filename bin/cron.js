@@ -155,7 +155,7 @@ async function debug(task) {
 
 var watch = require('node-watch');
 
-watch('restart.txt', {
+watch('.env', {
     recursive: true
 }, async function (evt, name) {
     await app.redis.set("RESTART", "true");

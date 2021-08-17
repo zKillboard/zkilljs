@@ -6,7 +6,9 @@ var types = [
     'alliance_id',
     'faction_id',
     'item_id',
+    'group_id',
     'region_id',
+    'constellation_id',
     'solar_system_id',
     'location_id',
 ];
@@ -58,13 +60,13 @@ async function do_update(app, epoch, row) {
             stats: true
         };
         if (row.type == 'label' && row.id == 'all') delete match.labels;
-        var top_killers = do_queries(app, collections[epoch], match);
+        var top_killers = do_queries(app, collections[epoch], match, 'killed');
 
         match = {
             [row.type == 'label' ? 'labels' : 'involved.' + row.type]: (-1 * row.id),
             stats: true
         };
-        var top_losers = do_queries(app, collections[epoch], match);
+        var top_losers = do_queries(app, collections[epoch], match, 'lost');
         top_killers = await top_killers;
         top_losers = await top_losers;
         var newhash = app.md5(JSON.stringify(top_killers));
@@ -81,26 +83,24 @@ async function do_update(app, epoch, row) {
                 [epoch + '.update_top']: false
             }
         });
-        if (n.matchedCount > 0 && epoch == 'week' && oldhash != newhash) {
-            let redis_base = JSON.stringify({
-                type: row.type,
-                id: row.id
-            });
-            await app.redis.sadd('zkilljs:toplists:publish', redis_base);
-        }
+        let redis_base = JSON.stringify({
+            type: row.type,
+            id: row.id
+        });
+        await app.redis.sadd('zkilljs:toplists:publish', redis_base);
     } finally {
         sequential--;
     }
 }
 
-async function do_queries(app, collection, match) {
+async function do_queries(app, collection, match, killed_lost) {
     var ret = {
         types: {},
         topisk: []
     };
     // Start the queries
     for (var i = 0; i < types.length; i++) {
-        ret.types[types[i]] = app.util.stats.group(app, collection, match, types[i]);
+        ret.types[types[i]] = app.util.stats.group(app, collection, match, types[i], killed_lost);
     }
     var stats = app.util.stats.topISK(app, collection, match, 6);
     // and wait for them to finish
