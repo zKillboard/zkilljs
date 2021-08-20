@@ -48,11 +48,11 @@ async function doStuff(req, res, next, controllerFile, pugFile) {
 
         req.verify_query_params = verify_query_params;
         let result = await controller(req, res);
-        var maxAge = (result == null ? 0 : (result.maxAge || 0));
+        var maxAge = Math.min(3600, (result == null ? 0 : (result.maxAge || 0)));
         if (result.content_type != undefined) res.setHeader("Content-Type", result.content_type)
 
-        //res.set('Cache-Control', 'public, max-age=' + maxAge);
-        res.set('Cache-Control', 'public, max-age=' + 0); // TODO remove this for production
+        res.set('Cache-Control', 'public, max-age=' + maxAge);
+        //res.set('Cache-Control', 'public, max-age=' + 0); // TODO remove this for production
 
         if (result === null || result === undefined) {
             res.sendStatus(404);

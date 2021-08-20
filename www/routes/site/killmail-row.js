@@ -52,7 +52,7 @@ async function getData(req, res) {
             rawmail: rawmail,
             victims: victim_array.join(','),
         },
-        maxAge: 1
+        maxAge: 86400
     };
 
     ret.json = await app.util.info.fill(app, ret.json);

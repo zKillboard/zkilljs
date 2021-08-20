@@ -16,6 +16,16 @@ var pagepath;
 
 var fetch_controller = new AbortController();
 
+var connected_online = window.navigator.onLine;
+function connection_status_update() {
+    if (connected_online == false && window.navigator.onLine == true) window.location = window.location; // refresh
+    connected_online = window.navigator.onLine;
+
+    if (connected_online == false) {
+        ws.close();
+    }
+}
+
 function historyReady() {
     try {
         browserHistory = History.createBrowserHistory();
@@ -54,6 +64,9 @@ function documentReady() {
 
     historyReady();
     toggleTooltips();
+
+    window.addEventListener('online', connection_status_update);
+    window.addEventListener('offline', connection_status_update);
 
     $('#autocomplete').autocomplete({
         autoSelectFirst: true,
@@ -831,6 +844,7 @@ function feed_toggle(event, enabled, doLoad) {
         load_stats_box({
             path: pagepath,
         });
+        ws_connect();
         ws_action('sub', 'statsfeed:' + pagepath);
     } else {
         ws_clear_subs();

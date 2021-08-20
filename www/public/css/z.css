@@ -39,6 +39,7 @@ img.image {
     border-bottom-right-radius: 5px;
     border-bottom-left-radius: 5px;
     border-top-right-radius: 5px;
+    overflow:  hidden;
 }
 
 #info-box li {
@@ -341,6 +342,7 @@ hr {
 
 .top10block table, .topiskblock table {
     table-layout: fixed;
+    overflow:  hidden;
 }
 
 .top10title {

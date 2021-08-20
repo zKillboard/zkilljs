@@ -28,6 +28,21 @@ var urls = {
 };
 var types = Object.keys(urls);
 
+/*
+ Meta 1-4 is tech 1, meta 5 is tech 2, meta 6-7 is storyline, meta 8 is faction, meta 10 is abyss, meta 11 to 14 is officer
+ Zifrian — Today at 4:40 PM
+@Squizz Caphinator moving to this channel - on using an attributeID, 1692 seems to give the new metaGroupID
+However, T1 and T2 that value is null in the SDE
+null - T1-T2
+3 - Storyline
+4 - Faction/Navy (Green)
+5 - Officer (purple)
+6 - Deadsace (Blue)
+Squizz Caphinator — Today at 4:41 PM
+hrm, so maybe use 1692 if present, and otherwise 633
+*/
+
+
 const set = new Set();
 var firstRun = true;
 

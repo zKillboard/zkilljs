@@ -1,11 +1,6 @@
 module.exports = f;
 
-/*const originalLogger = console.log;
-console.log = function(text) {
-    var d = new Date();
-    var time = ("" + d.getHours()).padStart(2, '0') + ":" + ("" + d.getMinutes()).padStart(2, '0') + ":" + ("" + d.getSeconds()).padStart(2, '0');
-    originalLogger(time , " > ", text);
-}*/
+const util = require('util')
 
 const redis = require('async-redis').createClient({
     retry_strategy: redis_retry_strategy
@@ -54,6 +49,7 @@ async function f() {
         price: require('../util/price.js'),
         stats: require('../util/stats.js'),
     };
+    console.log('loaded utilities');
 
     app.cache = {
         prices: {}
@@ -73,6 +69,7 @@ async function f() {
             return failure(app, e);
         }
     };
+    console.log('loaded phin');
     app.redis = redis;
     app.esi = 'https://esi.evetech.net';
     app.waitfor = async function (promises, key = undefined) {
@@ -126,6 +123,7 @@ async function f() {
         //console.log('Prepping ' + collections[i].name);
         app.db[collections[i].name] = app.db.collection(collections[i].name);
     }
+        console.log('loaded mongodb');
 
     var Database = require('../util/mysql.js');
     var mysql = new Database({
@@ -135,17 +133,28 @@ async function f() {
         database: 'zkilljs'
     });
     app.mysql = mysql;
+    console.log('loaded mysql');
 
     app.zincr = function (key) {
         app.redis.incr('zkb:ztop:' + key);
     };
+
+    app.log = function(object) {
+        console.log(util.inspect(object, false, null, true /* enable colors */));
+    }
+
+    app.now = function() {
+        return Math.floor(Date.now() / 1000);
+    }
 
     // Special case, killhashes will be mapped to original zkillboard's esimails collection
     // We don't need to double this data set on the server.... 
     //var zdb = client.db('zkillboard');
     //app.db.rawmails = zdb.collection('esimails');
 
-    gc(app);
+    setTimeout(function() { gc(); }, 1000);
+
+    console.log('initialized');
 
     globalapp = app;
     return app;
@@ -169,5 +178,5 @@ function gc() {
         console.log("Memory exceeding 3500 MB, restarting...");
         globalapp.redis.set("RESTART", "true");
     }
-    setTimeout(function() { gc(); }, 15000);
+    setTimeout(function() { gc(); }, 1000);
 }

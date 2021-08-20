@@ -7,6 +7,7 @@ const types = [
     "faction_id",
     "item_id",
     "group_id",
+    "category_id",
     "location_id",
     "solar_system_id",
     "constellation_id",
@@ -23,7 +24,6 @@ const epochs = {
 const epoch_keys = Object.keys(epochs);
 
 var first_run = true;
-var concurrent = 0;
 
 async function f(app) {
     if (first_run) {
@@ -53,11 +53,12 @@ async function update_stats(app, collection, epoch, type, find) {
             if (app.delay_stat) return await app.randomSleep(1000, 3000);
 
             var record = await iter.next();
+
             if (record.id !== NaN) {
                 await update_record(app, collection, epoch, record);
                 iterated = true;
+                app.zincr('stats_calced_' + epoch);
             }
-            app.zincr('stats_calced_' + epoch);
         }
     } catch (e) {
         console.log(e);
@@ -102,6 +103,15 @@ async function update_record(app, collection, epoch, record) {
             },
         };
         if (min > 0) match.sequence['$gt'] = min;
+
+        if (record.type == 'label' && record.id == 'all') {
+            // no match, we want all of the killmails
+        } else if (record.type == 'label') {
+            match['labels'] = record.id;
+        } else {
+            match['involved.' + record.type] = record.id;
+            match.labels = 'pvp';
+        }
 
         // Update the stats based on the result, but don't clear the update_ field yet
         set = {};

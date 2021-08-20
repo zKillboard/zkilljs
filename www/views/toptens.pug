@@ -13,7 +13,7 @@ if json.topisk
 	hr
 	div.row
 		each row in json.topisk
-			div.topiskblock.col-xs-12.col-md-2
+			div.topiskblock.col-12.col-xl-2
 				table.table.table-sm.table-borderless
 					tbody
 						tr
@@ -34,10 +34,10 @@ if json.types
 	hr
 	div.row
 		each arr,type in json.types
-			div.top10block.col-xs-12.col-md-3
+			div.top10block.col-12.col-xl-3
 				- var name = type.replace('_id', '_name');
 				- var first = arr[0]
-				h6.top10title= type.replace('_id', 's').replace('_', ' ') 
+				h6.top10title= type.replace('_id', '').replace('_', ' ') 
 				+show_image('span', type, first[type], first[name], 128)
 				table.table.table-striped.table-hover.table-sm
 					each value in arr

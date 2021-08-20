@@ -19,6 +19,7 @@ async function f(app) {
                 await applyIndexes(app);
                 success = true;
             } catch (e) {
+                console.log(e);
                 await app.sleep(1000);
                 success = false;
             }
@@ -42,6 +43,10 @@ async function applyIndexes(app) {
     await createIndex(app.db.collection('statistics'), {type: 1, update_alltime: 1}, {});
     await createIndex(app.db.collection('statistics'), {type: 1, update_recent: 1}, {});
     await createIndex(app.db.collection('statistics'), {type: 1, update_week: 1}, {});
+    await createIndex(app.db.collection('statistics'), {update_alltime: 1}, {});
+    await createIndex(app.db.collection('statistics'), {update_recent: 1}, {});
+    await createIndex(app.db.collection('statistics'), {update_week: 1}, {});
+    await createIndex(app.db.collection('statistics'), {'alltime.last_sequence': 1}, {sparse: true});
     await createIndex(app.db.collection('statistics'), {'recent.last_sequence': 1}, {sparse: true});
     await createIndex(app.db.collection('statistics'), {'week.last_sequence': 1}, {sparse: true});
     await createIndex(app.db.collection('statistics'), {'alltime.update_top': 1}, {sparse: true});

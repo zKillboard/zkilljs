@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
 var tasks = {
-    'balance_resources': createTaskSettings(1),
+    'balance_resources': createTaskSettings(5),
     'ztop': createTaskSettings(5),
 
     // maintenance fun
-     'trigger_price_checks': createTaskSettings(60),
+    'trigger_price_checks': createTaskSettings(60),
     'update_prices': createTaskSettings(1),
     'update_factions.js': createTaskSettings(60),
     'update_information.js': createTaskSettings(1),
@@ -17,7 +17,7 @@ var tasks = {
     'listen_redisq.js': createTaskSettings(15),
     'fetch_wars.js': createTaskSettings(9600),
     'fetch_warmails': createTaskSettings(1),
-    'fetch_dailies': createTaskSettings(60),
+    'fetch_dailies': createTaskSettings(5),
 
     // killmail consumers
     'fetch_mails.js': createTaskSettings(1),
@@ -25,11 +25,11 @@ var tasks = {
     'update_stats_prepare.js': createTaskSettings(1),
 
     // statistics
-    'update_stats.js': createTaskSettings(60),
+    'update_stats.js': createTaskSettings(5),
     'publish_stats_updates.js': createTaskSettings(5),
     'update_stats_week_cleanup.js': createTaskSettings(3600),
     'update_stats_recent_cleanup.js': createTaskSettings(86400, 0, -9000),
-    'update_stats_top_lists.js': createTaskSettings(15),
+    'update_stats_top_lists.js': createTaskSettings(60),
     'populate_ranks.js': createTaskSettings(86400),
 }
 
@@ -155,8 +155,10 @@ async function debug(task) {
 
 var watch = require('node-watch');
 
-watch('.env', {
-    recursive: true
-}, async function (evt, name) {
+watch('.env', {recursive: true}, restart);
+watch('bin/cron.js', {recursive: true}, restart);
+watch('cron/', {recursive: true}, restart);
+
+async function restart(evt, name) {
     await app.redis.set("RESTART", "true");
-});
+}

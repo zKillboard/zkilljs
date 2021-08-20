@@ -10,16 +10,6 @@ const stats = {
     update_stat_record: async function (app, collection, epoch, record, match, max) {
         let fquery;
 
-        if (record.type == 'label' & record.id == 'all') {
-            // console.log(epoch, match);
-            // no match, we want all of the killmails
-        } else if (record.type == 'label') {
-            match['labels'] = record.id;
-        } else {
-            match['involved.' + record.type] = record.id;
-            match.labels = {'$ne' : 'nostats'};
-        }
-
         fquery = await this.facet_query(app, collection, match);
 
         this.apply(record, epoch, fquery, true, 'groups');
@@ -256,10 +246,6 @@ const stats = {
         var unwind_match = {};
         if (killed_lost == 'lost' && negatives.indexOf(type) != -1) unwind_match['$lt'] = 0;
         else unwind_match['$gt'] = 0;
-
-        if (match.labels == undefined) {
-            match.labels = {'$ne' : 'nostats'};
-        }
         
         const util = require('util');
         var retval = [];
@@ -301,8 +287,7 @@ const stats = {
         return retval;
     },
 
-    topISK: async function (app, collection, match, limit = 10) {
-
+    topISK: async function (app, collection, match, limit = 10, killed_lost = 'killed') {
         const util = require('util');
         var retval = [];
 

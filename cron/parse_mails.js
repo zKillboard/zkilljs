@@ -263,7 +263,9 @@ async function addInvolved(app, object, involved, is_victim) {
 
         if (type == 'item_id') {
             var item = await app.util.entity.info(app, type, id, true);
+            var group = await app.util.entity.info(app, 'group_id', item.group_id, true);
             addTypeId(app, object, 'group_id', (is_victim ? -1 * item.group_id : item.group_id));
+            addTypeId(app, object, 'category_id', (is_victim ? -1 * group.category_id : group.category_id));
         }
     }
 }

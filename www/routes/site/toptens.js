@@ -15,7 +15,6 @@ async function f(req, res) {
     const app = req.app.app;
 
     let epoch = req.params.epoch;
-    console.log(epoch);
     if (epoch == undefined) epoch = 'week';
     if (epoch != 'week' && epoch != 'recent' && epoch != 'alltime') epoch = 'week';
     
