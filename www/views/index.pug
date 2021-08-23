@@ -21,7 +21,7 @@ html
                     ul.navbar-nav.mr-auto
                     ul.navbar-nav
                         li.btn-group
-                            button#filtersbutton.btn.btn-secondary(type='button' toggle='#overview-filters' data-toggle="button") Advanced Search
+                            button#filtersbutton.btn.btn-secondary(type='button' toggle='#ooverview-filters' data-toggle="button") Advanced Search
                             button#feedbutton.btn.btn-primary(type='button')
                                 i#feedactive.bi.bi-play-fill
                                 i#feedinactive.bi.bi-pause-fill.collapse
@@ -37,47 +37,19 @@ html
                 div.row
                     div.col-12#ztop
                 div#overview.collapse.container-fluid
-                    div.row#overview-filters.collapse(style='margin-top: 1em;')
-                        div.col-12
-                            div.btn-toolbar(role="tooolbar" aria-label="Overview Filter")
-                                div.btn-group.mr-2
-                                    button#allbtn.ofilter.btn.btn-primary(type='button') All
-                                    button.ofilter.btn.btn-secondary(type='button') Killed
-                                    button.ofilter.btn.btn-secondary(type='button') Lost
-                                div.btn-group.mr-2
-                                    button.ofilter.btn.btn-secondary(type='button') HIGHSEC
-                                    button.ofilter.btn.btn-secondary(type='button') LOWSEC
-                                    button.ofilter.btn.btn-secondary(type='button') NULLSEC
-                                    button.ofilter.btn.btn-secondary(type='button') W-SPACE
-                                    button.ofilter.btn.btn-secondary(type='button') Abyssal
-                                div.btn-group.mr-2
-                                    button.ofilter.btn.btn-secondary(type='button') NPC
-                                    button.ofilter.btn.btn-secondary(type='button') PVP
-                                    button.ofilter.btn.btn-secondary(type='button') Solo
-                                    button.ofilter.btn.btn-secondary(type='button') Abyssal-PVP
-                                    button.ofilter.btn.btn-secondary(type='button') 100+
-                                    button.ofilter.btn.btn-secondary(type='button') 1000+
-                                    button.ofilter.btn.btn-secondary(type='button') BIGISK
-                                    button.ofilter.btn.btn-secondary(type='button') EXTREMEISK
-                                    button.ofilter.btn.btn-secondary(type='button') INSANEISK
                     div.row
-                        div.col-sm-12.col-md-9.col-xl-6
+                        div.col-xs-12.col-xl-6
                             div#overview-information
-                            div#overview-killmails
-                                div#killlist
-                                div.m-5
-                        div.col-sm-12.col-md-3.col-xl-6
+                        div.col-xs-12.col-xl-6
                             div#overview-statistics
                                 div.table-responsive.float-right
                                     table#stats-table.table.table-hover.table-sm.table-responsive
                                         thead
                                             tr
                                                 th.timespan Days
-                                                th.w-integer
-                                                    button.stats-killed-lost.btn.btn-primary.btn-small.py-0.text-right Killed
+                                                th.w-integer Killed
                                                 th.w-isk ISK
-                                                th.w-integer
-                                                    button.stats-killed-lost.btn.btn-secondary.btn-small.py-0.text-right Lost
+                                                th.w-integer Lost
                                                 th.w-isk ISK
                                                 th.w-decimal Eff
                                                 th.w-decimal Snuggly
@@ -125,7 +97,36 @@ html
                                                 td#week-avg-inv-cnt.clearbeforeload(format='decimal')
                                                 td#week-zscore.clearbeforeload(format='percentage')
                                                 td#week-rank.clearbeforeload(format='integer')
+                    div.row#overview-filters.mt-3.mb-3
+                        div.col-12
+                            div.btn-toolbar(role="tooolbar" aria-label="Overview Filter")
+                                div.btn-group.mr-2
+                                    button#allbtn.ofilter.btn.btn-primary(type='button') All
+                                    button.ofilter.btn.btn-secondary.stats-killed-lost(type='button') Killed
+                                    button.ofilter.btn.btn-secondary.stats-killed-lost(type='button') Lost
+                                div.btn-group.mr-2
+                                    button.ofilter.lfilter.btn.btn-secondary(type='button') HIGHSEC
+                                    button.ofilter.lfilter.btn.btn-secondary(type='button') LOWSEC
+                                    button.ofilter.lfilter.btn.btn-secondary(type='button') NULLSEC
+                                    button.ofilter.lfilter.btn.btn-secondary(type='button') W-SPACE
+                                    button.ofilter.lfilter.btn.btn-secondary(type='button') Abyssal
+                                div.btn-group.mr-2
+                                    button.ofilter.lfilter.btn.btn-secondary(type='button') NPC
+                                    button.ofilter.lfilter.btn.btn-secondary(type='button') PVP
+                                    button.ofilter.lfilter.btn.btn-secondary(type='button') Solo
+                                    button.ofilter.lfilter.btn.btn-secondary(type='button') Abyssal-PVP
+                                    button.ofilter.lfilter.btn.btn-secondary(type='button') 100+
+                                    button.ofilter.lfilter.btn.btn-secondary(type='button') 1000+
+                                    button.ofilter.lfilter.btn.btn-secondary(type='button') BIGISK
+                                    button.ofilter.lfilter.btn.btn-secondary(type='button') EXTREMEISK
+                                    button.ofilter.lfilter.btn.btn-secondary(type='button') INSANEISK
+                    div.row
+                        div.col-xs-12.col-xl-6
+                            div#overview-killmails
+                                div#killlist
+                        div.col-xs-12.col-xl-6
                             div#overview-toptens
+                    div.m-5
                 div#killmail.collapse
                 div#other.row.collapse
         div.clearfix.push

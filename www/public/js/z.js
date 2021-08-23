@@ -674,9 +674,13 @@ function load_stats_box(json) {
     applyJSON('/cache/1hour/stats_box' + pagepath + '.json');
 }
 
-function load_toplists_box(json) {
+function load_toplists_box(modifiers = []) {
     console.log('updating top lists');
-    apply('overview-toptens', '/site/toptens/' + getSelectedStats() + pagepath + '.html', null, true);
+    var params = "";
+    if (modifiers.length > 0) {
+        params = "?modifiers=" + modifiers.join(',');
+    }
+    apply('overview-toptens', '/site/toptens/' + getSelectedStats() + pagepath + '.html' + params, null, true);
 }
 
 function spaTheLinks() {
@@ -807,18 +811,16 @@ function filter_change(eventObject, buttonname) {
 
     // Now build the filter
     var modifiers = [];
-    $(".ofilter").each(function () {
+    $(".lfilter.btn-primary").each(function () {
         var btn = $(this);
-        if (btn.hasClass("btn-primary") && btn.attr('id') != 'allbtn') {
-            modifiers.push(btn.html().toLowerCase());
-        }
+        modifiers.push(btn.html().toLowerCase());
     });
     modifiers.sort();
 
     var url = '/site/killmails' + pagepath + '.json';
     if (modifiers.length > 0) url = url + '?modifiers=' + modifiers.join(',');
-    //apply('overview-killmails', url, null, true);
     loadKillmails(url);
+    load_toplists_box(modifiers);
 }
 
 function resetFilters() {
@@ -964,8 +966,8 @@ function getSelectedStatsEpoch() {
 
 function getSelectedStatsKL() {
     let text = $(".stats-killed-lost.btn-primary").text();
-    if (text == 'Killed') return 'killed';
-    return 'lost';
+    if (text == 'Lost') return 'lost';
+    return 'killed';
 }
 
 function setSelectedStatsEpoch() {

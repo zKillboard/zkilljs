@@ -43,6 +43,8 @@ div.row.m-0.p-0
 							each label in killmail.labels
 								+add_label(label)
 		div#killmail-cargo.col-12
+			if victim.category_id == 87
+				h6.text-right Note: Accurate fighter counts are not reflected in ESI.
 			table#cargotable.table.table-sm.table-hover.table-responsive-sm
 				tbody
 					tr.border-0#master-sort-row(style='background-color: inherit;')

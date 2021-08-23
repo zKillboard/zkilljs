@@ -20,6 +20,7 @@ async function getData(req, res) {
 
     // Augment the rawmail
     rawmail.victim.group_id = get_negative(killmail.involved.group_id);
+    rawmail.victim.category_id = await app.util.info.get_info_field(app, 'group_id', Math.abs(rawmail.victim.group_id), 'category_id');
     rawmail.constellation_id = killmail.involved.constellation_id[0];
     rawmail.region_id = killmail.involved.region_id[0];
     if (killmail.involved.location_id != undefined) {
@@ -139,8 +140,11 @@ async function getData(req, res) {
 }
 
 function get_negative(arr) {
-    for (var i of arr)
-        if (i < 0) return arr;
+    for (var i of arr) {
+        if (i < 0) {
+            return i;
+        }
+    }
     return null;
 }
 

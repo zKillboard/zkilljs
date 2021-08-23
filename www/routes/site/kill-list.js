@@ -35,11 +35,9 @@ async function getData(req, res) {
         };
 
         var key = 'involved.' + type;
-        query_or = [{
-            [key]: id
-        }, {
-            [key]: (-1 * id)
-        }];
+        query_or = [];
+        if (req.query['kl'] == 'all' || req.query['kl'] == 'killed') query_or.push({[key]: id});
+        if (req.query['kl'] == 'all' || req.query['kl'] == 'lost') query_or.push({[key]: -1 * id});
     };
     var record = await app.db.statistics.findOne({
         type: type,
@@ -57,7 +55,8 @@ async function getData(req, res) {
         modifiers: 'string',
         page: 'integer',
         sequence: record.sequence,
-        required: ['page', 'sequence'],
+        kl: ['all', 'killed', 'lost'],
+        required: ['kl', 'page', 'sequence'],
     }
     req.alternativeUrl = '/cache/1hour/killmails/' + req.params.type + '/' + req.params.id + '.json';
     var valid = req.verify_query_params(req, valid);
@@ -79,7 +78,7 @@ async function getData(req, res) {
                     [key]: (-1 * id)
                 }];
             } else if (modifier == 'pvp') {
-                query['stats'] = true;
+                query_and.push({labels: 'pvp'});
             } else {
                 query_and.push({
                     labels: modifier.replace(' ', '+')

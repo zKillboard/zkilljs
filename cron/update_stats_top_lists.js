@@ -8,10 +8,10 @@ var types = [
     'item_id',
     'group_id',
     'category_id',
-    'region_id',
-    'constellation_id',
-    'solar_system_id',
     'location_id',
+    'solar_system_id',
+    'constellation_id',
+    'region_id',
 ];
 
 var collections = {
@@ -21,27 +21,33 @@ var collections = {
 };
 
 var sequential = 0;
+var first_run = true;
 
 async function f(app) {
-    var epochs = Object.keys(collections);
-    var promises = [];
+    if (first_run) {
+        var epochs = Object.keys(collections);
+        for (var i = 0; i < epochs.length; i++) {
+            do_epoch(app, epochs[i]);
+        }
+        first_run = false;
+    }
+}
 
-    for (var e = 0; e < epochs.length; e++) {
-        var epoch = epochs[e];
-
-        var result = await app.db.statistics.find({
-            [epoch + '.update_top']: true,
-        });
+async function do_epoch(app, epoch) {
+    var iterated = false;
+    try {
+        var result = await app.db.statistics.find({[epoch + '.update_top']: true}).limit(1000);
         while (await result.hasNext()) {
             if (app.bailout || app.no_stats || app.delay_stats) return;
 
-            var record = await result.next();
-            while (sequential > 10) await app.sleep(1);
-            await do_update(app, epoch, record);
+            await do_update(app, epoch, await result.next());
+            iterated = true;
+
             app.zincr('stats_toplist_' + epoch);
         }
+    } finally {
+        setTimeout(function() { do_epoch(app, epoch); }, (iterated == true ? 1 : 1000));
     }
-    while (sequential > 0) await app.sleep(1);
 }
 
 async function do_update(app, epoch, record) {

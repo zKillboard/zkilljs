@@ -140,8 +140,13 @@ function verify_query_params(req, valid_array) {
             if (isNaN(num)) return null; // Just 404 in this case, don't attempt rebuild
             break;
         default:
-            // matching value provided, make sure we have that value
-            if (query_params[key] != ('' + valid_array[key])) rebuild_required = true; // This key does not belong here;
+            // If the data type passed is an array, then we need to make sure our value is within that array
+            if (Array.isArray(valid_array[key])) {
+                if(valid_array[key].indexOf(query_params[key]) == -1) rebuild_required = true;
+            } else {
+                // matching value provided, make sure we have that value
+                if (query_params[key] != ('' + valid_array[key])) rebuild_required = true; // This key does not belong here;
+            }
         }
 
         last_key = key;
@@ -164,7 +169,11 @@ function rebuild_query(base_url, query_params, valid_array, required) {
             rebuild[key] = query_params[key];
             break;
         default:
-            rebuild[key] = valid_array[key];
+            if (Array.isArray(valid_array[key])) {
+                rebuild[key] = valid_array[key][0]; // first value is default
+            } else {
+                rebuild[key] = valid_array[key];
+            }
         }
         delete query_params[key];
         delete valid_array[key];

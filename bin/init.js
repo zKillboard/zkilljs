@@ -166,17 +166,14 @@ let ztopindexes = [];
 let globalapp = undefined;
 
 function gc() {
-    var used = Math.floor(process.memoryUsage().heapUsed / 1024 / 1024);
-    if (used > 2500) {
-        if (global.gc) {
-            global.gc();
-            var used_now = Math.floor(process.memoryUsage().heapUsed / 1024 / 1024);
-            // console.log('Garbage collected ' + (used - used_now) + ' MB');
+    if (global.gc) {
+        global.gc();
+        var used = Math.floor(process.memoryUsage().heapUsed / 1024 / 1024);
+        if (used > 3500) {
+            console.log("Memory exceeding 3500 MB, restarting...");
+            globalapp.redis.set("RESTART", "true");
         }
+        setTimeout(function() { gc(); }, 15000);
     }
-    if (used > 3500) {
-        console.log("Memory exceeding 3500 MB, restarting...");
-        globalapp.redis.set("RESTART", "true");
-    }
-    setTimeout(function() { gc(); }, 1000);
 }
+    
