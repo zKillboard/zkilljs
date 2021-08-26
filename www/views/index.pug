@@ -21,11 +21,13 @@ html
                     ul.navbar-nav.mr-auto
                     ul.navbar-nav
                         li.btn-group
-                            button#filtersbutton.btn.btn-secondary(type='button' toggle='#ooverview-filters' data-toggle="button") Advanced Search
+                            button#filtersbutton.btn.btn-secondary.d-none(type='button' toggle='#ooverview-filters' data-toggle="button")
+                                i#feedactive.bi.bi-search
+                                span.d-none.d-lg-inline-block| &nbsp;Advanced Search
                             button#feedbutton.btn.btn-primary(type='button')
                                 i#feedactive.bi.bi-play-fill
-                                i#feedinactive.bi.bi-pause-fill.collapse
-                                | Feed
+                                i#feedinactive.bi.bi-pause-fill
+                                span.d-none.d-lg-inline-block Feed
                     ul.navbar-nav
                         li.navbar-item
                             a.nav-link(href='#' onclick='return toggleZTop();')

@@ -135,8 +135,10 @@ async function f() {
     app.mysql = mysql;
     console.log('loaded mysql');
 
+    app.ztops = {};
     app.zincr = function (key) {
         app.redis.incr('zkb:ztop:' + key);
+        app.ztops[key] = (app.ztops[key] || 0) + 1;
     };
 
     app.log = function(object) {
@@ -160,9 +162,6 @@ async function f() {
     return app;
 }
 
-let lastsecond = 0;
-let zincrcount = 0;
-let ztopindexes = [];
 let globalapp = undefined;
 
 function gc() {

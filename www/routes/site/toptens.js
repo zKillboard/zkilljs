@@ -28,18 +28,18 @@ async function f(req, res) {
 
     var record = await app.db.statistics.findOne(query);
     if (record[epoch] == undefined) record[epoch] = {};
-    if (record[epoch].hash_killed_top == undefined) record[epoch].hash_killed_top = 'none';
+    if (record[epoch]['hash_' + killed_lost + '_top'] == undefined) record[epoch].hash_killed_top = app.md5(record[epoch][killed_lost + '_top'])
 
     // if (req.query.current_hash == record[epoch].hash_killed_top) return 204;
     var valid = {
         required: ['hash'],
-        hash: record[epoch].hash_killed_top
+        hash: record[epoch]['hash_' + killed_lost + '_top']
     }
     req.alternativeUrl = '/cache/1hour/toptens/' + epoch + '/' + killed_lost + '/' + req.params.type + '/' + req.params.id + '.html';
     var valid = req.verify_query_params(req, valid);
     if (valid !== true) return valid;
 
-    if (record[epoch].killed_top == undefined) return {
+    if (record[epoch][killed_lost + '_top'] == undefined) return {
         json: {}
     }; // empty, do nothing
 

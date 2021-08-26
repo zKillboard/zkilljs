@@ -34,11 +34,11 @@ async function f(app) {
 var bg = {background: true};
 
 async function applyIndexes(app) {
-    await app.db.createCollection('killhashes');
+    await create_collection(app, 'killhashes');
     await createIndex(app.db.killhashes, {killmail_id: 1, hash: 1}, {unique: true});
     await createIndex(app.db.killhashes, {status: 1}, {});
 
-    await app.db.createCollection('statistics');
+    await create_collection(app, 'statistics');
     await createIndex(app.db.statistics, {type: 1, id: 1}, {unique: true});
     await createIndex(app.db.collection('statistics'), {type: 1, update_alltime: 1}, {});
     await createIndex(app.db.collection('statistics'), {type: 1, update_recent: 1}, {});
@@ -53,12 +53,12 @@ async function applyIndexes(app) {
     await createIndex(app.db.collection('statistics'), {'recent.update_top': 1}, {sparse: true});
     await createIndex(app.db.collection('statistics'), {'week.update_top': 1}, {sparse: true});
 
-    await app.db.createCollection('prices');
+    await create_collection(app, 'prices');
     await createIndex(app.db.prices, {item_id: 1}, {unique: true});
     await createIndex(app.db.prices, {waiting: 1}, {});
     await createIndex(app.db.prices, {last_fetched: 1}, {});
 
-    await app.db.createCollection('information');
+    await create_collection(app, 'information');
     await createIndex(app.db.information, {type: 1});
     await createIndex(app.db.information, {id: 1}); 
     await createIndex(app.db.information, {type: 1, id: 1}, {unique: true});
@@ -66,12 +66,12 @@ async function applyIndexes(app) {
     await createIndex(app.db.information, {last_updated: 1}, {});
     await createIndex(app.db.information, {type: 1, alliance_id: 1}, {sparse: true}); // For determining alliance member counts
 
-    await create_collection(app, 'killmails');
+    await create_killmail_collection(app, 'killmails');
     await createIndex(app.db.collection('killmails'), {status: 1}, {sparse: true});
-    await create_collection(app, 'killmails_7');
+    await create_killmail_collection(app, 'killmails_7');
     await createIndex(app.db.collection('killmails_7'), {epoch: 1}, {});
 
-    await create_collection(app, 'killmails_90');
+    await create_killmail_collection(app, 'killmails_90');
     await createIndex(app.db.collection('killmails_90'), {epoch: 1}, {});
 
     await createIndex(app.db.collection('information'), {type: 1, id: 1}, {unique: true});
@@ -88,10 +88,19 @@ async function applyIndexes(app) {
     await createIndex(app.db.collection('rawmails'), {killmail_id: 1}, {unique: true});
     await createIndex(app.db.collection('killmails'), {killmail_id: 1}, {unique: true});
 
-    await create_collection(app, 'settings');
+    await create_killmail_collection(app, 'settings');
     await createIndex(app.db.collection('settings'), {key: 1}, {unique: true});
     
     console.log('done');
+}
+
+async function create_collection(app, name) {
+    try {
+        await app.db.createCollection(name);
+    } catch (e) {
+        if (e.code == 48) return; // all good, collection already exists and we want  that anyway
+        throw e;
+    }
 }
 
 async function createIndex(collection, index, options) {
@@ -99,19 +108,21 @@ async function createIndex(collection, index, options) {
     await collection.createIndex(index, options);
 }
 
-async function create_collection(app, collection) {
-    await app.db.createCollection(collection);
+async function create_killmail_collection(app, collection) {
+    await create_collection(app, collection);
 
     var index = {
         sequence: 1,
         labels: 1
-
     };
     await createIndex(app.db.collection(collection), index, {background: true});
     var index = {
         killmail_id: -1,
         labels: 1
-
+    };
+    await createIndex(app.db.collection(collection), index, {background: true});
+     var index = {
+        labels: 1
     };
     await createIndex(app.db.collection(collection), index, {background: true});
         
@@ -127,6 +138,12 @@ async function create_collection(app, collection) {
         
         index = {
             stats: 1,
+            sequence: 1,
+        };
+        index[key] = 1;
+        await createIndex(app.db.collection(collection), index, bg);
+
+        index = {
             sequence: 1,
         };
         index[key] = 1;

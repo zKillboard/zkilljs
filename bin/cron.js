@@ -17,7 +17,7 @@ var tasks = {
     'listen_redisq.js': createTaskSettings(15),
     'fetch_wars.js': createTaskSettings(9600),
     'fetch_warmails': createTaskSettings(1),
-    'fetch_dailies': createTaskSettings(5),
+    'fetch_dailies': createTaskSettings(86400, 0, -50000),
 
     // killmail consumers
     'fetch_mails.js': createTaskSettings(1),
@@ -25,12 +25,14 @@ var tasks = {
     'update_stats_prepare.js': createTaskSettings(1),
 
     // statistics
-    'update_stats.js': createTaskSettings(5),
-    'publish_stats_updates.js': createTaskSettings(5),
-    'update_stats_week_cleanup.js': createTaskSettings(3600),
-    'update_stats_recent_cleanup.js': createTaskSettings(86400, 0, -9000),
-    'update_stats_top_lists.js': createTaskSettings(60),
+    'update_stats.js': createTaskSettings(15),
+    'publish_stats_updates.js': createTaskSettings(15, 0, -10),
+    'update_stats_top_lists.js': createTaskSettings(15, 0, -10),
     'populate_ranks.js': createTaskSettings(86400),
+
+    // cleanups
+    'update_stats_week_cleanup.js': createTaskSettings(900),
+    'update_stats_recent_cleanup.js': createTaskSettings(10800, 0, -30),
 }
 
 var app = undefined;

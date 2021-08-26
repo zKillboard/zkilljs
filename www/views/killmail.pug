@@ -38,8 +38,6 @@ div.row.m-0.p-0
 					tr
 						td Labels
 						td
-							if killmail.stats == false
-								+add_label('nostats')
 							each label in killmail.labels
 								+add_label(label)
 		div#killmail-cargo.col-12

@@ -38,25 +38,8 @@ module.exports = {
         return next.value.value;
     },
 
-    remove: async function (app, collection, killmail, epoch) {
+    remove_killmail: async function (app, collection, killmail, epoch) {
         var resets = [];
-
-        await app.util.stats.wait_for_stats(app, epoch);
-
-        var original_killmail_id = killmail.killmail_id;
-        var purge_mail = killmail;
-        delete purge_mail._id;
-        purge_mail.purging = true;
-        purge_mail.killmail_id = -1 * killmail.killmail_id;
-        purge_mail.total_value = -1 * killmail.total_value;
-        purge_mail.involved_cnt = -1 * killmail.involved_cnt;
-        purge_mail.sequence = await app.util.killmails.next_sequence(app);
-
-        try {
-            await app.db[collection].insertOne(purge_mail); // Insert the killmail
-        } catch (e) {
-            if (e.code != 11000) console.log(e);
-        }
 
         // Mark everyone involved as needing a stat update
         for (const type of Object.keys(killmail.involved)) {
@@ -65,9 +48,9 @@ module.exports = {
 
                 var reset_key = type + ':' + id;
                 if (resets.indexOf(reset_key) != -1) continue;
-                resets.push(reset_key);
+                resets.push(reset_key);                
 
-                await update_stats_record(app, type, id, epoch, purge_mail.sequence);
+                await app.db.statistics.updateOne({type: type, id: id}, {$set: {['update_' + epoch]: true, [epoch + '.reset']: true}});
             }
         }
 
@@ -77,20 +60,30 @@ module.exports = {
             if (resets.indexOf(reset_key) != -1) continue;
             resets.push(reset_key);
 
-            await update_stats_record(app, 'label', label, epoch, purge_mail.sequence);
+            await app.db.statistics.updateOne({type: 'label', id: label}, {$set: {['update_' + epoch]: true, [epoch + '.reset']: true}});
         }
 
-        await app.util.stats.wait_for_stats(app, epoch);
+        await app.db[collection].removeOne({killmail_id: killmail.killmail_id});
+    },
 
-        await app.db[collection].removeOne({
-            killmail_id: original_killmail_id
-        });
-        await app.db[collection].removeOne({
-            killmail_id: purge_mail.killmail_id
-        });
+    remove_old_killmails: async function(app, epoch, num_days) {
+        var now = app.now();
+        // now = now - (now % 3600); // stick to the hour mark
+        var remove = now - (num_days * 86400);
+        var collection = 'killmails' + (epoch == 'alltime' ? '' : (epoch == 'week' ? '_7' : (epoch == 'recent' ? '_90' : '_unknown_collection')));
+        var purging = await app.db[collection].find({epoch : {$lt : remove}});
 
-        purge_mail = null; // Having these two cause a circular dependency which causes a memory leak...
-        killmail = null; // Having these two cause a circular dependency which causes a memory leak...
+        var previous_stats = app.no_stats;
+        app.no_stats = true;
+        await app.sleep(5000); // give any running stats a few seconds to finish up
+        try {
+            while (await purging.hasNext()) {
+                var killmail = await purging.next();
+                await app.util.killmails.remove_killmail(app, collection, killmail, epoch);
+            }
+        } finally {
+            app.no_stats = previous_stats;
+        }
     }
 }
 

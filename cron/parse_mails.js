@@ -26,13 +26,13 @@ const match = {
 
 async function f(app) {
     if (firstRun) {
-        sw.start(app, app.db.killhashes, match, parse_mail, 99, {killmail_id: -1});
+        sw.start(app, app.db.killhashes, match, parse_mail, 99999);
         firstRun = false;
     }
 }
 
 async function parse_mail(app, killhash) {
-    if (app.delay_parse) await app.randomSleep(0, 100);
+    if (app.delay_parse) return app.randomSleep(100, 200);
 
     var killmail = {};
     const now = Math.floor(Date.now() / 1000);

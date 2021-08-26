@@ -129,10 +129,10 @@ const stats = {
 
     facet_query: async function (app, collection, match) {
         while (app.fquery >= 5) await app.sleep(1); // poor man's sempahore
-        app.fquery++;
 
-        //console.log(collection);
-        //console.log(util.inspect(match, false, null, true /* enable colors */))
+        var time_start = Date.now();
+
+        app.fquery++;
 
         try {
             let result = await app.db[collection].aggregate([{
@@ -239,6 +239,12 @@ const stats = {
             return result.length == 0 ? {} : result[0];
         } finally {
             app.fquery--;
+
+            var time_end = Date.now();
+            var diff = time_end - time_start;
+            if (diff > 1000) {
+                console.log(collection, diff + 'ms', match);
+            }
         }
     },
 
@@ -287,14 +293,15 @@ const stats = {
         return retval;
     },
 
-    topISK: async function (app, collection, match, limit = 10, killed_lost = 'killed') {
-        const util = require('util');
+    topISK: async function (app, collection, match, type, limit = 10, killed_lost = 'killed') {
         var retval = [];
+        var unwind_match = {};
+        if (killed_lost == 'lost' && negatives.indexOf(type) != -1) unwind_match['$lt'] = 0;
+        else unwind_match['$gt'] = 0;
 
         var agg = [{
                 $match: match
-            },
-            {
+            }, {
                 $project: {
                     killmail_id: 1,
                     total_value: 1

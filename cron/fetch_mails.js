@@ -4,18 +4,15 @@ module.exports = f;
 var firstRun = true;
 
 const sw = require('../util/StreamWatcher.js');
-const match = {
-    status: 'pending'
-};
 
 async function f(app) {
     if (firstRun) {
         // clear failure reasons on mails that are successful
-        app.db.killhashes.updateMany({status: 'done', failure_reason : { $exists: true}}, {$unset: {failure_reason : 1}}, {multi: true});
+        // app.db.killhashes.updateMany({status: 'done', failure_reason : {$exists: true}}, {$unset: {failure_reason : 1}}, {multi: true});
         
         resetBadMails(app);
 
-        sw.start(app, app.db.killhashes, match, fetch, 1000, {killmail_id: -1});
+        sw.start(app, app.db.killhashes, {status: 'pending'}, fetch, 1000);
         firstRun = false;
     }
 }
@@ -71,6 +68,8 @@ async function fetch(app, mail) {
             });
             return true;
         } else {
+            app.zincr('esi_error');
+            app.zincr('esi_error_' + res.statusCode);
             await app.db.killhashes.updateOne(mail, {
                 $set: {
                     status: 'failed',

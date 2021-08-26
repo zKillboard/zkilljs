@@ -131,7 +131,7 @@ async function getData(req, res) {
             rawmail: rawmail,
             killmail: killmail
         },
-        maxAge: 0
+        maxAge: 3600
     };
 
     ret.json = await app.util.info.fill(app, ret.json);

@@ -838,8 +838,6 @@ function feed_toggle(event, enabled, doLoad) {
     if (doLoad == undefined) doLoad = true && enabled;
 
     mark_enabled(feedbutton, enabled);
-    $("#feedactive").toggle(enabled);
-    $("#feedinactive").toggle(!enabled);
     if (enabled && doLoad) {
         resetFilters();
         loadKillmails('/site/killmails' + pagepath + '.json', 'killlistfeed:' + pagepath);

@@ -26,7 +26,7 @@ async function f(app) {
     }
 
     let added = 0;
-    while (await app.redis.scard("zkb:dailies") > 0 && added < 50000) {
+    while (await app.redis.scard("zkb:dailies") > 0) {
         let members = await app.redis.smembers("zkb:dailies");
         members.sort().reverse();
         let key = members[0];

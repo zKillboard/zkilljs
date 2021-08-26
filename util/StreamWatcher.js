@@ -2,7 +2,7 @@
 
 
 module.exports = {
-    async start(app, collection, match, f, limit, sort = {}) {
+    async start(app, collection, match, f, limit = 99999, sort = {}) {
         const streamConfig = {
             fullDocument: 'updateLookup'
         };
@@ -15,12 +15,12 @@ module.exports = {
             });
 
             // Process any existing that match
-            count = await iterate(app, await collection.find(match).sort(sort), f, limit, false, set);
+            count = await iterate(app, await collection.find(match).sort(sort), f, false, set);
 
             // Now process any in the oplog that match
             /*streamConfig.startAtOperationTime = hostInfo.operationTime;
             const stream = collection.watch(createStreamMatch(match), streamConfig);
-            count += await iterate(app, stream, f, limit, true);*/
+            count += await iterate(app, stream, f, true, set);*/
         } catch (e) {
             // 136 is stream died, ignore it and restart in a second
             if (e.code != 136) console.log('StremWatcher exception', '\n', match, '\n', e);
@@ -44,13 +44,12 @@ function createStreamMatch(match) {
     }];
 }
 
-async function iterate(app, iterator, f, limit, isStream, set) {
+async function iterate(app, iterator, f, isStream, set) {
     let count = 0;
     while (await iterator.hasNext()) {
-        while (set.size >= 10) await app.sleep(1); // don't flood the stack        
+        while (set.size >= 100) await app.sleep(1); // don't flood the stack        
         call(app, f, (isStream ? (await iterator.next()).fullDocument : await iterator.next()), set);
         count++;
-        if (count >= limit) break;
     }
     return count;
 }

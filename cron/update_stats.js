@@ -17,9 +17,9 @@ const types = [
 ];
 
 const epochs = {
-    "alltime": "killmails",
+    "week": "killmails_7",
     "recent": "killmails_90",
-    "week": "killmails_7"
+    "alltime": "killmails",
 };
 const epoch_keys = Object.keys(epochs);
 
@@ -33,7 +33,7 @@ async function f(app) {
                     type: type
                 };
                 find['update_' + epoch] = true;
-                update_stats(app, epochs[epoch], epoch, type, find);
+                await update_stats(app, epochs[epoch], epoch, type, find);
             }
         }
         first_run = false;
@@ -65,7 +65,7 @@ async function update_stats(app, collection, epoch, type, find) {
     } finally {
         setTimeout(function () {
             update_stats(app, collection, epoch, type, find);
-        }, (iterated ? 1 : 1000));
+        }, (iterated ? 1 : 15000));
     }
 }
 
@@ -125,7 +125,7 @@ async function update_record(app, collection, epoch, record) {
                     [epoch]: 1
                 }
             });
-
+ 
             // Update the redis ranking
             await app.redis.zrem(redisRankKey, record.id);
         } else {

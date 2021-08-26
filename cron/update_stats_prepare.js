@@ -1,6 +1,6 @@
 'use strict';
 
-const prepSet = new Set();
+var concurrent = 0;
 var firstRun = true;
 
 async function f(app) {
@@ -9,86 +9,65 @@ async function f(app) {
         populateSet(app);
     }
 
-    while (prepSet.size > 0) await app.sleep(1000);
+    while (concurrent > 0) await app.sleep(1000);
 }
 
 async function populateSet(app) {
-    let prepped = 0;
+    let prepped = false;
     try {
-        let killhashes = await app.db.killhashes.find({
-            status: 'parsed'
-        }).sort({sequence: -1});
+        if (app.no_stats || app.delay_stats) return;
+
+        let killhashes = await app.db.killhashes.find({status: 'parsed'}).limit(10000);
 
         while (await killhashes.hasNext()) {
-            if (app.no_stats) break;
-            if (app.delay_prep) return await app.randomSleep(1000, 2000);
+            if (app.no_stats || app.delay_prep) break;
+
+            while (concurrent >= 5) await app.sleep(1);
 
             prepStats(app, await killhashes.next());
-            while (prepSet.size >= 10) await app.sleep(1);
-            await app.sleep(1);
-            prepped++;
+
+            prepped = true;
             app.zincr('stats_prepped');
         }
-        while (prepSet.size > 0) {
-            await app.sleep(1);
-        }
+        while (concurrent > 0) await app.sleep(1);
     } catch (e) {
         console.log(e);
     } finally {
-        if (prepped == 0) await app.sleep(1000);
+        if (prepped == false) await app.sleep(1000);
         populateSet(app);
     }
 }
 
 async function prepStats(app, killhash) {
     try {
-        prepSet.add(killhash);
+        concurrent++;
 
-        let killmail = await app.db.killmails.findOne({
-            killmail_id: killhash.killmail_id
-        });
-        if (killmail == undefined) {
-            await app.db.killhashes.updateOne({
-                _id: killhash._id
-            }, {
-                $set: {
-                    status: 'fetch'
-                }
-            });
-            return;
-        }
-        killmail.labels.push('all');
-
-        let promises = [];
+        let killmail = await app.db.killmails.findOne({killmail_id: killhash.killmail_id});
         if (killmail.involved == undefined) {
             console.log(killhash.killmail_id + ' has no involved');
-            return;
+            return await app.db.killhashes.updateOne({_id: killhash._id}, {$set: {status: 'stats_prepare_error', reason: 'no involved'}});
         }
+
+        killmail.labels.push('all');
+
         let keys = Object.keys(killmail.involved);
         for (let i = 0; i < keys.length; i++) {
             let type = keys[i];
             let values = killmail.involved[type];
             for (let j = 0; j < values.length; j++) {
-                let id = values[j];
-                promises.push(addKM(app, killmail, type, id));
-            }
-            for (let j = 0; j < killmail.labels.length; j++) {
-                promises.push(addKM(app, killmail, 'label', killmail.labels[j], "alltime"));
+                let id = Math.abs(values[j]);
+                if (!isNaN(id) && id > 0) await add_killmail(app, killmail, type, Math.abs(id));
             }
         }
-        await Promise.all(promises); // If one errors they all error!
+        for (let j = 0; j < killmail.labels.length; j++) {
+            await add_killmail(app, killmail, 'label', killmail.labels[j]);
+        }
 
-        await app.db.killhashes.updateOne({
-            _id: killhash._id
-        }, {
-            $set: {
-                status: 'done'
-            }
-        });
+        await app.db.killhashes.updateOne({_id: killhash._id}, {$set: {status: 'done'} });
     } catch (e) {
         console.log(e);
     } finally {
-        prepSet.delete(killhash);
+        concurrent--;
     }
 }
 
@@ -97,14 +76,15 @@ let sequenceUpdates = new Map();
 setInterval(function () {
     addSet.clear();
     sequenceUpdates.clear();
-}, 3600000);
+}, 900000);
 
-async function addKM(app, killmail, type, id) {
+async function add_killmail(app, killmail, type, id) {
     if (id == undefined || id == null) return;
-    if (typeof id != 'string') id = Math.abs(id);
-    if (id <= 0) return;
 
     let addKey = type + ':' + id;
+    let previousSequence = sequenceUpdates.get(addKey);
+    if (previousSequence != undefined && previousSequence > killmail.sequence) return; // no need to do any of this
+
     try {
         if (!addSet.has(addKey)) {
             await app.db.statistics.insertOne({
@@ -116,6 +96,7 @@ async function addKM(app, killmail, type, id) {
                 sequence: killmail.sequence
             });
             addSet.add(addKey);
+            if (previousSequence == undefined || previousSequence < killmail.sequence) sequenceUpdates.set(addKey, killmail.sequence);
             return;
         }
     } catch (e) {
@@ -139,20 +120,8 @@ async function addKM(app, killmail, type, id) {
     if (update_recent) set.update_recent = true;
     if (update_week) set.update_week = true;
 
-    let previousSequence = sequenceUpdates.get(addKey);
-    if (previousSequence == undefined || killmail.sequence > previousSequence) {
-
-        await app.db.statistics.updateOne({
-            type: type,
-            id: id,
-            sequence: {
-                $lt: killmail.sequence
-            }
-        }, {
-            $set: set,
-        });
-        sequenceUpdates.set(addKey, killmail.sequence);
-    }
+    await app.db.statistics.updateOne({type: type, id: id, sequence: { $lt: killmail.sequence } }, { $set: set, });
+    sequenceUpdates.set(addKey, killmail.sequence);
 }
 
 module.exports = f;

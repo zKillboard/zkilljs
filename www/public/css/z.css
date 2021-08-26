@@ -394,3 +394,12 @@ hr {
 .group-toggle-full[aria-expanded='false']::after {
   content: "+ Expand All";
 }
+
+/* Display or hide the play/pause feed buttons depending on the feed button having the class btn-primary */
+#feedbutton.btn-primary #feedinactive {
+    display: none;
+}
+
+#feedbutton:not(.btn-primary) #feedactive {
+    display: none;
+}

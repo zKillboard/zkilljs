@@ -16,7 +16,7 @@ var types = [
 
 var collections = {
     week: 'killmails_7',
-    //recent: 'killmails_90',
+    recent: 'killmails_90',
     //alltime: 'killmails',
 };
 
@@ -38,7 +38,7 @@ async function do_epoch(app, epoch) {
     try {
         var result = await app.db.statistics.find({[epoch + '.update_top']: true}).limit(1000);
         while (await result.hasNext()) {
-            if (app.bailout || app.no_stats || app.delay_stats) return;
+            if (app.bailout || app.no_stats || app.delay_stat) return app.sleep(1000);
 
             await do_update(app, epoch, await result.next());
             iterated = true;
@@ -66,21 +66,22 @@ async function do_update(app, epoch, record) {
             match.labels = 'pvp';
         }
 
-        var top_killers = await do_queries(app, collections[epoch], match, 'killed');
+        var top_killers = await do_queries(app, collections[epoch], record, match, record[epoch].killed_top, (record[epoch].killed || 0), 'killed');
 
-        if (record.type != 'label') match['involved.' + record.type] = -1 * record.id;
-
-        var top_losers = await do_queries(app, collections[epoch], match, 'lost');
+        if (record.type != 'label') {
+            match['involved.' + record.type] = -1 * record.id;
+            var top_losers = await do_queries(app, collections[epoch], record, match, record[epoch].lost_top, (record[epoch].lost || 0), 'lost');
+        } else top_losers = {};
 
         var n = await app.db.statistics.updateOne({
             _id: record._id,
             last_sequence: last_sequence
         }, {
             $set: {
-                [epoch + '.killed_top']: await top_killers,
-                [epoch + '.lost_top']: await top_losers,
-                [epoch + '.hash_killed_top']: app.md5(JSON.stringify(await top_killers) + JSON.stringify(await top_losers)),
-                [epoch + '.hash_lost_top']: app.md5(JSON.stringify(await top_losers)),
+                [epoch + '.killed_top']: top_killers,
+                [epoch + '.lost_top']: top_losers,
+                [epoch + '.hash_killed_top']: app.md5(JSON.stringify(top_killers) + JSON.stringify(top_losers)),
+                [epoch + '.hash_lost_top']: app.md5(JSON.stringify(top_losers)),
                 [epoch + '.update_top']: false
             }
         });
@@ -94,25 +95,34 @@ async function do_update(app, epoch, record) {
     }
 }
 
-async function do_queries(app, collection, match, killed_lost) {
+async function do_queries(app, collection, record, match, existing, total_kills, killed_lost) {
     var ret = {
         types: {},
         topisk: []
     };
 
     // Start the top Isk query
-    var topIsk = app.util.stats.topISK(app, collection, match, 6, killed_lost);
+    var topIsk = await app.util.stats.topISK(app, collection, match, record.type, 6, killed_lost);
 
-    // Start the group queries
-    for (var i = 0; i < types.length; i++) {
-        ret.types[types[i]] = app.util.stats.group(app, collection, match, types[i], killed_lost);
-    }
+    // Compare to see if we need to actually do these expensive group queries
+    var last_total = (existing ? (existing['last_topten_total_' + killed_lost] || 0) : 0);
+    if (total_kills < 10000 || ((total_kills - last_total) > Math.floor(last_total * 0.01))) {
+        // Start the group queries
+        for (var i = 0; i < types.length; i++) {
+            ret.types[types[i]] = app.util.stats.group(app, collection, match, types[i], killed_lost);
+        }
 
-    // and wait for all the queries to finish
-    for (var i = 0; i < types.length; i++) {
-        ret.types[types[i]] = await ret.types[types[i]];
-        if (ret.types[types[i]] == undefined || ret.types[types[i]].length == 0) delete ret.types[types[i]];
+        // and wait for all the queries to finish
+        for (var i = 0; i < types.length; i++) {
+            ret.types[types[i]] = await ret.types[types[i]];
+            if (ret.types[types[i]] == undefined || ret.types[types[i]].length == 0) delete ret.types[types[i]];
+        }
+    } else {
+        ret = existing;
     }
+    ret['last_topten_total_' + killed_lost] = total_kills;
+
+    ret.topisk = [];
     topIsk = await topIsk;
     for (var i = 0; i < topIsk.length; i++) {
         var record = topIsk[i];
