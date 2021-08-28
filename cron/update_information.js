@@ -108,8 +108,7 @@ async function fetch(app, row) {
 
         let now = Math.floor(Date.now() / 1000);
 
-
-        if (row.last_updated > 0 && row.type == 'character_id') {
+        if (row.last_updated > 0 && (row.type == 'character_id' || row.type == 'corporation_id' || row.type == 'alliance_id')) {
             // Do they have a recent killmail?
             let recent_match = {}
             recent_match['involved.' + row.type] = row.id;

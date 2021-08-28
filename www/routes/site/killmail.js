@@ -13,6 +13,7 @@ async function getData(req, res) {
     });
     var km_date = new Date(killmail.epoch * 1000);
 
+    
     // Ensure the attackers array exists
     if (rawmail.attackers == undefined) rawmail.attackers = [];
     // Only initially show the first 10 attackers
@@ -34,6 +35,7 @@ async function getData(req, res) {
     if (rawmail.victim.items == undefined) rawmail.victim.items = [];
     var fittingwheelitems = [];
     var last_slot = undefined;
+
     for (var item of get_all_items(rawmail.victim.items)) {
         var flag = item.flag;
         item.slot = get_inferno_slot(flag);
@@ -73,7 +75,7 @@ async function getData(req, res) {
         }
     }
     killmail.slotkeys = Array.from(rearranged.keys());
-
+    
     // Iterate and reduce the slots/items into like categories
     let items_compressed = {};
     for (let [key, value] of rearranged) {
@@ -119,11 +121,11 @@ async function getData(req, res) {
         fittingwheel.push(item);
     }
     killmail.fittingwheel = fittingwheel;
-
+    
     killmail.ship_price = await app.util.price.get(app, rawmail.victim.ship_type_id, km_date, true);
     killmail.totals.total +=  killmail.ship_price;
     killmail.totals.destroyed += killmail.ship_price;
-
+    
     delete killmail.involved; // Not needed, present in rawmail 
 
     var ret = {
@@ -131,7 +133,7 @@ async function getData(req, res) {
             rawmail: rawmail,
             killmail: killmail
         },
-        maxAge: 3600
+        maxAge: 0
     };
 
     ret.json = await app.util.info.fill(app, ret.json);

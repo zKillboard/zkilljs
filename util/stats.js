@@ -210,31 +210,11 @@ const stats = {
                                 $sum: '$involved_cnt'
                             }
                         }
-                    }],
-                    /*'topisk': [{
-                        $project: {
-                            killmail_id: 1,
-                            total_value: 1
-                        }
-                    }, {
-                        $match: {
-                            'total_value': {
-                                $gt: 10000
-                            }
-                        }
-                    }, {
-                        $sort: {
-                            total_value: -1
-                        }
-                    }, {
-                        $limit: 10
-                    }]*/
+                    }]
                 }
             }, ], {
                 allowDiskUse: true
             }).maxTimeMS(3600000).toArray();
-
-            //console.log(util.inspect(result, false, null, true /* enable colors */));
 
             return result.length == 0 ? {} : result[0];
         } finally {
@@ -242,8 +222,8 @@ const stats = {
 
             var time_end = Date.now();
             var diff = time_end - time_start;
-            if (diff > 1000) {
-                console.log(collection, diff + 'ms', match);
+            if (diff > 5000) {
+                //app.log(collection, diff + 'ms', match);
             }
         }
     },

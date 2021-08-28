@@ -2,7 +2,7 @@
 
 var tasks = {
     'balance_resources': createTaskSettings(5),
-    'ztop': createTaskSettings(5),
+    'ztop': createTaskSettings(1),
 
     // maintenance fun
     'trigger_price_checks': createTaskSettings(60),
@@ -87,16 +87,24 @@ async function runTasks(app, tasks) {
             app.bailout = true;
             app.no_parsing = true;
             app.no_stats = true;
-            while ((await app.redis.keys("crin:running:*")).length > 0) {
+            iterations = 15;
+            while (iterations > 0 && (await app.redis.keys("crin:running:*")).length > 0) {
                 console.log('Running: ', await app.redis.keys("crin:running:*"));
+                await app.sleep(1000);
+                iterations--;
+            }
+            for (let i = iterations; i > 0; i--) {
+                console.log(i);
                 await app.sleep(1000);
             }
             if (await app.redis.get("RESTART") != null) {
                 await app.redis.del("RESTART");
                 console.log("Restarting...");
+                await app.sleep(1000);
                 process.exit();
             }
             console.log("STOPPED");
+            await app.sleep(1000);
             process.exit();
         }
 

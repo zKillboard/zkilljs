@@ -4,58 +4,107 @@ var fs = require('fs');
 var util = require('util');
 
 var epochs = {
-    moment: 1,
+    moment: 5,
     five: 300,
     hour: 3600,
 }
 
-var totals = {};
+var first_run = true;
 
 async function f(app) {
-    await ztop(app);
+    if (first_run) {
+        first_run = false;
+        constant_ztop(app);
+    }
+}
+
+async function cleanup(app) {
+    let keys = await app.redis.keys('ztop:*');
+
+    for (let key of keys) {
+        await app.redis.del(key); 
+    }
+
+    first_run = false;
+}
+
+async function constant_ztop(app) {
+    try {
+        await ztop(app);
+    } finally {
+        setTimeout(constant_ztop.bind(null, app), 1000);
+    }
 }
 
 async function ztop(app) {
     let out = [];
 
-    out.push(memUsage(app));
+    var now = app.now();
+
     out.push([
+        memUsage(app),
         text('Fetching', false), 
         text('Parsing', app.delay_parse), 
         text('Prepping', app.delay_prep), 
         text('Statting', app.delay_stat), 
         text('Dailies', app.no_fetch_dailies)
         ].join(', '));
+    out.push([]);
+
+    var str = '';
+    for (let epoch in epochs) {
+        str += (('           ' + (epochs[epoch])).toLocaleString()).slice(-12);
+    }
+    out.push(str + '    seconds');
 
     let values = [];
     let keys = Object.keys(app.ztops); //await app.redis.keys("zkb:ztop:*");
-    keys.sort();
-    var value = 0;
+    
     for (let key of keys) {
-        value = app.ztops[key];
+        await app.redis.setex('ztop:base:' + key, 86400, "true");
+        var value = app.ztops[key];
 
         app.ztops[key] = 0;
-        var str = '';
+        str = '';
         for (let epoch in epochs) {
-            if (totals[epoch] === undefined) totals[epoch] = {};
-            totals[epoch][key] = (totals[epoch][key] || 0) + value;
-            str += ('           ' + totals[epoch][key].toLocaleString()).slice(-12);
-
-            if (value > 0) setTimeout(decrement.bind(null, epoch, key, value), epochs[epoch] * 1000);
+            var redis_key = 'ztop:' + key + ':' + epochs[epoch] + ':' + now;
+            if (value > 0) {
+                await app.redis.incrby(redis_key, value);
+                await app.redis.expire(redis_key, epochs[epoch]);
+            }
         }
-        out.push(str + '    ' + key)
     }
+
+    keys = await app.redis.keys('ztop:base:*');
+    keys.sort();
+    for (let key of keys) {
+        str = '';
+        key = key.replace('ztop:base:', '');
+
+        for (let epoch in epochs) {
+            str += ('           ' + (await get_totals(app, 'ztop:' + key + ':' + epochs[epoch])).toLocaleString()).slice(-12);
+        }
+        out.push(str + '    ' + key);
+    }
+
     var output = out.join('\n');
     await app.redis.setex("server-information", 60, output);
     await fs.writeFileSync('/tmp/ztop.txt', output, 'utf-8');
 }
 
-function decrement(epoch, key, value) {
-    totals[epoch][key] = totals[epoch][key] - value;
+async function get_totals(app, redis_base) {
+    let keys = await app.redis.keys(redis_base + ':*');
+    var total = 0;
+    for (let i = 0; i < keys.length; i++) {
+        let key = keys[i];
+        let value = await app.redis.get(key);
+        total += parseInt(value) || 0;
+    }
+    return total;
 }
 
 function text(key, isDelayed) {
-    return /*key +*/ (isDelayed ? ' n': ' Y');
+    return key + (isDelayed ? ' n': ' Y');
 }
 
 function memUsage(app) {
