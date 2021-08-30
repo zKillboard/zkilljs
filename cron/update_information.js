@@ -126,12 +126,14 @@ async function fetch(app, row) {
         await app.redis.hset('zkilljs:info:' + row.type, row.id, JSON.stringify(row));
 
         let url = app.esi + urls[row.type].replace(':id', row.id);
+        await app.util.assist.esi_limiter(app);
         let res = await app.phin({
             url: url,
             headers: {
                 // 'If-None-Match': (row.type == 'alliance_id' ? '' : row.etag || '')
             }
         });
+        await app.util.assist.esi_result_handler(app, res);
 
         if (res.statusCode != 200 && res.statusCode != 304) {
             esi_err_log(app);
@@ -160,7 +162,6 @@ async function fetch(app, row) {
                 $set: body
             });
 
-            app.zincr('esi_fetched');
             app.zincr('info_' + row.type);
 
             let keys = Object.keys(body);
@@ -196,7 +197,6 @@ async function fetch(app, row) {
                     last_updated: now
                 }
             });
-            app.zincr('esi_304');
             break;
         case 404:
             await app.db.information.updateOne(row, {
@@ -205,10 +205,19 @@ async function fetch(app, row) {
                 }
             });
             break;
+        case 401:
+            if (app.no_api == false) {
+                app.no_api = true;
+                //setTimeout(function() { clear_no_api(app); }, 300000 + (Date.now() % 60000));
+                console.log("http code 401 received, we've been banned?");
+            }            
+            break;
         case 420:
-            app.no_api = true;
-            setTimeout(function() {clear_no_api(app);}, 1000 + (Date.now() % 60000));
-            console.log("420'ed in information: " + row.type + " " + row.id);
+            if (app.no_api == false) {
+                app.no_api = true;
+                setTimeout(function() {clear_no_api(app);}, 1000 + (Date.now() % 60000));
+                console.log("420'ed in information: " + row.type + " " + row.id);
+            }
             break;
         case 500:
             console.log(row.type, row.id, '500 received');
@@ -243,7 +252,6 @@ function clear_no_api(app) {
 
 function esi_err_log(app) {
     esi_error++;
-    app.zincr('esi_error');
     setTimeout(function () {
         esi_error--;
     }, 1000);

@@ -13,15 +13,19 @@ async function getData(req, res) {
 
     let query = {};
     var type, id, page = 0;
-    var query_or = undefined;
 
+    var key;
+    var query_or = [];
     var query_and = [];
+    var kl = undefined;
 
     if (req.params.type == 'label' && req.params.id == 'all') {
+        key = 'label';
         type = 'label';
         id = 'all';
         query = {};
     } else if (req.params.type == 'label') {
+        key = 'label';
         type = 'label';
         id = req.params.id;
         query_and.push({
@@ -35,32 +39,21 @@ async function getData(req, res) {
         };
 
         var key = 'involved.' + type;
-        query_or = [];
-        if (req.query['kl'] == 'all' || req.query['kl'] == 'killed') query_or.push({[key]: id});
-        if (req.query['kl'] == 'all' || req.query['kl'] == 'lost') query_or.push({[key]: -1 * id});
     };
-    var record = await app.db.statistics.findOne({
-        type: type,
-        id: id
-    });
-
-    if (record == null) {
-        // return an empty list
-        return {
-            json: []
-        };
-    }
+    var record = await app.db.statistics.findOne({type: type, id: id});
+    if (record == null) return { json: [] }; // return an empty list
 
     var valid = {
         modifiers: 'string',
         page: 'integer',
         sequence: record.sequence,
-        kl: ['all', 'killed', 'lost'],
-        required: ['kl', 'page', 'sequence'],
+        required: ['page', 'sequence'],
     }
     req.alternativeUrl = '/cache/1hour/killmails/' + req.params.type + '/' + req.params.id + '.json';
     var valid = req.verify_query_params(req, valid);
-    if (valid !== true) return valid;
+    if (valid !== true) {
+        return valid;
+    }
 
     var last_modifier = '';
     if (req.query['modifiers'] != undefined) {
@@ -69,16 +62,9 @@ async function getData(req, res) {
             // Modifiers must be in alpha order and cannot be repeated
             if (modifier <= last_modifier) return null; // 404
 
-            if (modifier == 'killed') {
-                if (type != 'label') query_or = [{
-                    [key]: id
-                }];
-            } else if (modifier == 'lost') {
-                if (type != 'label') query_or = [{
-                    [key]: (-1 * id)
-                }];
-            } else if (modifier == 'pvp') {
-                query_and.push({labels: 'pvp'});
+            if (modifier == 'killed' || modifier == 'lost') {
+                if (kl != undefined) return null; // 404
+                kl = modifier;
             } else {
                 query_and.push({
                     labels: modifier.replace(' ', '+')
@@ -87,32 +73,44 @@ async function getData(req, res) {
             last_modifier = modifier;
         }
     }
+
+    if (kl == undefined) kl = 'all';
+    if (type == 'label') {
+        if (id == 'all') query_or.push({});
+        else query_or.push({label: id});
+    } else {
+        if (kl == 'all' || kl == 'killed') query_or.push({[key]: id});
+        if (kl == 'all' || kl == 'lost') query_or.push({[key]: -1 * id});
+    }
+
     if (query_and.length > 0) {
         query['$and'] = query_and;
     }
 
-    if (query_or != undefined) query['$or'] = query_or;
-    page = req.query['page'];
+    query['$or'] = query_or;
+    page = Math.max(0, Math.min(9, req.query['page'])); // cannot go below 0 or above 9
 
     var killmails;
     var collections = ['killmails_7', 'killmails_90', 'killmails'];
     for (var i = 0; i < collections.length; i++) {
+        var now = Date.now();
         let result = await app.db[collections[i]].find(query)
-            .sort({
-                killmail_id: -1
-            })
+            .sort({ killmail_id: -1 })
             .skip(page * 50) // faster without a limit... 
+            .limit(50)
             .batchSize(50);
         killmails = [];
         while (await result.hasNext()) {
             killmails.push((await result.next()).killmail_id)
             if (killmails.length >= 50) break;
         }
+        console.log(query, '\n', collections[i], ((Date.now()) - now) + 'ms')
         if (killmails.length >= 50) break;
     }
 
     return {
-        json: killmails
+        json: killmails,
+        maxAge: 900,
     };
 }
 

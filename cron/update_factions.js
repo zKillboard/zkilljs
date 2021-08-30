@@ -5,6 +5,7 @@ async function f(app) {
     if (factionCount == 0) return;
     
     console.log('Updating factions');
+    await app.util.assist.esi_limiter(app);
     let res = await app.phin(app.esi + '/latest/universe/factions/');
     if (res.statusCode == 200) {
         app.zincr('esi_fetched');

@@ -34,6 +34,10 @@ async function f(app) {
 var bg = {background: true};
 
 async function applyIndexes(app) {
+    await create_collection(app, 'datacache');
+    await createIndex(app.db.datacache, {requrl: 1}, {unique: true});
+    await createIndex(app.db.datacache, {epoch: 1});
+
     await create_collection(app, 'killhashes');
     await createIndex(app.db.killhashes, {killmail_id: 1, hash: 1}, {unique: true});
     await createIndex(app.db.killhashes, {status: 1}, {});

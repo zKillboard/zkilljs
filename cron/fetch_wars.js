@@ -12,6 +12,7 @@ async function f(app) {
     	if (app.bailout || app.no_api) return;
         
         let url = app.esi + '/v1/wars/' + (min_id == 9999999999 ? '' : '?max_war_id=' + min_id);
+        await app.util.assist.esi_limiter(app);
         res = await app.phin(url);
         if (res.statusCode == 200) {
             app.zincr('esi_fetched');

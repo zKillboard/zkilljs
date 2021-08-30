@@ -9,7 +9,7 @@ addGet('/index.html', 'site/index', 'index.pug');
 addGet('/site/information/:type/:id.html', 'site/information.js', 'information.pug');
 addGet('/site/killmails/:type/:id.json', 'site/kill-list.js', 'kill-list.pug');
 addGet('/site/statistics/:type/:id.html', 'site/statistics.js', 'statistics.pug');
-addGet('/site/toptens/:epoch/:killed_lost/:type/:id.html', 'site/toptens.js');
+addGet('/site/toptens/:epoch/:type/:id.html', 'site/toptens.js');
 addGet('/site/ztop.txt', 'site/ztop.js', 'ztop.pug');
 
 // Cached endpoints
@@ -17,7 +17,7 @@ addGet('/cache/1hour/killmail/:id.html', 'site/killmail.js', 'killmail.pug');
 addGet('/cache/1hour/killmail/:id/remaining.html', 'site/killmail-remaining.js', 'killmail-remaining.pug');
 addGet('/cache/1hour/killmail/row/:id.html', 'site/killmail-row.js', 'killmail-row.pug');
 addGet('/cache/1hour/killmails/:type/:id.json', 'site/kill-list.js');
-addGet('/cache/1hour/toptens/:epoch/:killed_lost/:type/:id.html', 'site/toptens.js', 'toptens.pug');
+addGet('/cache/1hour/toptens/:epoch/:type/:id.html', 'site/toptens.js', 'toptens.pug');
 addGet('/cache/1hour/autocomplete/', 'site/autocomplete.js');
 
 addGet('/cache/1hour/api/information/:type/:id/:field.html', 'site/information', 'raw.pug');
@@ -41,25 +41,35 @@ const pug = require('pug');
 var compiled = {};
 
 async function doStuff(req, res, next, controllerFile, pugFile) {
+    const app = req.app.app;
     try {
-        const app = req.app.app;
         const file = res.app.root + '/www/routes/' + controllerFile;
         const controller = require(file);
 
         req.verify_query_params = verify_query_params;
+
+        var now = app.now();
+        /*while (await app.redis.set('req:' + req.url, "true", 'nx', 'ex', 600) == null) {
+            await app.sleep(50); // another process is handling this exact call, wait 
+            if ((app.now() - now) > 30) {
+                res.redirect(req.url);
+                return;
+            }
+        }*/
+
         let result = await controller(req, res);
         var maxAge = Math.min(3600, (result == null ? 0 : (result.maxAge || 0)));
         if (result.content_type != undefined) res.setHeader("Content-Type", result.content_type)
 
         res.set('Cache-Control', 'public, max-age=' + maxAge);
-        //res.set('Cache-Control', 'public, max-age=' + 0); // TODO remove this for production
-
+        
         if (result === null || result === undefined) {
             res.sendStatus(404);
         } else if (typeof result === "object") {
             if (pugFile !== undefined) {
                 var rendered = (maxAge > 0 ? await app.redis.get('zkilljs:rendered:' + req.url) : null);
                 if (rendered != null) {
+                    console.log('sending redis cache result');
                     res.send(rendered);
                 } else {
                     if (compiled[pugFile] == null) {
@@ -91,6 +101,8 @@ async function doStuff(req, res, next, controllerFile, pugFile) {
         result = {}; // Clear it out for quicker GC
     } catch (e) {
         console.log(e);
+    } finally {
+        await app.redis.del('req:' + req.url);
     }
 }
 
@@ -142,7 +154,8 @@ function verify_query_params(req, valid_array) {
         default:
             // If the data type passed is an array, then we need to make sure our value is within that array
             if (Array.isArray(valid_array[key])) {
-                if(valid_array[key].indexOf(query_params[key]) == -1) rebuild_required = true;
+                console.log(key, query_params[key], valid_array[key]);
+                if (req.query[key].indexOf(query_params[key]) == -1) rebuild_required = true;
             } else {
                 // matching value provided, make sure we have that value
                 if (query_params[key] != ('' + valid_array[key])) rebuild_required = true; // This key does not belong here;

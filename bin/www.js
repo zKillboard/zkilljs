@@ -50,6 +50,7 @@ async function startWebListener() {
 
     server = http.createServer(www);
     server.listen((process.env.PORT || '3000'));
+    server.timeout = 3600000;
     server.on('error', onError);
     server.on('listening', onListening);
 

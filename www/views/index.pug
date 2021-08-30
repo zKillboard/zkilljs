@@ -40,10 +40,10 @@ html
                     div.col-12#ztop
                 div#overview.collapse.container-fluid
                     div.row
-                        div.col-xs-12.col-xl-6
+                        div.col-xs-12.col-xl-4
                             div#overview-information
-                        div.col-xs-12.col-xl-6
-                            div#overview-statistics
+                        div.col-xs-12.col-xl-8
+                            div#overview-statistics.float-right
                                 div.table-responsive.float-right
                                     table#stats-table.table.table-hover.table-sm.table-responsive
                                         thead
@@ -61,8 +61,7 @@ html
                                                 th.w-decimal Rank
                                         tbody
                                             tr
-                                                th
-                                                    button.stats-epoch.btn.btn-secondary.btn-small.btn-block.py-0 ∞
+                                                th ∞
                                                 td#alltime-kills.clearbeforeload.green(format='integer')
                                                 td#alltime-isk-killed.clearbeforeload.green(format='fnumber')
                                                 td#alltime-lost.clearbeforeload.red(format='integer')
@@ -74,8 +73,7 @@ html
                                                 td#alltime-zscore.clearbeforeload(format='percentage')
                                                 td#alltime-rank.clearbeforeload(format='integer')
                                             tr
-                                                th 
-                                                    button.stats-epoch.btn.btn-secondary.btn-small.btn-block.py-0 90
+                                                th 90
                                                 td#recent-kills.clearbeforeload.green(format='integer')
                                                 td#recent-isk-killed.clearbeforeload.green(format='fnumber')
                                                 td#recent-lost.clearbeforeload.red(format='integer')
@@ -87,8 +85,7 @@ html
                                                 td#recent-zscore.clearbeforeload(format='percentage')
                                                 td#recent-rank.clearbeforeload(format='integer')
                                             tr
-                                                th
-                                                    button.stats-epoch.btn.btn-small.btn-primary.btn-block.py-0 7
+                                                th 7
                                                 td#week-kills.clearbeforeload.green(format='integer')
                                                 td#week-isk-killed.clearbeforeload.green(format='fnumber')
                                                 td#week-lost.clearbeforeload.red(format='integer')
@@ -103,25 +100,36 @@ html
                         div.col-12
                             div.btn-toolbar(role="tooolbar" aria-label="Overview Filter")
                                 div.btn-group.mr-2
-                                    button#allbtn.ofilter.btn.btn-primary(type='button') All
-                                    button.ofilter.btn.btn-secondary.stats-killed-lost(type='button') Killed
-                                    button.ofilter.btn.btn-secondary.stats-killed-lost(type='button') Lost
+                                    button#filter-kills.filter.kfilter.btn.btn-secondary(type='button') Killed
+                                    button#filter-losses.filter.kfilter.btn.btn-secondary(type='button') Lost
                                 div.btn-group.mr-2
-                                    button.ofilter.lfilter.btn.btn-secondary(type='button') HIGHSEC
-                                    button.ofilter.lfilter.btn.btn-secondary(type='button') LOWSEC
-                                    button.ofilter.lfilter.btn.btn-secondary(type='button') NULLSEC
-                                    button.ofilter.lfilter.btn.btn-secondary(type='button') W-SPACE
-                                    button.ofilter.lfilter.btn.btn-secondary(type='button') Abyssal
+                                    button.ofilter.filter.lfilter.btn.btn-secondary(type='button') HIGHSEC
+                                    button.ofilter.filter.lfilter.btn.btn-secondary(type='button') LOWSEC
+                                    button.ofilter.filter.lfilter.btn.btn-secondary(type='button') NULLSEC
+                                    button.ofilter.filter.lfilter.btn.btn-secondary(type='button') W-SPACE
+                                    button.ofilter.filter.lfilter.btn.btn-secondary(type='button') Abyssal
                                 div.btn-group.mr-2
-                                    button.ofilter.lfilter.btn.btn-secondary(type='button') NPC
-                                    button.ofilter.lfilter.btn.btn-secondary(type='button') PVP
-                                    button.ofilter.lfilter.btn.btn-secondary(type='button') Solo
-                                    button.ofilter.lfilter.btn.btn-secondary(type='button') Abyssal-PVP
-                                    button.ofilter.lfilter.btn.btn-secondary(type='button') 100+
-                                    button.ofilter.lfilter.btn.btn-secondary(type='button') 1000+
-                                    button.ofilter.lfilter.btn.btn-secondary(type='button') BIGISK
-                                    button.ofilter.lfilter.btn.btn-secondary(type='button') EXTREMEISK
-                                    button.ofilter.lfilter.btn.btn-secondary(type='button') INSANEISK
+                                    button.ofilter.filter.lfilter.btn.btn-secondary(type='button') NPC
+                                    button.ofilter.filter.lfilter.btn.btn-secondary(type='button') PVP
+                                    button.ofilter.filter.lfilter.btn.btn-secondary(type='button') Solo
+                                    button.ofilter.filter.lfilter.btn.btn-secondary(type='button') Abyssal-PVP
+                                    button.ofilter.filter.lfilter.btn.btn-secondary(type='button') 10+
+                                    button.ofilter.filter.lfilter.btn.btn-secondary(type='button') 100+
+                                    button.ofilter.filter.lfilter.btn.btn-secondary(type='button') 1000+
+                                    button.ofilter.filter.lfilter.btn.btn-secondary(type='button') BIGISK
+                                    button.ofilter.filter.lfilter.btn.btn-secondary(type='button') EXTREMEISK
+                                    button.ofilter.filter.lfilter.btn.btn-secondary(type='button') INSANEISK
+                                div.btn-group.mr-2
+                                    button#stats-epoch-week.tfilter.stats-epoch.btn.btn-primary 7
+                                    button#stats-epoch-recent.tfilter.stats-epoch.btn.btn-secondary 90
+                                    button#stats-epoch-recent.tfiler.stats-epoch.btn.btn-secondary(value='current-month' disabled)
+                                        i.bi.bi-calendar3
+                                    button#stats-epoch-recent.stats-epoch.lfilter.btn.btn-secondary(value='prior-month' disabled)
+                                        i.bi.bi-arrow-left-circle
+                                        i.bi.bi-calendar3
+                                    button#stats-epoch-recent.stats-epoch.lfilter.btn.btn-secondary(value='custom-range' disabled)
+                                        i.bi.bi-clock
+                                    button#stats-epoch-alltime.stats-epoch.lfilter.btn.btn-secondary ∞
                     div.row
                         div.col-xs-12.col-xl-6
                             div#overview-killmails
@@ -144,7 +152,10 @@ html
                         span.d-none.d-lg-block.d-xl-none lg
                         span.d-none.d-xl-block xl
                     center(data-toggle='tooltip' style='cursor: pointer; text-decoration: underline' title='EVE Online and the EVE logo are the registered trademarks of CCP hf. All rights are reserved worldwide. All other trademarks are the property of their respective owners. EVE Online, the EVE logo, EVE and all associated logos and designs are the intellectual property of CCP hf. All artwork, screenshots, characters, vehicles, storylines, world facts or other recognizable features of the intellectual property relating to these trademarks are likewise the intellectual property of CCP hf. CCP hf. has granted permission to evewho.com to use EVE Online and all associated logos and designs for promotional and information purposes on its website but does not endorse, and is not in any way affiliated with, evewho.com. CCP is in no way responsible for the content on or functioning of this website, nor can it be liable for any damage arising from the use of this website.')  All Eve Related Materials are Property of CCP Games
-
+div#noactivity.collapse
+    i.bi.bi-slash-circle
+    i.bi.bi-filter
+    i No activity found with current filter(s).
 div.collapse
     div#spinner
         div.lds-ring

@@ -22,3 +22,7 @@ ul#info-box
 			+info_row_a('Constellation:', 'constellation', json.constellation_id, json.constellation_name)
 			+info_row_a('Region:', 'region', json.region_id, json.region_name)
 			+info_row('Security:', json.security_status, 'decimal')
+			if json.inactive == true
+				td Inactive:
+				td Information may be out of date. Not present on killmail in last 90 days.
+			fi

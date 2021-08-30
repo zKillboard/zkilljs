@@ -20,6 +20,7 @@ async function fetchWarMails(app, row) {
     let url, res, json;
     do {
         let url = app.esi + '/v1/wars/' + row.id + '/killmails/?page=' + page;
+        await app.util.assist.esi_limiter(app);
         let res = await app.phin(url);
         if (res.statusCode != 200) return; // Something went wrong!
         app.zincr('esi_fetched');

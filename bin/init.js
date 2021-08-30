@@ -40,8 +40,10 @@ async function f() {
     app.delay_prep = true;
     app.delay_stat = true;
     app.no_fetch_dailies = true;
+    app.no_api = true;
 
     app.util = {
+        assist: require('../util/assist.js'),
         entity: require('../util/entity.js'),
         info: require('../util/info.js'),
         killmails: require('../util/killmails.js'),
@@ -57,7 +59,6 @@ async function f() {
 
     app.debug = false;
     app.bailout = false;
-    app.no_api = false;
     app.no_parsing = false;
     app.no_stats = false;
     app.error_count = 0;
@@ -72,7 +73,7 @@ async function f() {
     console.log('loaded phin');
     app.redis = redis;
     app.esi = 'https://esi.evetech.net';
-    app.waitfor = async function (promises, key = undefined) {
+    app.waitfor = async function (promises) {
         for (let i = 0; i < promises.length; i++) {
             await promises[i];
         }

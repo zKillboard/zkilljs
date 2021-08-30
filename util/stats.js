@@ -2,9 +2,7 @@
 
 const util = require('util')
 
-const negatives = ['character_id', 'corporation_id', 'alliance_id', 'faction_id', 'item_id', 'group_id', 'category_id',
-    'war_id'
-];
+const negatives = [ 'character_id', 'corporation_id', 'alliance_id', 'faction_id', 'item_id', 'group_id', 'category_id', 'war_id' ];
 
 const stats = {
     update_stat_record: async function (app, collection, epoch, record, match, max) {

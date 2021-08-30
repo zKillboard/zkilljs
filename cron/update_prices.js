@@ -3,18 +3,16 @@
 const set = new Set();
 
 async function f(app) {
-    if (app.no_parsing) return;
+    if (app.no_parsing || app.no_api) return;
 
     let todays_price_key = app.util.price.get_todays_price_key();
     let now = new Date();
 
-    let prices_cursor = await app.db.prices.find({
-        waiting: true
-    });
+    let prices_cursor = await app.db.prices.find({waiting: true});
 
     let promises = [];
     while (await prices_cursor.hasNext()) {
-        if (app.bailout == true || app.no_api) break;
+        if (app.bailout == true || app.no_api == true) break;
 
         let row = await prices_cursor.next();
         if (isNaN(row.item_id)) continue;
@@ -23,10 +21,12 @@ async function f(app) {
         await app.sleep(1);
         while (set.size > 5) await app.sleep(1);
     }
-    await app.waitfor(promises, 'update_prices');
+    await app.waitfor(promises);
 }
 
 async function update_price(app, row, todays_price_key) {
+    while (app.no_api) await app.sleep(1000);
+
     let s = Symbol();
     set.add(s);
     try {
@@ -36,7 +36,6 @@ async function update_price(app, row, todays_price_key) {
         updates.last_fetched = todays_price_key;
 
         if (row.zkill != true) {
-            //console.log('Fetching zkill price history for ' + item_id);
             let res = await app.phin('https://zkillboard.com/api/prices/' + item_id + '/');
             if (res.statusCode == 200) {
                 let json = JSON.parse(res.body);
@@ -57,39 +56,32 @@ async function update_price(app, row, todays_price_key) {
         if (row.no_fetch == true) {
             // This price endpoint no longer exists...
             //console.log('Skipping price check for ' + item_id);
-            await app.db.prices.updateOne(row, {
-                '$set': updates
-            });
+            await app.db.prices.updateOne(row, {'$set': updates});
             return;
         }
 
-        //console.log('Fetching price history for ' + item_id);
         var url = app.esi + '/v1/markets/10000002/history/?type_id=' + item_id;
+        await app.util.assist.esi_limiter(app);
         let res = await app.phin(url);
+        await app.util.assist.esi_result_handler(app, res);
+
         if (res.statusCode == 200) {
-            app.zincr('esi_fetched');
             let json = JSON.parse(res.body);
             for (const day of json) {
                 if (row[day.date] == undefined) {
                     updates[day.date] = day.average;
                 }
             }
-            await app.db.prices.updateOne(row, {
-                '$set': updates
-            });
+            await app.db.prices.updateOne(row, {'$set': updates});
             app.zincr('price_fetch');
         } else if (res.statusCode == 404) {
             updates.no_fetch = true;
-            await app.db.prices.updateOne(row, {
-                '$set': updates
-            });
+            await app.db.prices.updateOne(row, {'$set': updates });
             //console.log('Marking price check for ' + item_id + ' as no_fetch');
-            app.zincr('esi_error');
             app.zincr('price_fetch_error');
             await app.sleep(1000);
         } else {
             console.log('Price fetch ended in error: ' + res.statusCode, url);
-            app.zincr('esi_error');
             app.zincr('price_fetch_error');
             await app.sleep(1000);
         }

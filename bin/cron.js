@@ -12,6 +12,7 @@ var tasks = {
     'fetch_locations.js': createTaskSettings(5),
     'status_change.js': createTaskSettings(1),
     'update_alliance_membercounts.js': createTaskSettings(3600),
+    'fetch_tq_status': createTaskSettings(60),
 
     // killmail producers
     'listen_redisq.js': createTaskSettings(15),
@@ -27,12 +28,13 @@ var tasks = {
     // statistics
     'update_stats.js': createTaskSettings(15),
     'publish_stats_updates.js': createTaskSettings(15, 0, -10),
-    'update_stats_top_lists.js': createTaskSettings(15, 0, -10),
+    'publish_topten_updates.js': createTaskSettings(900, 0, -30),
+    //'update_stats_top_lists.js': createTaskSettings(60, 0, -10),
     'populate_ranks.js': createTaskSettings(86400),
 
     // cleanups
-    'update_stats_week_cleanup.js': createTaskSettings(900),
-    'update_stats_recent_cleanup.js': createTaskSettings(10800, 0, -30),
+    'update_stats_week_cleanup.js': createTaskSettings(900, 0, 30),
+    'update_stats_recent_cleanup.js': createTaskSettings(10800, 0, 60),
 }
 
 var app = undefined;

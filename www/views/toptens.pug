@@ -47,8 +47,4 @@ if json.types
 							tr
 								td.top10name
 									+show_link('span', type, value[type], value[name])
-								td.top10count.text-right.integer= value.count 
-else
-	i.bi.bi-slash-circle
-	i.bi.bi-filter
-	i No activity found with current filter(s).
+								td.top10count.text-right.integer= value.count

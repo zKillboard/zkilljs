@@ -3,6 +3,3 @@ div#killlist
 		- var url = '/cache/1hour/killmail/row/' + val.killmail_id + '.html';
 		- var divid = 'kill-' + val.killmail_id
 		div(fetch=url unfetched="true" id=divid)
-	if json.length == 0
-		i Nothing to see here... 
-br
