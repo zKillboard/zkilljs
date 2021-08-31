@@ -62,15 +62,31 @@ async function getData(req, res) {
             // Modifiers must be in alpha order and cannot be repeated
             if (modifier <= last_modifier) return null; // 404
 
-            if (modifier == 'killed' || modifier == 'lost') {
-                if (kl != undefined) return null; // 404
-                kl = modifier;
-            } else {
-                query_and.push({
-                    labels: modifier.replace(' ', '+')
-                });
-            }
-            last_modifier = modifier;
+                    switch (modifier) {
+                        case 'killed':
+                        case 'lost':
+                            if (kl != undefined) return { json: [], maxAge : 900}; // return an empty list
+                            kl = modifier;
+                            break;
+                        case 'current-month':
+                            var date = new Date(), y = date.getFullYear(), m = date.getMonth();
+                            var firstDay = new Date(y, m, 1);
+                            // var lastDay = new Date(y, m + 1, 0);
+                            query_and.push({epoch : {'$gte' : Math.floor(firstDay.getTime() / 1000) }});
+                            break;
+                        case 'prior-month':
+                            var date = new Date(), y = date.getFullYear(), m = date.getMonth();
+                            var firstDay = new Date(y, m - 1, 1);
+                            var lastDay = new Date(y, m + 1, 0);
+                            query_and.push({epoch : {'$gte' : Math.floor(firstDay.getTime() / 1000) }});
+                            query_and.push({epoch : {'$lt' : Math.floor(lastDay.getTime() / 1000) }});
+                            break;
+                        default:
+                            query_and.push({
+                                labels: modifier.replace(' ', '+')
+                            });
+                    }
+                    last_modifier = modifier;
         }
     }
 
@@ -104,7 +120,6 @@ async function getData(req, res) {
             killmails.push((await result.next()).killmail_id)
             if (killmails.length >= 50) break;
         }
-        console.log(query, '\n', collections[i], ((Date.now()) - now) + 'ms')
         if (killmails.length >= 50) break;
     }
 

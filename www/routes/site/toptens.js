@@ -26,10 +26,11 @@ async function f(req, res) {
         types: {},
         topisk: []
     };
+    ret.timespan = (req.params.epoch == 'week' ? 'Past 7 Days' : (req.params.epoch == 'recent' ? 'Past 90 Days' : 'Alltime'));
+
 
     var pmm_key = req.params.epoch + ':' + req.params.type;
     while (pmm[pmm_key] != undefined) {
-        console.log('waiting?', pmm, pmm_key, pmm[pmm_key]);
         await app.sleep(250);
     }
 
@@ -98,13 +99,31 @@ async function f(req, res) {
                     // Modifiers must be in alpha order and cannot be repeated
                     if (modifier <= last_modifier) return { json: [], maxAge : 900}; // return an empty list
 
-                    if (modifier == 'killed' || modifier == 'lost') {
-                        if (kl != undefined) return { json: [], maxAge : 900}; // return an empty list
-                        kl = modifier;
-                    } else {
-                        query_and.push({
-                            labels: modifier.replace(' ', '+')
-                        });
+                    switch (modifier) {
+                        case 'killed':
+                        case 'lost':
+                            if (kl != undefined) return { json: [], maxAge : 900}; // return an empty list
+                            kl = modifier;
+                            break;
+                        case 'current-month':
+                            var date = new Date(), y = date.getFullYear(), m = date.getMonth();
+                            var firstDay = new Date(y, m, 1);
+                            // var lastDay = new Date(y, m + 1, 0);
+                            query_and.push({epoch : {'$gte' : Math.floor(firstDay.getTime() / 1000) }});
+                            ret.timespan = 'current month';
+                            break;
+                        case 'prior-month':
+                            var date = new Date(), y = date.getFullYear(), m = date.getMonth();
+                            var firstDay = new Date(y, m - 1, 1);
+                            var lastDay = new Date(y, m + 1, 0);
+                            query_and.push({epoch : {'$gte' : Math.floor(firstDay.getTime() / 1000) }});
+                            query_and.push({epoch : {'$lt' : Math.floor(lastDay.getTime() / 1000) }});
+                            ret.timespan = 'prior month';
+                            break;
+                        default:
+                            query_and.push({
+                                labels: modifier.replace(' ', '+')
+                            });
                     }
                     last_modifier = modifier;
                 }
@@ -155,7 +174,6 @@ async function f(req, res) {
                 }
             }
             ret.topisk = topisk;
-            ret.numDays = (req.params.epoch == 'week' ? '7' : (req.params.epoch == 'recent' ? '90' : 'Alltime'));
             ret.killed_lost = kl;
 
             if ((app.now() - start_time) > 5) {
@@ -168,7 +186,7 @@ async function f(req, res) {
 
     return {
         json: ret,
-        maxAge: mod
+        maxAge: 0
     };
 }
 

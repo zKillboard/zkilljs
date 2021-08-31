@@ -58,8 +58,9 @@ async function doStuff(req, res, next, controllerFile, pugFile) {
         }*/
 
         let result = await controller(req, res);
+        if (result == undefined) result = null;
         var maxAge = Math.min(3600, (result == null ? 0 : (result.maxAge || 0)));
-        if (result.content_type != undefined) res.setHeader("Content-Type", result.content_type)
+        if (result != undefined && result.content_type != undefined) res.setHeader("Content-Type", result.content_type)
 
         res.set('Cache-Control', 'public, max-age=' + maxAge);
         

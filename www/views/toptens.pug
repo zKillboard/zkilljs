@@ -2,10 +2,7 @@ include mixins.pug
 
 if json.topisk && json.topisk.length > 0
 	h4.text-capitalize
-		if json.numDays == 'Alltime'
-			span= 'top ' + json.killed_lost + ': alltime'
-		else
-			span= 'top ' + json.killed_lost + ': past ' + json.numDays + ' days'
+		span= 'top ' + json.killed_lost + ': ' + json.timespan
 	hr
 	div.row
 		each row in json.topisk
@@ -28,11 +25,7 @@ if json.topisk && json.topisk.length > 0
 							td.fnumber= row.total_value
 if json.types
 	h4.text-capitalize
-		if json.numDays == 'Alltime'
-			span= 'top ' + (json.killed_lost == 'killed' ? 'killers' : 'victims') + ': alltime'
-		else
-			span= 'top ' + (json.killed_lost == 'killed' ? 'killers' : 'victims') + ': past ' + json.numDays + ' days'
-
+		span= 'top ' + json.killed_lost + ': ' + json.timespan
 	hr
 	div.row
 		each arr,type in json.types

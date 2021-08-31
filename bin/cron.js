@@ -13,6 +13,7 @@ var tasks = {
     'status_change.js': createTaskSettings(1),
     'update_alliance_membercounts.js': createTaskSettings(3600),
     'fetch_tq_status': createTaskSettings(60),
+    'cleanup_datacache': createTaskSettings(60),
 
     // killmail producers
     'listen_redisq.js': createTaskSettings(15),
