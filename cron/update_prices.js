@@ -19,15 +19,13 @@ async function f(app) {
         
         promises.push(update_price(app, row, todays_price_key));
         await app.sleep(1);
-        while (set.size > 5) await app.sleep(1);
+        while (app.bailout == false && app.no_api == false && set.size > 5) await app.sleep(1);
     }
     await app.waitfor(promises);
 }
 
 async function update_price(app, row, todays_price_key) {
-    while (app.no_api) await app.sleep(1000);
-
-    let s = Symbol();
+    let s = Symbol(); 
     set.add(s);
     try {
         const item_id = row.item_id;

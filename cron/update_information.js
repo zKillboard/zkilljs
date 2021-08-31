@@ -24,7 +24,7 @@ var urls = {
     'constellation_id': '/v1/universe/constellations/:id/',
     'region_id': '/v1/universe/regions/:id/',
     'star_id': '/v1/universe/stars/:id/',
-    'war_id': '/v1/wars/:id/'
+    //'war_id': '/v1/wars/:id/'
 };
 var types = Object.keys(urls);
 
@@ -78,6 +78,7 @@ async function populateSet(app, typeValue) {
 
             // limit to 10/s 
             if (typeValue == 'character_id' || typeValue == 'corporation_id' || typeValue == 'alliance_id') await app.sleep(100);
+            else await app.sleep(1000);
             var p = fetch(app, await rows.next());
             let wait = 20;
             while (set.size > 100) {

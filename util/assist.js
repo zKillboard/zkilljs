@@ -30,6 +30,7 @@ const assist = {
 	        case 500:
 	            console.log(row.type, row.id, '500 received');
 	            break;
+	        case 404:
 	        case 502:
 	        case 503:
 	        case 504:
@@ -42,10 +43,18 @@ const assist = {
 	},
 
 	limit_per_second : async function (app, limit) {
-		var key = 'limiter:' + app.now();
-		await app.redis.set(key, '0', 'NX', 'EX', 5);
-		while (parseInt(await app.redis.get(key)) >= limit) await app.sleep(10);
-		await app.redis.incrby(key, 1);
+		var count;
+		do {
+			if (app.bailout || app.no_api) return;
+			let key = 'limiter:' + app.now();
+			count = parseInt(await app.redis.get(key) || 0);
+			if (count <= limit) {
+				await app.redis.incrby(key, 1);
+				await app.redis.expire(key, 5);
+			} else {
+				await app.sleep(100);
+			}
+		} while (count >= limit);
 	},
 
 	publish_key: async function (app, action, rediskey) {

@@ -20,7 +20,7 @@ var pmm = {};
 async function f(req, res) {
     const app = req.app.app;
 
-    var start_time = app.now();
+    var mod = (req.params.epoch == 'week' ? 900 : (req.params.epoch == 'recent' ? 3600 : 86400));
 
     var ret = {
         types: {},
@@ -28,21 +28,19 @@ async function f(req, res) {
     };
     ret.timespan = (req.params.epoch == 'week' ? 'Past 7 Days' : (req.params.epoch == 'recent' ? 'Past 90 Days' : 'Alltime'));
 
-
-    var pmm_key = req.params.epoch + ':' + req.params.type;
-    while (pmm[pmm_key] != undefined) {
-        await app.sleep(250);
-    }
-
     var cached_row = await app.db.datacache.findOne({requrl: req.url});
     if (cached_row != null) {
         ret = JSON.parse(cached_row.data);
     } else {
+        var pmm_key = req.params.epoch + ':' + req.params.type;
+        while (pmm[pmm_key] != undefined) {
+            await app.sleep(250);
+        }
         try {
             pmm[pmm_key] = true;
 
+            var start_time = app.now();
             var timestamp = start_time;
-            var mod = (req.params.epoch == 'week' ? 900 : (req.params.epoch == 'recent' ? 3600 : 86400));
             timestamp = timestamp - (timestamp % mod);
 
             if (req.params.type == 'system') {
@@ -145,6 +143,7 @@ async function f(req, res) {
             if (query_or != undefined) query['$or'] = query_or;
 
             var collection = (req.params.epoch == 'week' ? 'killmails_7' : (req.params.epoch == 'recent' ? 'killmails_90' : 'killmails'));
+            collection = (ret.timespan == 'current month' || ret.timespan == 'prior month' ? 'killmails_90' : collection);
 
             ret.topisk = app.util.stats.topISK(app, collection, query, type, 6, kl);
             for (var i = 0; i < types.length; i++) {
@@ -176,9 +175,9 @@ async function f(req, res) {
             ret.topisk = topisk;
             ret.killed_lost = kl;
 
-            if ((app.now() - start_time) > 5) {
-                await app.db.datacache.insertOne({requrl : req.url, epoch: timestamp + mod, data : JSON.stringify(ret)});
-            }
+            var next_update = timestamp + mod;
+            ret.next_update = new Date(next_update * 1000);
+            await app.db.datacache.insertOne({requrl : req.url, epoch: next_update, data : JSON.stringify(ret)});
         } finally { 
             delete pmm[pmm_key]; 
         }
@@ -186,7 +185,7 @@ async function f(req, res) {
 
     return {
         json: ret,
-        maxAge: 0
+        maxAge: mod
     };
 }
 

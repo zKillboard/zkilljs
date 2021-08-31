@@ -41,3 +41,5 @@ if json.types
 								td.top10name
 									+show_link('span', type, value[type], value[name])
 								td.top10count.text-right.integer= value.count
+if json.next_update
+	i= 'Next update: ' + json.next_update

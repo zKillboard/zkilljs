@@ -12,10 +12,12 @@ async function f(app) {
     	if (app.bailout || app.no_api) return;
         
         let url = app.esi + '/v1/wars/' + (min_id == 9999999999 ? '' : '?max_war_id=' + min_id);
+
         await app.util.assist.esi_limiter(app);
         res = await app.phin(url);
+        await app.util.assist.esi_result_handler(app, res);
+
         if (res.statusCode == 200) {
-            app.zincr('esi_fetched');
             json = JSON.parse(res.body);
 
             for (let war_id of json) {

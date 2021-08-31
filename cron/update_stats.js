@@ -42,7 +42,6 @@ async function f(app) {
 
 async function update_stats(app, collection, epoch, type, find) {
     var iterated = false;
-
     try {
         if (app.bailout == true || app.no_stats == true) return;
         if (app.delay_stat) return await app.randomSleep(1000, 3000);
@@ -63,9 +62,10 @@ async function update_stats(app, collection, epoch, type, find) {
     } catch (e) {
         console.log(e);
     } finally {
+        var delay = iterated ? 1 : ((60 - (app.now() % 60)) * 1000);
         setTimeout(function () {
             update_stats(app, collection, epoch, type, find);
-        }, (iterated ? 1 : 15000));
+        }, delay);
     }
 }
 
@@ -160,7 +160,7 @@ async function update_record(app, collection, epoch, record) {
 
         // announce that the stats have been updated
         await app.redis.sadd('zkilljs:stats:publish', redis_base);
-
+        await app.redis.sadd('zkilljs:toplists:publish', redis_base);
     } finally {
         record = null; // memory leak prevention
         result = null; // memory leak prevention

@@ -8,7 +8,8 @@ async function getData(req, res) {
      let current_ops = await app.db.eval("return db.currentOp()");
      for (const op of current_ops.inprog) { 
         if ( (op.secs_running || 0) < 1 ) continue;
-        retset.push(op);
+        var row = {elapsed: op.secs_running, query: op.command };
+        retset.push(row);
      }
 
     return {

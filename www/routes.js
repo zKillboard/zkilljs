@@ -48,16 +48,27 @@ async function doStuff(req, res, next, controllerFile, pugFile) {
 
         req.verify_query_params = verify_query_params;
 
+        var rendered = await app.redis.get('zkilljs:rendered:' + req.url);
+        if (rendered != null) {
+            console.log('sending redis cache result');
+            res.send(rendered);
+            res.end();
+            return;
+        }
+
+        let result = wrap_promise(controller(req, res));
+
         var now = app.now();
-        /*while (await app.redis.set('req:' + req.url, "true", 'nx', 'ex', 600) == null) {
-            await app.sleep(50); // another process is handling this exact call, wait 
-            if ((app.now() - now) > 30) {
+        while (result.isFinished() == false) {
+            if ((app.now() - now) > 15) {
                 res.redirect(req.url);
                 return;
             }
-        }*/
+            await app.sleep(1);
+        }
+        result = await result;
 
-        let result = await controller(req, res);
+        // let result = await controller(req, res);
         if (result == undefined) result = null;
         var maxAge = Math.min(3600, (result == null ? 0 : (result.maxAge || 0)));
         if (result != undefined && result.content_type != undefined) res.setHeader("Content-Type", result.content_type)
@@ -223,4 +234,22 @@ function rebuild_query(base_url, query_params, valid_array, required) {
         url += (key + '=' + rebuild[key]);
     }
     return url;
+}
+
+function wrap_promise(promise) {
+    // Don't create a wrapper for promises that can already be queried.
+    if (promise.isResolved) return promise;
+    
+    var isFinished = false;
+
+    var isResolved = false;
+    var isRejected = false;
+
+    // Observe the promise, saving the fulfillment in a closure scope.
+    var result = promise.then(
+       function(v) { isFinished = true; return v; }, 
+       function(e) { isFinished = true; throw e; }
+    );
+    result.isFinished = function() { return isFinished};
+    return result;
 }

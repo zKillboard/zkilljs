@@ -5,6 +5,7 @@ var util = require('util');
 
 var epochs = {
     moment: 5,
+    minute: 60,
     five: 300,
     hour: 3600,
 }

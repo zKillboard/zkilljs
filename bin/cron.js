@@ -13,12 +13,12 @@ var tasks = {
     'status_change.js': createTaskSettings(1),
     'update_alliance_membercounts.js': createTaskSettings(3600),
     'fetch_tq_status': createTaskSettings(60),
-    'cleanup_datacache': createTaskSettings(60),
+    'cleanup_datacache': createTaskSettings(1),
 
     // killmail producers
     'listen_redisq.js': createTaskSettings(15),
-    'fetch_wars.js': createTaskSettings(9600),
-    'fetch_warmails': createTaskSettings(1),
+    //'fetch_wars.js': createTaskSettings(9600),
+    //'fetch_warmails': createTaskSettings(1),
     'fetch_dailies': createTaskSettings(86400, 0, -50000),
 
     // killmail consumers
@@ -27,7 +27,7 @@ var tasks = {
     'update_stats_prepare.js': createTaskSettings(1),
 
     // statistics
-    'update_stats.js': createTaskSettings(15),
+    'update_stats.js': createTaskSettings(60),
     'publish_stats_updates.js': createTaskSettings(15, 0, -10),
     'publish_topten_updates.js': createTaskSettings(900, 0, -30),
     //'update_stats_top_lists.js': createTaskSettings(60, 0, -10),

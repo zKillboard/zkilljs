@@ -8,7 +8,7 @@ const redis = require('async-redis').createClient({
 const phin = require('phin').defaults({
     'method': 'get',
     'headers': {
-        'User-Agent': 'zkillboard.dev (zkilljs)'
+        'User-Agent': 'zkillboard.dev (zkilljs) squizzc@gmail.com'
     }
 });
 
