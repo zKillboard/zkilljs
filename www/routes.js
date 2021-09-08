@@ -49,7 +49,9 @@ async function doStuff(req, res, next, controllerFile, pugFile) {
         req.verify_query_params = verify_query_params;
 
         var rendered = await app.redis.get('zkilljs:rendered:' + req.url);
-        if (rendered != null) {
+        if (false && rendered != null) {
+            var ttl = await app.redis.ttl('zkilljs:rendered:' + req.url);
+            res.set('Cache-Control', 'public, max-age=' + ttl);
             console.log('sending redis cache result');
             res.send(rendered);
             res.end();
@@ -57,7 +59,10 @@ async function doStuff(req, res, next, controllerFile, pugFile) {
         }
 
         let result = wrap_promise(controller(req, res));
+        await app.sleep(1); // give the above a chance to execute
 
+        // For long running queries (such as top groups), redirect after 15 seconds to keep the connection
+        // from timing out. 
         var now = app.now();
         while (result.isFinished() == false) {
             if ((app.now() - now) > 15) {
@@ -68,7 +73,6 @@ async function doStuff(req, res, next, controllerFile, pugFile) {
         }
         result = await result;
 
-        // let result = await controller(req, res);
         if (result == undefined) result = null;
         var maxAge = Math.min(3600, (result == null ? 0 : (result.maxAge || 0)));
         if (result != undefined && result.content_type != undefined) res.setHeader("Content-Type", result.content_type)
@@ -80,7 +84,7 @@ async function doStuff(req, res, next, controllerFile, pugFile) {
         } else if (typeof result === "object") {
             if (pugFile !== undefined) {
                 var rendered = (maxAge > 0 ? await app.redis.get('zkilljs:rendered:' + req.url) : null);
-                if (rendered != null) {
+                if (false && rendered != null) {
                     console.log('sending redis cache result');
                     res.send(rendered);
                 } else {

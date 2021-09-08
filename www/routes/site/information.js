@@ -43,12 +43,17 @@ async function getData(req, res) {
 
     if (result.name == undefined) {
         result.name = req.params.type + ' ' + req.params.id;
+    } else if (req.params.type == 'label') {
+        result.name = req.params.id.toUpperCase() + ' Killmails';
     }
+
+    if (result.type == 'corporation_id') result.ticker = '[' + result.ticker + ']';
+    if (result.type == 'alliance_id') result.ticker = '<' + result.ticker + '>';
 
     var ret = {
         json: result,
         page_title: result.name,
-        maxAge: 3600
+        maxAge: 0
     };
 
     ret.json = await app.util.info.fill(app, ret.json);

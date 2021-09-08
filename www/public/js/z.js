@@ -57,11 +57,13 @@ function documentReady() {
     ws_connect();
     is_jquery_loaded();
     loadPage();
-    $(".filter").unbind().click(toggle_button_this);
-    $("#feedbutton").unbind().click(feed_toggle);
 
-    $(".stats-epoch").on('click', setSelectedStatsEpoch);
-    $(".stats-killed-lost").on('click', setSelectedStatsKL);
+    $("#feedbutton").unbind().on('click', feed_toggle);
+
+    $(".filter").on('click', filter_clicked);
+    $("#more_filters_button").on('click', blur);
+    $("#more_filters_button button").on('click', handle_extra_filters);
+    $("#reset_filters").on('click', reset_filters);
 
     historyReady();
     toggleTooltips();
@@ -203,6 +205,7 @@ function loadOverview(path, type, id) {
     ws_action('sub', 'statsfeed:' + path);
     
     showSection('overview');
+    handle_extra_filters();
 }
 
 function load_killmails(url, subscribe) {
@@ -228,7 +231,7 @@ function load_killmails(url, subscribe) {
 // Prevents the kill list from becoming too large and causing the browser to eat up too much memory
 function killlist_cleanup() {
     try {
-        while ($(".killrow").length > 50) $(".killrow").last().parent().remove();
+        while ($(".killrow").length > 100) $(".killrow").last().parent().remove();
         applyRedGreen();
     } catch (e) {
         timeouts.push(setTimeout(killlist_cleanup, 100));
@@ -270,7 +273,7 @@ function apply(element, path, subscribe, delay) {
     if (typeof element == 'string') element = document.getElementById(element);
     // Clear the element
     if (delay != true) element.innerHTML = "";
-
+    
     if (path != null) {
         fetch(fetchpath, {
             signal: get_fetch_controller()
@@ -291,6 +294,10 @@ function handleResponse(res, element, path, subscribe) {
     if (res.ok) {
         res.text().then(function (html) {
             applyHTML(element, html);
+            $(element).fadeIn();
+            if (path.indexOf('toptens') != -1) {
+                $("#actual-topisk").html($("#loaded-topisk").html());
+            }
             if (subscribe) ws_action('sub', subscribe);
         });
     }
@@ -302,7 +309,7 @@ function applyHTML(element, html) {
         console.log('cache match');
         return;
     }
-    path_cache[element.id] = html;
+    // path_cache[element.id] = html;
     var child = document.createElement('div');
     child.id = element.id + '-temp';
     child.realid = element.id;
@@ -343,10 +350,9 @@ function postLoadActions(element) {
     if (element != undefined) loadUnfetched(element);
     killlist_cleanup();
     spaTheLinks();
-    $.each($('.page-title'), function (index, element) {
-        $("#page-title").html($(element).html());
-        $(element).remove();
-    });
+    var title = $("#page-title").text();
+    title = (title.length > 0) ? title + ' - zKillboard' : 'zKillboard';
+    $(document).prop('title',  title);
 
     $("#load-all-attackers").on('click', function () {
         $("#load-all-attackers").hide();
@@ -484,8 +490,7 @@ function loadUnfetched(element) {
         return;
     }
     updateNumbers();
-        $(".sort-trigger").on('click', sortColumn);
-
+    $(".sort-trigger").on('click', sortColumn);
 }
 
 // Iterates any elements with the number class and calls intToString to convert it
@@ -634,25 +639,26 @@ function ws_message(msg) {
     if (msg === 'ping' || msg === 'pong') return;
     json = JSON.parse(msg);
     switch (json.action) {
-    case 'killlistfeed':
-        delayed_json_call(load_killmail_rows, [json.killmail_id]);
-        break;
-    case 'statsfeed':
-        delayed_json_call(load_stats_box, json);
-        break;
-    case 'toplistsfeed':
-        delayed_json_call(load_toplists_box);
-        break;
-    case 'server_started':
-        var started = json.server_started;
-        if (server_started == 0) server_started = started;
-        else if (started != server_started) {
-            console.log('reloading');
-            location.reload(true);
-        }
-        break;
-    default:
-        console.log(json);
+        case 'killlistfeed':
+            delayed_json_call(load_killmail_rows, [json.killmail_id]);
+            break;
+        case 'statsfeed':
+            delayed_json_call(load_stats_box, json);
+            break;
+        case 'toplistsfeed':
+            delayed_json_call(load_toplists_box);
+            break;
+        case 'server_status':
+            var started = json.server_started;
+            if (server_started == 0) server_started = started;
+            else if (started != server_started) {
+                console.log('reloading');
+                setTimeout(function() { location.reload(true); }, 1000 + Math.random(500, 2000)); 
+            }
+            $("#mails_parsed").text(json.mails_parsed);
+            break;
+        default:
+            console.log(json);
     }
 }
 
@@ -688,12 +694,14 @@ function load_stats_box(json) {
 function load_toplists_box(modifiers = null) {
     abort_fetches();
     if (modifiers == null) modifiers = build_modifiers();
-    $("#overview-toptens").html("");
     var params = "";
     if (modifiers.length > 0) {
         params = "?modifiers=" + modifiers.join(',');
     }
-    apply('overview-toptens', '/site/toptens/' + getSelectedStatsEpoch() + pagepath + '.html' + params, null, true);
+    $("#actual-topisk").html("");
+    $("#loaded-topisk").html("");
+    $("#fulltoptenblock").html("");
+    apply('overview-toptens', '/site/toptens/' + getSelectedStatsEpoch() + pagepath + '.html' + params, 'toplistsfeed:' + pagepath, true);
 }
 
 function spaTheLinks() {
@@ -796,17 +804,11 @@ function removeSvgAttribute(element, attr_name, attr_value) {
 
 function build_modifiers() {
     var modifiers = [];
-    $(".lfilter.btn-primary").each(function () {
+    $(".filter.btn-primary").each(function () {
         var btn = $(this);
         var value = btn.attr('value');
         if (value == undefined) value = btn.html().toLowerCase();
         modifiers.push(value);
-    });
-
-    $(".tfilter.btn-primary").each(function () {
-        var btn = $(this);
-        var value = btn.attr('value');
-        if (value != undefined && value.length > 0) modifiers.push(btn.attr('value'));
     });
 
     if ($("#filter-kills").hasClass("btn-primary") && $("#filter-losses").hasClass("btn-primary")) noop();
@@ -818,23 +820,68 @@ function build_modifiers() {
     return modifiers;
 }
 
+function blur(e, elem) {
+    var elem = (elem != undefined ? $(elem) : $(this));
+    elem.blur();
+}
+
+function get_filter_value(elem) {
+    var value = elem.attr('value');
+    if (value == null || value == undefined || value == '') value = elem.html();
+    return value;
+}
+
+function filter_clicked() {
+    abort_fetches();
+
+    var elem = $(this);
+    elem.blur();
+    var value = get_filter_value(elem);
+
+    var radio_group = elem.attr('radio');
+    var enabling = elem.hasClass('btn-secondary');
+
+    $(".filter").each(function() {
+        var filter = $(this);
+        if (filter.attr('radio') != radio_group) return;
+        console.log(get_filter_value(filter));
+        filter.removeClass('btn-primary').removeClass('btn-secondary').addClass('btn-secondary');
+    });
+
+    if (enabling) elem.removeClass('btn-secondary').addClass('btn-primary');
+
+    // Make sure one of the time spans is clicked, if necessary, enable the week span for defaults
+    if ($(".tfilter.btn-primary").length == 0) {
+        $("#stats-epoch-week").removeClass('btn-secondary').addClass('btn-primary');
+    }
+
+    filter_change();
+}
+
 function filter_change() {
     abort_fetches();
     var modifiers = build_modifiers();
 
     var url = '/site/killmails' + pagepath + '.json';
     if (modifiers.length > 0) url = url + '?modifiers=' + modifiers.join(',');
+
+    console.log(modifiers.length, modifiers);
+
+    if ($(".filter.btn-primary").not("#stats-epoch-week").length > 0) $("#reset_filters").removeClass("btn-secondary").addClass("btn-primary").removeAttr("disabled");
+    else $("#reset_filters").removeClass("btn-primary").addClass("btn-secondary").attr("disabled", "disabled");
+
+    handle_extra_filters();
     
     load_toplists_box(modifiers);
-    load_killmails(url);
+    load_killmails(url, 'killlistfeed:' + pagepath);
 }
 
 function reset_filters() {
     console.log('resetting filters');
-    $(".kfilter").removeClass("btn-primary").addClass('btn-secondary');
-    $(".ofilter").removeClass("btn-primary").addClass('btn-secondary');
-    $(".stats-epoch").removeClass("btn-primary").addClass("btn-secondary");
+    $(".filter").removeClass("btn-primary").addClass('btn-secondary');
     $("#stats-epoch-week").removeClass("btn-secondary").addClass("btn-primary");
+    $("#reset_filters").blur();
+    filter_change();
 }
 
 function feed_toggle(event, enabled_override) {
@@ -849,17 +896,11 @@ function feed_toggle(event, enabled_override) {
     console.log('Live feed is', (enabled ? 'enabled' : 'disabled'));
 
     if (enabled) {
-        reset_filters();
-        filter_change();
         ws_connect();
         ws_action('sub', 'statsfeed:' + pagepath);
     } else {
         ws_clear_subs();
     }
-}
-
-function toggle_button_this() {
-    toggle_button(this);
 }
 
 function toggle_button(object, user_action = true) {
@@ -948,6 +989,23 @@ function sortColumn(eventObject) {
         //$('.group-toggle').show().attr('aria-expanded', 'true');
     }
     $('#master-sort-row').show();
+}
+
+function apply_aria_toggle() {
+    var elem = $(this);
+    var aria_expanded = $(elem).attr('aria-expanded');
+    if (aria_expanded == "false") elem.removeClass('btn-secondary').addClass('btn-primary');
+    else elem.removeClass('btn-primary').addClass('btn-secondary');
+    elem.blur();
+}
+
+function handle_extra_filters() {
+    var selected = $("#morefilters .btn-primary").not("#stats-epoch-week");
+    if (selected.length > 0) $("#more_filters_button").attr("disabled", "disabled");
+    else $("#more_filters_button").removeAttr("disabled");
+
+    if ($("#more_filters").hasClass("showing") || $("#more_filters").hasClass("show")) $("#more_filters_button").removeClass("btn-secondary").addClass("btn-primary");
+    else $("#more_filters_button").removeClass("btn-primary").addClass("btn-secondary");
 }
 
 function getSelectedStats() {

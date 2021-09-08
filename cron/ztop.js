@@ -8,6 +8,7 @@ var epochs = {
     minute: 60,
     five: 300,
     hour: 3600,
+    day: 86400,
 }
 
 var first_run = true;
@@ -83,7 +84,9 @@ async function ztop(app) {
         key = key.replace('ztop:base:', '');
 
         for (let epoch in epochs) {
-            str += ('           ' + (await get_totals(app, 'ztop:' + key + ':' + epochs[epoch])).toLocaleString()).slice(-12);
+            var total = await get_total(app, 'ztop:' + key + ':' + epochs[epoch]);
+            str += ('           ' + total.toLocaleString()).slice(-12);
+            if (epoch == 'hour') await app.redis.setex('www:status:' + key, 3600, total);
         }
         out.push(str + '    ' + key);
     }
@@ -93,7 +96,7 @@ async function ztop(app) {
     await fs.writeFileSync('/tmp/ztop.txt', output, 'utf-8');
 }
 
-async function get_totals(app, redis_base) {
+async function get_total(app, redis_base) {
     let keys = await app.redis.keys(redis_base + ':*');
     var total = 0;
     for (let i = 0; i < keys.length; i++) {

@@ -5,11 +5,10 @@ var wait_cache = {};
 
 const set = new Set(); // cache for keeping track of what has been inserted to information
 setInterval(function () {
-    console.log('clearing entity info caches');
     set.clear();
     info_cache = {};
     wait_cache = {};
-}, 900000);
+}, 36000000);
 
 const entity = {
     async add(app, type, id, wait = false) {

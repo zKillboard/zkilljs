@@ -1,0 +1,52 @@
+div.table-responsive
+    table#stats-table.table.table-hover.table-sm.table-responsive
+        thead
+            tr
+                th.timespan Days
+                th.w-integer Killed
+                th.w-isk ISK
+                th.w-integer Lost
+                th.w-isk ISK
+                th.w-decimal Eff
+                th.w-decimal Snuggly
+                th.w-decimal Solo
+                th.w-decimal Inv Avg
+                th.w-decimal Score
+                th.w-decimal Rank
+        tbody
+            tr
+                th ∞
+                td#alltime-kills.clearbeforeload.green(format='integer')
+                td#alltime-isk-killed.clearbeforeload.green(format='fnumber')
+                td#alltime-lost.clearbeforeload.red(format='integer')
+                td#alltime-isk-lost.clearbeforeload.red(format='fnumber')
+                td#alltime-eff.clearbeforeload(format='percentage')
+                td#alltime-dangerlevel.clearbeforeload(format='percentage')
+                td#alltime-solopct.clearbeforeload(format='percentage')
+                td#alltime-avg-inv-cnt.clearbeforeload(format='decimal')
+                td#alltime-zscore.clearbeforeload(format='percentage')
+                td#alltime-rank.clearbeforeload(format='integer')
+            tr
+                th 90
+                td#recent-kills.clearbeforeload.green(format='integer')
+                td#recent-isk-killed.clearbeforeload.green(format='fnumber')
+                td#recent-lost.clearbeforeload.red(format='integer')
+                td#recent-isk-lost.clearbeforeload.red(format='fnumber')
+                td#recent-eff.clearbeforeload(format='percentage')
+                td#recent-dangerlevel.clearbeforeload(format='percentage')
+                td#recent-solopct.clearbeforeload(format='percentage')
+                td#recent-avg-inv-cnt.clearbeforeload(format='decimal')
+                td#recent-zscore.clearbeforeload(format='percentage')
+                td#recent-rank.clearbeforeload(format='integer')
+            tr
+                th 7
+                td#week-kills.clearbeforeload.green(format='integer')
+                td#week-isk-killed.clearbeforeload.green(format='fnumber')
+                td#week-lost.clearbeforeload.red(format='integer')
+                td#week-isk-lost.clearbeforeload.red(format='fnumber')
+                td#week-eff.clearbeforeload(format='percentage')
+                td#week-dangerlevel.clearbeforeload(format='percentage')
+                td#week-solopct.clearbeforeload(format='percentage')
+                td#week-avg-inv-cnt.clearbeforeload(format='decimal')
+                td#week-zscore.clearbeforeload(format='percentage')
+                td#week-rank.clearbeforeload(format='integer')

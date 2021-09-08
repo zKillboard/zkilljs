@@ -1,5 +1,6 @@
 * {
     margin: 0;
+    padding: 0;
 }
 
 html,
@@ -12,7 +13,10 @@ html {
 }
 
 body {
-    zoom: 90%;
+    width: 1200px;
+    max-width: 1200px;
+    margin: 0 auto;
+    font-size:  0.75em;
 }
 
 .wrapper {
@@ -27,6 +31,12 @@ body {
 .push {
     height: 50px;
     /* .push must be the same height as .footer */
+}
+
+
+div, .container-fluid, .row, .col {
+    margin: 0px !important;
+    padding: 0px !important;
 }
 
 .tiny {
@@ -83,7 +93,7 @@ div.killrow ul.info2 {
 
 div.killrow ul.victim,
 div.killrow ul.finalblow {
-    width: 14em;
+    max-width:  18em;
 }
 
 div.killrow ul.image {
@@ -141,13 +151,16 @@ body.dark iframe {
 div#overview-information ul {
     white-space: nowrap;
     overflow: hidden;
-    padding: 5px;
+    padding: 0px;
     margin: 0px;
 }
 
 div#overview-information ul li {
+    white-space: nowrap;
+    overflow: hidden;
     list-style: none;
     margin: 0px;
+    border:  solic 1px red;
 }
 
 .item_destroyed,
@@ -197,6 +210,10 @@ div#overview-information ul li {
     text-align: right;
 }
 
+#stats-table tr:first-child th {
+    border-top:  none;
+}
+
 .w-integer {
     width: 7em;
     min-width: 7em;
@@ -214,8 +231,13 @@ div#overview-information ul li {
 
 #overview-information,
 #overview-statistics {
-    min-width: 500px;
-    min-height: 150px;
+    min-height:  135px;
+}
+
+.info_row td {
+    white-space: nowrap;
+    overflow: hidden;
+    max-width: 24em;
 }
 
 .label {
@@ -325,11 +347,12 @@ div.attacker ul {
 
 hr {
     border: none;
-    height: 1px;
+    height: 0.2em;
     background-color: #333;
     /* Modern Browsers */
     padding: 0px;
-    margin-top: 0px;
+    margin: 0px;
+    margin-bottom: 2px;
 }
 
 .page_title {
@@ -341,8 +364,26 @@ hr {
 }
 
 .top10block table, .topiskblock table {
+    min-width: 200px;
+    width:  200px;
+    max-width:  200px;
     table-layout: fixed;
     overflow:  hidden;
+}
+
+.topiskblock table {
+    border:  solic 1px red;
+    min-width:  10em !important;
+    width:  10em;
+    max-width:  10em;
+}
+
+#actual-topisk {
+    min-height:  22em; /* Keep the page from bouncing up and down a bit */
+}
+
+.topiskblock table tbody tr td {
+    padding: 0px;
 }
 
 .top10title {
@@ -357,7 +398,6 @@ hr {
 .top10count {
     width: 5em;
 }
-
 
 .autocomplete-suggestions { border: 1px solid #ccc; background: #000; overflow: auto; cursor: default;}
 .autocomplete-suggestion { padding: 2px 5px; white-space: nowrap; overflow: hidden; cursor: pointer; }
@@ -402,4 +442,51 @@ hr {
 
 #feedbutton:not(.btn-primary) #feedactive {
     display: none;
+}
+
+.sec0::after {
+    content:  " (0.0)";
+    color: #F30202;
+}
+
+.sec1::after {
+    content:  " (0.1)";
+     color: #DC3201;
+}
+
+.sec2::after {
+    content:  " (0.2)";
+     color: #EB4903;
+}
+.sec3::after {
+    content:  " (0.3)";
+     color: #F66301;
+}
+.sec4::after {
+    content:  " (0.4)";
+     color: #E58000;
+}
+.sec5::after {
+    content:  " (0.5)";
+     color: #F5F501;
+}
+.sec6::after {
+    content:  " (0.6)";
+     color: #96F933;
+}
+.sec7::after {
+    content:  " (0.7)";
+     color: #00FF00;
+}
+.sec8::after {
+    content:  " (0.8)";
+     color: #02F34B;
+}
+.sec9::after {
+    content:  " (0.9)";
+     color: #4BF3C3;
+}
+.sec10::after {
+    content:  " (1.0)";
+     color: #33F9F9;
 }

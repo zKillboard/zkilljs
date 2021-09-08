@@ -1,17 +1,24 @@
 'use strict';
 
 async function f(app) {
-    app.delay_parse = false; // await hasMinimum(app.db.killhashes, {status: 'pending'}, 25);
-    app.delay_prep = app.delay_parse || await hasMinimum(app.db.killhashes, {status: 'fetched'}, 25);
-    app.delay_stat = app.delay_prep || await hasMinimum(app.db.killhashes, {status: 'parsed'}, 25);
+    if (process.env.balance_resources == 'true') {
+        app.delay_parse = false; // await hasMinimum(app.db.killhashes, {status: 'pending'}, 25);
+        app.delay_prep = app.delay_parse || await hasMinimum(app.db.killhashes, {status: 'fetched'}, 25);
+        app.delay_stat = app.delay_prep || await hasMinimum(app.db.killhashes, {status: 'parsed'}, 25);
 
-    var no_fetch_dailies = false; // app.delay_parse || app.delay_prep || app.delay_stat;
-    /*if (no_fetch_dailies == false) no_fetch_dailies = await hasMinimum(app.db.statistics, {update_week: true}, 500);
-    if (no_fetch_dailies == false) no_fetch_dailies = await hasMinimum(app.db.statistics, {update_recent: true}, 500);
-    if (no_fetch_dailies == false) no_fetch_dailies = await hasMinimum(app.db.statistics, {update_alltime: true, type: 'label'}, 1);
-    if (no_fetch_dailies == false) no_fetch_dailies = await hasMinimum(app.db.statistics, {'week.update_top': true}, 100);
-    //if (no_fetch_dailies == false) no_fetch_dailies = await hasMinimum(app.db.statistics, {'recent.update_top': true}, 100);*/
-    app.no_fetch_dailies = no_fetch_dailies;
+        var no_fetch_dailies = app.delay_parse || app.delay_prep || app.delay_stat;
+        if (no_fetch_dailies == false) no_fetch_dailies = await hasMinimum(app.db.statistics, {update_week: true}, 500);
+        if (no_fetch_dailies == false) no_fetch_dailies = await hasMinimum(app.db.statistics, {update_recent: true}, 500);
+        if (no_fetch_dailies == false) no_fetch_dailies = await hasMinimum(app.db.statistics, {update_alltime: true, type: 'label'}, 1);
+        
+        app.no_fetch_dailies = no_fetch_dailies;
+    } else {
+        app.delay_parse = false;
+        app.delay_prep = false;
+        app.delay_stat = false;
+        app.no_fetch_dailies = false;
+    }
+
 }
 
 async function hasMinimum(collection, query, min) {

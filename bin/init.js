@@ -48,6 +48,7 @@ async function f() {
         info: require('../util/info.js'),
         killmails: require('../util/killmails.js'),
         //points: require('../util/points.js'),
+        match_builder: require('../util/match_builder'),
         price: require('../util/price.js'),
         stats: require('../util/stats.js'),
     };
@@ -83,6 +84,10 @@ async function f() {
         return new Promise(resolve => {
             setTimeout(resolve, ms)
         });
+    }
+
+    app.restart = function () {
+        setTimeout(function() { process.exit(); }, 3000);
     }
 
     app.randomSleep = async function(min, max = -1) {

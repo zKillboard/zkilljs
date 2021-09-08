@@ -2,45 +2,14 @@
 
 module.exports = getData;
 
+var batch_size = 100;
+
 async function getData(req, res) {
     const app = req.app.app;
 
-    if (req.params.type == 'system') {
-        req.params.type = 'solar_system';
-    } else if (req.params.type == 'type') {
-        req.params.type = 'item';
-    }
+    var match = await app.util.match_builder(app, req, 'all');
 
-    let query = {};
-    var type, id, page = 0;
-
-    var key;
-    var query_or = [];
-    var query_and = [];
-    var kl = undefined;
-
-    if (req.params.type == 'label' && req.params.id == 'all') {
-        key = 'label';
-        type = 'label';
-        id = 'all';
-        query = {};
-    } else if (req.params.type == 'label') {
-        key = 'label';
-        type = 'label';
-        id = req.params.id;
-        query_and.push({
-            labels: id
-        });
-    } else if (req.params.type != 'all' && req.params.id != 'all') {
-        type = req.params.type + '_id';
-        id = parseInt(req.params.id);
-        if (id == NaN) return {
-            json: '[]'
-        };
-
-        var key = 'involved.' + type;
-    };
-    var record = await app.db.statistics.findOne({type: type, id: id});
+    var record = await app.db.statistics.findOne({type: match.type, id: match.id});
     if (record == null) return { json: [] }; // return an empty list
 
     var valid = {
@@ -55,77 +24,28 @@ async function getData(req, res) {
         return valid;
     }
 
-    var last_modifier = '';
-    if (req.query['modifiers'] != undefined) {
-        var modifiers = req.query['modifiers'].split(',');
-        for (const modifier of modifiers) {
-            // Modifiers must be in alpha order and cannot be repeated
-            if (modifier <= last_modifier) return null; // 404
-
-                    switch (modifier) {
-                        case 'killed':
-                        case 'lost':
-                            if (kl != undefined) return { json: [], maxAge : 900}; // return an empty list
-                            kl = modifier;
-                            break;
-                        case 'current-month':
-                            var date = new Date(), y = date.getFullYear(), m = date.getMonth();
-                            var firstDay = new Date(y, m, 1);
-                            // var lastDay = new Date(y, m + 1, 0);
-                            query_and.push({epoch : {'$gte' : Math.floor(firstDay.getTime() / 1000) }});
-                            break;
-                        case 'prior-month':
-                            var date = new Date(), y = date.getFullYear(), m = date.getMonth();
-                            var firstDay = new Date(y, m - 1, 1);
-                            var lastDay = new Date(y, m + 1, 0);
-                            query_and.push({epoch : {'$gte' : Math.floor(firstDay.getTime() / 1000) }});
-                            query_and.push({epoch : {'$lt' : Math.floor(lastDay.getTime() / 1000) }});
-                            break;
-                        default:
-                            query_and.push({
-                                labels: modifier.replace(' ', '+')
-                            });
-                    }
-                    last_modifier = modifier;
-        }
-    }
-
-    if (kl == undefined) kl = 'all';
-    if (type == 'label') {
-        if (id == 'all') query_or.push({});
-        else query_or.push({label: id});
-    } else {
-        if (kl == 'all' || kl == 'killed') query_or.push({[key]: id});
-        if (kl == 'all' || kl == 'lost') query_or.push({[key]: -1 * id});
-    }
-
-    if (query_and.length > 0) {
-        query['$and'] = query_and;
-    }
-
-    query['$or'] = query_or;
-    page = Math.max(0, Math.min(9, req.query['page'])); // cannot go below 0 or above 9
+    var page = Math.max(0, Math.min(9, req.query['page'])); // cannot go below 0 or above 9
 
     var killmails;
     var collections = ['killmails_7', 'killmails_90', 'killmails'];
     for (var i = 0; i < collections.length; i++) {
         var now = Date.now();
-        let result = await app.db[collections[i]].find(query)
+        let result = await app.db[collections[i]].find(match.match)
             .sort({ killmail_id: -1 })
-            .skip(page * 50) // faster without a limit... 
-            .limit(50)
-            .batchSize(50);
+            .skip(page * batch_size) // faster without a limit... 
+            .limit(batch_size)
+            .batchSize(batch_size);
         killmails = [];
         while (await result.hasNext()) {
             killmails.push((await result.next()).killmail_id)
-            if (killmails.length >= 50) break;
+            if (killmails.length >= batch_size) break;
         }
-        if (killmails.length >= 50) break;
+        if (killmails.length >= batch_size) break;
     }
 
     return {
         json: killmails,
-        maxAge: 900,
+        maxAge: 3600
     };
 }
 

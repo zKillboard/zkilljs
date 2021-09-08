@@ -1,45 +1,69 @@
 include mixins.pug
 
-if json.topisk && json.topisk.length > 0
+div#loaded-topisk.d-md-none
 	h4.text-capitalize
-		span= 'top ' + json.killed_lost + ': ' + json.timespan
+		span= 'top ' + json.killed_lost.replace('killed', 'kills').replace('lost', 'victims')
 	hr
-	div.row
-		each row in json.topisk
-			div.topiskblock.col-12.col-xl-2
-				table.table.table-sm.table-borderless
-					tbody
-						tr
-							td.top10name
-								+show_link('span', 'item_id', row.item_id, row.item_name)
-						tr
-							td
-								-var category = (size <= 64 ? 'icon' : 'render')
-								-var url = '/killmail/' + row.killmail_id
-								-var image = 'https://images.evetech.net/types/' + row.item_id + '/' + category + '?size=128'
-								+tag_image(tag, url, image, row.item_name, 128)
-						tr
-							td.top10name
-								+show_link('span', 'character_id', row.character_id, row.character_name)
-						tr
-							td.fnumber= row.total_value
-if json.types
-	h4.text-capitalize
-		span= 'top ' + json.killed_lost + ': ' + json.timespan
+	if json.topisk && json.topisk.length > 0
+		div#topisk-block
+			div.d-flex.align-content-around.flex-wrap
+				each row in json.topisk
+					div.topiskblock.mr-auto
+						table.table.table-sm.table-borderless
+							tbody
+								tr
+									td
+										-var category = (size <= 64 ? 'icon' : 'render')
+										-var url = '/killmail/' + row.killmail_id
+										-var image = 'https://images.evetech.net/types/' + row.item_id + '/' + category + '?size=128'
+										+tag_image(tag, url, image, row.item_name, 128)
+								tr
+									td.top10name
+										if row.character_id
+											+show_link('span', 'character_id', row.character_id, row.character_name)
+										else
+											+show_link('span', 'corporation_id', row.corporation_id, row.corporation_name)
+								tr
+									td.top10name
+										+show_link('span', 'item_id', row.item_id, row.item_name)
+								tr
+									td.fnumber= row.total_value
+	else
+		i nothing to see here... 
+		br
+		br
+		br
+		br
+
+h4.text-capitalize
+	span
+		= 'top ' + json.killed_lost.replace('killed', 'killers').replace('lost', 'victims')
+hr
+div#fulltoptenblock
+	if json.types
+		div#toptensfullblock.row.d-flex.flex-wrap
+			each arr,type in json.types
+				div.top10block.mr-4.pl-4
+					- var name = type.replace('_id', '_name');
+					- var first = arr[0]
+					h5.top10title= type.replace('_id', '').replace('_', ' ') 
+					+show_image('span', type, first[type], first[name], 128)
+					table.table.table-striped.table-hover.table-sm
+						each value in arr
+							tbody
+								tr
+									td.top10name
+										+show_link('span', type, value[type], value[name])
+									td.top10count.text-right.integer= value.count
+	else
+		i nothing to see here...
+		br
+		br
+		br
+		br
 	hr
-	div.row
-		each arr,type in json.types
-			div.top10block.col-12.col-xl-3
-				- var name = type.replace('_id', '_name');
-				- var first = arr[0]
-				h6.top10title= type.replace('_id', '').replace('_', ' ') 
-				+show_image('span', type, first[type], first[name], 128)
-				table.table.table-striped.table-hover.table-sm
-					each value in arr
-						tbody
-							tr
-								td.top10name
-									+show_link('span', type, value[type], value[name])
-								td.top10count.text-right.integer= value.count
-if json.next_update
-	i= 'Next update: ' + json.next_update
+	i= json.timespan
+	if json.next_update
+		hr
+		i= 'Next update: ' + json.next_update
+

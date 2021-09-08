@@ -20,134 +20,55 @@ var pmm = {};
 async function f(req, res) {
     const app = req.app.app;
 
-    var mod = (req.params.epoch == 'week' ? 900 : (req.params.epoch == 'recent' ? 3600 : 86400));
+    var match = await app.util.match_builder(app, req, 'killed');
+
+    var start_time = app.now();
+    var timestamp = start_time;
+    var mod = 900;
+    timestamp = timestamp - (timestamp % mod);
+
 
     var ret = {
-        types: {},
-        topisk: []
+        topisk: {},
+        types: {}
     };
-    ret.timespan = (req.params.epoch == 'week' ? 'Past 7 Days' : (req.params.epoch == 'recent' ? 'Past 90 Days' : 'Alltime'));
 
-    var cached_row = await app.db.datacache.findOne({requrl: req.url});
-    if (cached_row != null) {
-        ret = JSON.parse(cached_row.data);
-    } else {
-        var pmm_key = req.params.epoch + ':' + req.params.type;
-        while (pmm[pmm_key] != undefined) {
-            await app.sleep(250);
-        }
-        try {
-            pmm[pmm_key] = true;
+    var valid = {
+        modifiers: 'string',
+        timestamp: timestamp,
+        required: ['timestamp'],
+    }
+    req.alternativeUrl = '/cache/1hour/toptens/' + req.params.epoch + '/' + req.params.type + '/' + req.params.id + '.html';
+    var valid = req.verify_query_params(req, valid);
+    if (valid !== true) {
+        return valid;
+    }
 
-            var start_time = app.now();
-            var timestamp = start_time;
-            timestamp = timestamp - (timestamp % mod);
+    if (match.epoch == 'alltime') {
+        // Pull the stats record, do they have enough kills to warrant week long caches?
+        var stats = app.db.statistics.findOne({type: match.type, id: match.id});
+        var total = (stats.killed || 0) + (stats.lost || 0);
+        if (total > 1000000) mod = 86400 * 7;
+        else if (total >= 100000) mod = 86400;
 
-            if (req.params.type == 'system') {
-                req.params.type = 'solar_system';
-            } else if (req.params.type == 'type') {
-                req.params.type = 'item';
-            }
+        timestamp = timestamp - (timestamp % mod); // daily
+    }
 
-            let query = {};
-            var type, id, page = 0;
+    var pmm_key = match.epoch + '-' + match.type;
+    while (pmm[pmm_key] != undefined) {
+        await app.sleep(100); // poor man's mutex
+    }
 
-            var key;
-            var query_or = [];
-            var query_and = [];
-            var kl = undefined;
+    try {
+        pmm[pmm_key] = true;
 
-            if (req.params.type == 'label' && req.params.id == 'all') {
-                key = 'label';
-                type = 'label';
-                id = 'all';
-                query = {};
-            } else if (req.params.type == 'label') {
-                key = 'label';
-                type = 'label';
-                id = req.params.id;
-                query_and.push({
-                    labels: id
-                });
-            } else if (req.params.type != 'all' && req.params.id != 'all') {
-                type = req.params.type + '_id';
-                id = parseInt(req.params.id);
-                if (id == NaN) return { json: [], maxAge : 900}; // return an empty list
-
-                var key = 'involved.' + type;
-            };
-            var record = await app.db.statistics.findOne({type: type, id: id});
-            if (record == null) return { json: [], maxAge : 900}; // return an empty list
-
-            var valid = {
-                modifiers: 'string',
-                timestamp: timestamp,
-                required: ['timestamp'],
-            }
-            req.alternativeUrl = '/cache/1hour/toptens/' + req.params.epoch + '/' + req.params.type + '/' + req.params.id + '.html';
-            var valid = req.verify_query_params(req, valid);
-            if (valid !== true) {
-                return valid;
-            }
-
-            var last_modifier = '';
-            if (req.query['modifiers'] != undefined) {
-                var modifiers = req.query['modifiers'].split(',');
-                for (const modifier of modifiers) {
-                    // Modifiers must be in alpha order and cannot be repeated
-                    if (modifier <= last_modifier) return { json: [], maxAge : 900}; // return an empty list
-
-                    switch (modifier) {
-                        case 'killed':
-                        case 'lost':
-                            if (kl != undefined) return { json: [], maxAge : 900}; // return an empty list
-                            kl = modifier;
-                            break;
-                        case 'current-month':
-                            var date = new Date(), y = date.getFullYear(), m = date.getMonth();
-                            var firstDay = new Date(y, m, 1);
-                            // var lastDay = new Date(y, m + 1, 0);
-                            query_and.push({epoch : {'$gte' : Math.floor(firstDay.getTime() / 1000) }});
-                            ret.timespan = 'current month';
-                            break;
-                        case 'prior-month':
-                            var date = new Date(), y = date.getFullYear(), m = date.getMonth();
-                            var firstDay = new Date(y, m - 1, 1);
-                            var lastDay = new Date(y, m + 1, 0);
-                            query_and.push({epoch : {'$gte' : Math.floor(firstDay.getTime() / 1000) }});
-                            query_and.push({epoch : {'$lt' : Math.floor(lastDay.getTime() / 1000) }});
-                            ret.timespan = 'prior month';
-                            break;
-                        default:
-                            query_and.push({
-                                labels: modifier.replace(' ', '+')
-                            });
-                    }
-                    last_modifier = modifier;
-                }
-            }
-
-            if (kl == undefined) kl = 'killed';
-            if (type == 'label') {
-                if (id == 'all') query_or.push({});
-                else query_or.push({label: id});
-            } else {
-                if (kl == 'killed') query_or.push({[key]: id});
-                if (kl == 'lost') query_or.push({[key]: -1 * id});
-            }
-
-            if (query_and.length > 0) {
-                query['$and'] = query_and;
-            }
-
-            if (query_or != undefined) query['$or'] = query_or;
-
-            var collection = (req.params.epoch == 'week' ? 'killmails_7' : (req.params.epoch == 'recent' ? 'killmails_90' : 'killmails'));
-            collection = (ret.timespan == 'current month' || ret.timespan == 'prior month' ? 'killmails_90' : collection);
-
-            ret.topisk = app.util.stats.topISK(app, collection, query, type, 6, kl);
+        var cached = await app.db.datacache.findOne({requrl: req.url});
+        if (cached != null) {
+            ret = JSON.parse(cached.data);
+        } else {
+            ret.topisk = app.util.stats.topISK(app, match.collection, match.match, match.type, 6, match.kl);
             for (var i = 0; i < types.length; i++) {
-                ret.types[types[i]] = app.util.stats.group(app, collection, query, types[i], kl);
+                ret.types[types[i]] = app.util.stats.group(app, match.collection, match.match, types[i], match.kl);
             }
 
             // Now wait for everything to finish
@@ -157,9 +78,11 @@ async function f(req, res) {
                 if (ret.types[types[i]] == undefined || ret.types[types[i]].length == 0) delete ret.types[types[i]];
             }
 
+            // Fill in the information from the raw data for the top tens
             if (Object.keys(ret.types).length == 0) delete ret.types;
             else await app.util.info.fill(app, ret.types);
 
+            // Fill in the information for the top isk block
             var topisk = [];
             if (ret.topisk != undefined) {
                 for (var i = 0; i < ret.topisk.length; i++) {
@@ -169,23 +92,25 @@ async function f(req, res) {
                     });
                     row.item_id = getVictim(killmail, 'item_id');
                     row.character_id = getVictim(killmail, 'character_id');
+                    row.corporation_id = getVictim(killmail, 'corporation_id');
                     topisk.push(await app.util.info.fill(app, row));
                 }
             }
             ret.topisk = topisk;
-            ret.killed_lost = kl;
+            ret.killed_lost = match.kl || '';
 
             var next_update = timestamp + mod;
-            ret.next_update = new Date(next_update * 1000);
+
+            await app.db.datacache.deleteOne({requrl: req.url});
             await app.db.datacache.insertOne({requrl : req.url, epoch: next_update, data : JSON.stringify(ret)});
-        } finally { 
-            delete pmm[pmm_key]; 
         }
+    } finally {
+        delete pmm[pmm_key];
     }
 
     return {
         json: ret,
-        maxAge: mod
+        maxAge: 0
     };
 }
 
@@ -195,7 +120,7 @@ function getVictim(killmail, type) {
     types.sort();
     var id = types.shift();
     if (id < 0) return (-1 * id);
-    return id;
+    return undefined;
 }
 
 module.exports = f;

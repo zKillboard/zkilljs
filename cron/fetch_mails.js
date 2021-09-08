@@ -44,9 +44,9 @@ async function fetch(app, mail) {
 
         let url = app.esi + '/v1/killmails/' + mail.killmail_id + '/' + mail.hash + '/';
         let res = await app.phin(url);
+        await app.util.assist.esi_result_handler(app, res);
 
         if (res.statusCode == 200) {
-            app.zincr('esi_fetched');
             app.zincr('mails_fetched');
 
             var body = JSON.parse(res.body);
@@ -69,8 +69,6 @@ async function fetch(app, mail) {
             });
             return true;
         } else {
-            app.zincr('esi_error');
-            app.zincr('esi_error_' + res.statusCode);
             await app.db.killhashes.updateOne(mail, {
                 $set: {
                     status: 'failed',

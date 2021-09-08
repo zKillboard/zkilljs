@@ -17,12 +17,12 @@ mixin corp_id_link(tag, id, name)
 mixin alli_id_link(tag, id, name)
 	+type_id_link(tag, 'alliance', id, name)
 
-mixin type_id_link(tag, type, id, name, extra)
+mixin type_id_link(tag, type, id, name, extra, extraclasses)
 	-var url = '/' + type + '/' + id
 	-var name = (name == null || name == undefined || name == '' ? type + ' ' + id : name)
 	if id != undefined
 		#{tag}
-			a.override(href=url alt=name)= name
+			a.override(href=url alt=name class=extraclasses)= name
 			+include_extra(extra)
 	else if extra != ''
 			+include_extra(extra)
@@ -115,16 +115,17 @@ mixin info_row(label, value, classes)
 	if value != undefined
 		- value = '' + value
 		if value.length > 0
-			tr
+			tr.info_row
 				td= label
 				td(class=classes)= value
 
 mixin info_row_a(label, type, id, value, classes)
 	-var href= '/' + type.replace('_id', '') + '/' + id
-	if value != undefined
+	- id = '' + id
+	if id.length > 0 && id != '0' && value != undefined
 		- value = '' + value
 		if value.length > 0
-			tr
+			tr.info_row
 				td= label
 				td(class=classes)
 					a(href=href class='override')= value

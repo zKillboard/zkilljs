@@ -10,14 +10,8 @@ async function getData(req, res) {
     const app = req.app.app;
     var killmail_id = parseInt(req.params.id);
 
-    let killmail = app.db.killmails.findOne({
-        killmail_id: killmail_id
-    });
-    let rawmail = app.db.rawmails.findOne({
-        killmail_id: killmail_id
-    });
-    killmail = await killmail;
-    rawmail = await rawmail;
+    let killmail = await app.db.killmails.findOne({killmail_id: killmail_id});
+    let rawmail = await app.db.rawmails.findOne({killmail_id: killmail_id});
 
     for (const inv of rawmail.attackers) {
         if (inv.final_blow == true) {
@@ -44,7 +38,8 @@ async function getData(req, res) {
 
     rawmail.stats = killmail.stats;
     rawmail.total_value = killmail.total_value;
-    rawmail.labels = killmail.labels;
+    rawmail.labels = killmail.labels.join(' ');
+    rawmail.epoch = killmail.epoch;
     rawmail.involved_cnt = killmail.involved_cnt;
 
     var ret = {
@@ -52,9 +47,23 @@ async function getData(req, res) {
             rawmail: rawmail,
             victims: victim_array.join(','),
         },
-        maxAge: 86400
+        maxAge: 0
     };
 
     ret.json = await app.util.info.fill(app, ret.json);
+
+    // ret.json.rawmail.calculated_security_status = get_ccp_security_level(ret.json.rawmail.solar_system_security_status)
+
+    // console.log(ret.json.rawmail.solar_system_security_status, ret.json.rawmail.solar_system_security_rounded);
+    return ret;
+}
+
+function get_ccp_security_level(security_status) {
+    return security_status;
+
+    var ret = security_status.number_format(0, 1);
+    if (ret == 0 && security_status > 0) {
+        ret = 0.1;
+    }
     return ret;
 }

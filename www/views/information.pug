@@ -1,6 +1,6 @@
 include mixins.pug
 
-span.page-title= page_title
+h1.d-none#page-title= page_title
 ul#info-box
 	+show_image('li', json.type, json.id, json.name, 128)
 
@@ -15,7 +15,8 @@ ul#info-box
 			+info_row('Ticker:', json.ticker)
 			+info_row_a('Item:', 'item', json.item_id, json.item_name)
 			+info_row_a('Group:', 'group', json.group_id, json.group_name)
-			+info_row('Members:', json.member_count, 'integer')
+			if json.inactive == false
+				+info_row('Members:', json.member_count, 'integer')
 			+info_row('Founded:', founded)
 			+info_row_a('Location: ', 'location', json.location_id, json.location_name)
 			+info_row_a('System:', 'system', json.solar_system_id, json.solar_system_name)
@@ -24,5 +25,8 @@ ul#info-box
 			+info_row('Security:', json.security_status, 'decimal')
 			if json.inactive == true
 				td Inactive:
-				td Information may be out of date. Not present on killmail in last 90 days.
+				td
+					| Information may be out of date.
+					br
+					| Not present on any killmail in last 90 days.
 			fi

@@ -5,8 +5,8 @@ include mixins.pug
 -var rowid = 'killmail-' + json.rawmail.killmail_id
 -var time = json.rawmail.killmail_time.replace("T", "<br/>").replace("Z", "");
 
-div.killrow(victims=json.victims)
-	div.killrowblock
+div.row.m-0.p-0.killrow(victims=json.victims labels=json.rawmail.labels epoch=json.rawmail.epoch)
+	div.killrowblock.col-12.col-md-4.m-0.p-0
 		ul.image
 			-var url = '/killmail/' + json.rawmail.killmail_id
 			-var image = 'https://images.evetech.net/types/' + json.rawmail.victim.ship_type_id + '/icon?size=' + 64
@@ -21,10 +21,10 @@ div.killrow(victims=json.victims)
 					i.bi.bi-x.victim
 				span.fnumber= json.rawmail.total_value
 		ul.info2
-			+type_id_link('li', 'system', json.rawmail.solar_system_id, json.rawmail.solar_system_name)
+			+type_id_link('li', 'system', json.rawmail.solar_system_id, json.rawmail.solar_system_name, null, 'sec' + json.rawmail.solar_system_security_rounded)
 			+type_id_link('li', 'constellation', json.rawmail.constellation_id, json.rawmail.constellation_name)
 			+type_id_link('li', 'region', json.rawmail.region_id, json.rawmail.region_name)
-	div.killrowblock
+	div.killrowblock.col-12.col-md-4.m-0.p-0
 		ul.image
 			if json.rawmail.victim.alliance_id > 0
 				+alli_image('li', json.rawmail.victim.alliance_id, json.rawmail.victim.alliance_name, 64)
@@ -40,7 +40,7 @@ div.killrow(victims=json.victims)
 				+type_id_link('span', 'item', json.rawmail.victim.ship_type_id, json.rawmail.victim.ship_type_name)
 			+corp_id_link('li', json.rawmail.victim.corporation_id, json.rawmail.victim.corporation_name)
 			+alli_id_link('li', json.rawmail.victim.alliance_id, json.rawmail.victim.alliance_name)
-	div.killrowblock
+	div.killrowblock.col-12.col-md-4.m-0.p-0
 		ul.image
 			if json.rawmail.final_blow.alliance_id > 0
 				+alli_image('li', json.rawmail.final_blow.alliance_id, json.rawmail.final_blow.alliance_name, 64)

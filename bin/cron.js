@@ -5,7 +5,7 @@ var tasks = {
     'ztop': createTaskSettings(1),
 
     // maintenance fun
-    'trigger_price_checks': createTaskSettings(60),
+    'trigger_price_checks': createTaskSettings(1),
     'update_prices': createTaskSettings(1),
     'update_factions.js': createTaskSettings(60),
     'update_information.js': createTaskSettings(1),

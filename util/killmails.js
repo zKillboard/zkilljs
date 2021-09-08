@@ -68,21 +68,13 @@ module.exports = {
 
     remove_old_killmails: async function(app, epoch, num_days) {
         var now = app.now();
-        // now = now - (now % 3600); // stick to the hour mark
         var remove = now - (num_days * 86400);
         var collection = 'killmails' + (epoch == 'alltime' ? '' : (epoch == 'week' ? '_7' : (epoch == 'recent' ? '_90' : '_unknown_collection')));
         var purging = await app.db[collection].find({epoch : {$lt : remove}});
 
-        var previous_stats = app.no_stats;
-        app.no_stats = true;
-        await app.sleep(5000); // give any running stats a few seconds to finish up
-        try {
-            while (await purging.hasNext()) {
-                var killmail = await purging.next();
-                await app.util.killmails.remove_killmail(app, collection, killmail, epoch);
-            }
-        } finally {
-            app.no_stats = previous_stats;
+        while (await purging.hasNext()) {
+            var killmail = await purging.next();
+            await app.util.killmails.remove_killmail(app, collection, killmail, epoch);
         }
     }
 }

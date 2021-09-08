@@ -5,6 +5,8 @@ var path = require('path');
 var debug = require('debug')('server');
 var http = require('http');
 var morgan = require('morgan');
+var watch = require('node-watch');
+
 var app = undefined;
 var server;
 
@@ -59,10 +61,19 @@ async function startWebListener() {
     www.app.ws = require(__dirname + '/websocket');
 
     wsServerStarted(app);
+
+    watch('bin/init.js', {resursive: true}, app.restart);
+    watch('bin/www.js', {resursive: true}, app.restart);
+    watch('www/', {recursive: true}, app.restart);
+    watch('util/', {resursive: true}, app.restart);
 }
 
 async function wsServerStarted() {
-    var msg = JSON.stringify({'action': 'server_started', 'server_started': server_started});
+    var msg = JSON.stringify({
+        'action': 'server_status', 
+        'server_started': server_started, 
+        'mails_parsed': await app.redis.get('www:status:mails_parsed')
+    });
     await app.redis.publish('zkilljs:public', msg);
 
     setTimeout(wsServerStarted, 1000);
@@ -102,10 +113,3 @@ function onListening() {
         'port ' + addr.port;
     debug('Listening on ' + bind);
 }
-
-var watch = require('node-watch');
-watch('www/', {
-    recursive: true
-}, async function (evt, name) {
-    process.exit();
-}); 

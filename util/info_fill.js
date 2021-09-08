@@ -22,22 +22,34 @@ const info_fill = {
     		let key = keys[i];
     		const o = object[key];
 
+            var record = undefined;
+
     		if (typeof o == 'object') object[key] = await this.fill(app, o);
     		else {
     			// Step 1, we'll populate names here
     			switch (key) {
+                    case 'solar_system_id':
+                        record = await app.util.info.get_info(app, key, o, true);
+                        if (record != null && record.name != undefined) {
+                            object[key.replace('_id', '_security_status')] = record.security_status;
+                            var rounded = Math.max(0, Math.round(record.security_status * 10, 1));
+                            if (rounded == 0 && record.security_status > 0 && record.security_status < 0.1) {
+                                rounded = 1;
+                            }
+                            object[key.replace('_id', '_security_rounded')] = rounded;
+                        }
+                        // Purposeful fall thruogh
     				case 'character_id':
     				case 'corporation_id':
     				case 'alliance_id':
     				case 'faction_id':
-    				case 'solar_system_id':
     				case 'constellation_id':
     				case 'region_id':
                     case 'location_id':
     				case 'item_id':
                     case 'group_id':
                     case 'category_id':
-                        var record = await app.util.info.get_info(app, key, o, true);
+                        if (record == undefined || record == null) record = await app.util.info.get_info(app, key, o, true);
     					if (record != null && record.name != undefined) {
                             object[key.replace('_id', '_name')] = record.name;
                         }
@@ -45,7 +57,7 @@ const info_fill = {
     				case 'ship_type_id':
     				case 'weapon_type_id':
     				case 'item_type_id':
-    					var record = await app.util.info.get_info(app, 'item_id', o);
+    					record = await app.util.info.get_info(app, 'item_id', o);
     					if (record != null) object[key.replace('_id', '_name')] = record.name;
     					break;
 

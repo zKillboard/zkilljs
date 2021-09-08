@@ -5,12 +5,12 @@ const assist = {
 		// TODO check headers for versioning header
 
 		if (res.statusCode == 200 || res.statusCode == 304) {
-            app.zincr('esi_fetched');
+            app.zincr('esi_success');
 			return; // All is well
 		}
 
 		await app.zincr('esi_error');
-		await app.zincr('esi_error_' + res.statusCode);
+		// await app.zincr('esi_error_' + res.statusCode);
 		await app.sleep(1000); // pause on any and all errors
 		switch (res.statusCode) {
 	        case 401:
