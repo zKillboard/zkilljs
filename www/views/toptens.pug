@@ -1,15 +1,12 @@
 include mixins.pug
 
-div#loaded-topisk.d-md-none
-	h4.text-capitalize
-		span= 'top ' + json.killed_lost.replace('killed', 'kills').replace('lost', 'victims')
-	hr
+div#loaded-topisk
 	if json.topisk && json.topisk.length > 0
-		div#topisk-block
+		div#topisk-block.p-0.m-0
 			div.d-flex.align-content-around.flex-wrap
 				each row in json.topisk
 					div.topiskblock.mr-auto
-						table.table.table-sm.table-borderless
+						table.table.table-sm.table-borderless.p-0.m-0
 							tbody
 								tr
 									td
@@ -34,16 +31,12 @@ div#loaded-topisk.d-md-none
 		br
 		br
 		br
-
-h4.text-capitalize
-	span
-		= 'top ' + json.killed_lost.replace('killed', 'killers').replace('lost', 'victims')
 hr
 div#fulltoptenblock
 	if json.types
 		div#toptensfullblock.row.d-flex.flex-wrap
 			each arr,type in json.types
-				div.top10block.mr-4.pl-4
+				div.top10block.mr-4
 					- var name = type.replace('_id', '_name');
 					- var first = arr[0]
 					h5.top10title= type.replace('_id', '').replace('_', ' ') 

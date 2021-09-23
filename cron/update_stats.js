@@ -33,7 +33,7 @@ async function f(app) {
                     type: type
                 };
                 find['update_' + epoch] = true;
-                await update_stats(app, epochs[epoch], epoch, type, find);
+                update_stats(app, epochs[epoch], epoch, type, find);
             }
         }
         first_run = false;
@@ -41,12 +41,13 @@ async function f(app) {
 }
 
 async function update_stats(app, collection, epoch, type, find) {
-    var iterated = false;
+    if (app.bailout) return;
+    var iterated = 0, limit = 10000;
     try {
-        if (app.bailout == true || app.no_stats == true) return;
+        if (app.no_stats == true) return;
         if (app.delay_stat) return await app.randomSleep(1000, 3000);
 
-        var iter = await app.db.statistics.find(find).limit(10000);
+        var iter = await app.db.statistics.find(find).limit(limit);
         while (await iter.hasNext()) {
             if (app.bailout == true || app.no_stats == true) break;
             if (app.delay_stat) return await app.randomSleep(1000, 3000);
@@ -55,17 +56,22 @@ async function update_stats(app, collection, epoch, type, find) {
 
             if (record.id !== NaN) {
                 await update_record(app, collection, epoch, record);
-                iterated = true;
+                iterated++;
                 app.zincr('stats_calced_' + epoch);
             }
         }
     } catch (e) {
         console.log(e);
     } finally {
-        var delay = iterated ? 1 : ((60 - (app.now() % 60)) * 1000);
-        setTimeout(function () {
-            update_stats(app, collection, epoch, type, find);
-        }, delay);
+        var base = 120;
+        // spread out the epochs
+        if (epoch == 'alltime') base -= 30;
+        else if (epoch == 'recent') base -= 20;
+        else base -= 10;
+
+        var next_run_at = base - (app.now() - app.now(60));
+        var delay = (iterated >= limit) ? 1 : next_run_at * 1000;
+        setTimeout(update_stats.bind(null, app, collection, epoch, type, find), delay);
     }
 }
 

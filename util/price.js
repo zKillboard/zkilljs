@@ -1,7 +1,6 @@
 let price_cache = {};
 
 setInterval(function () {
-    console.log('clearing price cache');
     price_cache = {};
 }, 36000000);
 
@@ -11,21 +10,22 @@ const price = {
 
         if (typeof date == 'string') date = date.substr(0, 10);
         else date = this.format_date(date);
-        let rkey = date + ':' + item_id;
+        let rkey = 'zkilljs-price-' + date + '-' + item_id;
 
         let cached = price_cache[rkey];
         if (!isNaN(cached)) return this.cacheIt(app, rkey, cached);
         
-        /*cached = await app.redis.get(rkey);
-        if (!isNaN(cached)) {
-            // return await this.cacheIt(app, rkey, cached);
-        }*/
+        cached = await app.redis.get(rkey);
+        if (cached != null && cached != undefined && !isNaN(cached)) {
+            return await this.cacheIt(app, rkey, cached);
+        }
 
         const fixed_price = await price.get_fixed_price(app, item_id);
         if (fixed_price != undefined) return this.cacheIt(app, rkey, fixed_price);
 
         let info = await app.util.entity.info(app, 'item_id', item_id, true);
-        if (info.category_id == 66) {
+        let group = (info != undefined ? await app.util.entity.info(app, 'group_id', info.group_id, true) : {});
+        if (group.category_id == 65 || group.category_id == 66) { // citadels... , or their modules
             const build_price = await get_build_price(app, item_id, date);
             if (build_price != undefined && build_price > 0.01) return this.cacheIt(app, rkey, build_price);
         }
@@ -162,9 +162,7 @@ async function fetch(app, item_id, date, skip_fetch) {
     let todays_key = app.util.price.get_todays_price_key();
     var iterations = 0;
     do {
-        marketHistory = await app.db.prices.findOne({
-            item_id: item_id
-        });
+        marketHistory = await app.db.prices.findOne({ item_id: item_id });
         if (marketHistory == null) {
             try {
                 await app.db.prices.insertOne({
@@ -183,7 +181,7 @@ async function fetch(app, item_id, date, skip_fetch) {
                     waiting: true
                 }
             });
-            if (skip_fetch != true) await app.sleep(3000);
+            if (skip_fetch != true) await app.sleep(1000);
         }
         if (marketHistory.last_fetched != todays_key && skip_fetch != true) {
             iterations++;
@@ -239,7 +237,6 @@ async function get_build_price(app, item_id, date) {
     let blueprint = await get_blueprint(app, item_id);
 
     if (blueprint == undefined || blueprint.reqs == undefined) return 0;
-    console.log(blueprint);
 
     let price = 0;
     for (let i = 0; i < blueprint.reqs.length; i++) {
@@ -247,28 +244,32 @@ async function get_build_price(app, item_id, date) {
         let req_price = await app.util.price.get(app, req.materialTypeID, date);
         let req_total_price = req_price * req.quantity;
         price += req_total_price;
-        console.log(req_price + ' ' + req.quantity + ' ' + price);
     }
     let final_price = Math.ceil(0.9 * (price / Math.max(1, blueprint.quantity)));
     return final_price;
 }
 
 async function get_blueprint(app, item_id) {
-    if (app.cache.blueprints == undefined) {
-        let reqs = await import_reqs(app);
+    try {
+        await app.util.pmm.acquire(app, 'get_blueprints');
+        if (app.cache.blueprints == undefined) {
+            let reqs = await import_reqs(app);
 
-        app.cache.blueprints = {};
-        console.log('Fetching https://sde.zzeve.com/industryActivityProducts.json');
-        let res = await app.phin('https://sde.zzeve.com/industryActivityProducts.json');
-        let json = JSON.parse(res.body);
-        for (let i = 0; i < json.length; i++) {
-            let blueprint = json[i];
-            blueprint.reqs = reqs['item_id:' + blueprint.typeID];
-            app.cache.blueprints[blueprint.productTypeID] = blueprint;
+            app.cache.blueprints = {};
+            console.log('Fetching https://sde.zzeve.com/industryActivityProducts.json');
+            let res = await app.phin('https://sde.zzeve.com/industryActivityProducts.json');
+            let json = JSON.parse(res.body);
+            for (let i = 0; i < json.length; i++) {
+                let blueprint = json[i];
+                blueprint.reqs = reqs['item_id:' + blueprint.typeID];
+                app.cache.blueprints[blueprint.productTypeID] = blueprint;
+            }
+
         }
-
+        return app.cache.blueprints[item_id];
+    } finally {
+        await app.util.pmm.release('get_blueprints');
     }
-    return app.cache.blueprints[item_id];
 }
 
 async function import_reqs(app) {

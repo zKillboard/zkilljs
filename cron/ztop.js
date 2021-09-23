@@ -8,16 +8,17 @@ var epochs = {
     minute: 60,
     five: 300,
     hour: 3600,
-    day: 86400,
+    //day: 86400,
 }
 
 var first_run = true;
 
 async function f(app) {
-    if (first_run) {
+    await ztop(app);
+    /*if (first_run) {
         first_run = false;
         constant_ztop(app);
-    }
+    }*/
 }
 
 async function cleanup(app) {
@@ -42,6 +43,8 @@ async function ztop(app) {
     let out = [];
 
     var now = app.now();
+
+    out.push([new Date()]);
 
     out.push([
         memUsage(app),

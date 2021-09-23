@@ -15,7 +15,7 @@ module.exports = {
             });
 
             // Process any existing that match
-            count = await iterate(app, await collection.find(match).sort(sort), f, false, set);
+            count = await iterate(app, await collection.find(match).sort(sort).limit(limit), f, false, set);
 
             // Now process any in the oplog that match
             /*streamConfig.startAtOperationTime = hostInfo.operationTime;
@@ -25,6 +25,7 @@ module.exports = {
             // 136 is stream died, ignore it and restart in a second
             if (e.code != 136) console.log('StremWatcher exception', '\n', match, '\n', e);
         } finally {
+            if (app.bailout) return;
             while (set.size > 0) await app.sleep(1);            
             if (count == 0) await app.sleep(1000);
             this.start(app, collection, match, f, limit, sort); // start again

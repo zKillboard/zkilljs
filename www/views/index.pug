@@ -39,22 +39,14 @@ html
                         div.m-auto
                         div#overview-statistics.p-0.m-0
                             include stats-box.pug
-                    div.row#overview-filters.mb-2
-                        div.col-12
+                    div.row#overview-filters.mb-5
+                        div.col-12.mb-2
                             include filters.pug
+                    hr
                     div.row.d-flex
-                        div.col-xs-12.col-md-9
-                            div#actual-topisk.d-none.d-md-block
-                            div#overview-killmails
-                                hr
-                                h4
-                                    | Killmails
-                                    button#feedbutton.btn.btn-small.btn-primary.m-0.ml-3.p-0(type='button')
-                                        i#feedactive.bi.bi-play-fill
-                                        i#feedinactive.bi.bi-pause-fill
-                                        span.d-none.d-lg-inline-block Feed
-                                div#killlist
-                        div.col-xs-12.col-md-3
+                        div.col-xs-12.col-md-8.pr-3
+                            div#killlist
+                        div.col-xs-12.col-md-4
                             div#overview-toptens
                     div.m-5
                 div#killmail.collapse

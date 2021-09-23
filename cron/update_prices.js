@@ -58,6 +58,7 @@ async function update_price(app, row, todays_price_key) {
             return;
         }
 
+        // console.log('Fetching price for', item_id);
         var url = app.esi + '/v1/markets/10000002/history/?type_id=' + item_id;
         await app.util.assist.esi_limiter(app);
         let res = await app.phin(url);

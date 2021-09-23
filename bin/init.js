@@ -49,6 +49,7 @@ async function f() {
         killmails: require('../util/killmails.js'),
         //points: require('../util/points.js'),
         match_builder: require('../util/match_builder'),
+        pmm: require('../util/pmm.js'),
         price: require('../util/price.js'),
         stats: require('../util/stats.js'),
     };
@@ -151,8 +152,10 @@ async function f() {
         console.log(util.inspect(object, false, null, true /* enable colors */));
     }
 
-    app.now = function() {
-        return Math.floor(Date.now() / 1000);
+    app.now = function(mod = 0) {
+        var now = Math.floor(Date.now() / 1000);
+        if (mod != 0) now = now - (now % mod);
+        return now;
     }
 
     // Special case, killhashes will be mapped to original zkillboard's esimails collection

@@ -1,5 +1,10 @@
 div.btn-toolbar(role="tooolbar" aria-label="Overview Filter").mt-1
     div.btn-group.btn-group-sm.mr-2
+        button#feedbutton.btn.btn-primary(type='button')
+            i#feedactive.bi.bi-play-fill
+            i#feedinactive.bi.bi-pause-fill
+            span.d-none.d-lg-inline-block Feed
+
         button#filter-kills.filter.kfilter.btn.btn-secondary(type='button' radio='killtype') Killed
         button#filter-losses.filter.kfilter.btn.btn-secondary(type='button' radio='killtype') Lost
     div.btn-group.btn-group-sm.mr-2

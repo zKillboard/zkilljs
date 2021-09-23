@@ -295,9 +295,6 @@ function handleResponse(res, element, path, subscribe) {
         res.text().then(function (html) {
             applyHTML(element, html);
             $(element).fadeIn();
-            if (path.indexOf('toptens') != -1) {
-                $("#actual-topisk").html($("#loaded-topisk").html());
-            }
             if (subscribe) ws_action('sub', subscribe);
         });
     }
@@ -698,10 +695,7 @@ function load_toplists_box(modifiers = null) {
     if (modifiers.length > 0) {
         params = "?modifiers=" + modifiers.join(',');
     }
-    $("#actual-topisk").html("");
-    $("#loaded-topisk").html("");
-    $("#fulltoptenblock").html("");
-    apply('overview-toptens', '/site/toptens/' + getSelectedStatsEpoch() + pagepath + '.html' + params, 'toplistsfeed:' + pagepath, true);
+    apply('overview-toptens', '/site/toptens/' + getSelectedStatsEpoch() + pagepath + '.html' + params, 'toplistsfeed:' + pagepath, true, true);
 }
 
 function spaTheLinks() {
@@ -872,6 +866,7 @@ function filter_change() {
 
     handle_extra_filters();
     
+    $("#overview-toptens").html("");
     load_toplists_box(modifiers);
     load_killmails(url, 'killlistfeed:' + pagepath);
 }

@@ -40,9 +40,15 @@ async function f(app) {
 
         let res = await app.phin('https://zkillboard.com/api/history/' + key + '.json');
         if (res.statusCode == 200) {
-            for (const [id, hash] of Object.entries(JSON.parse(res.body))) {
-                if (app.bailout) return;
-                added += await app.util.killmails.add(app, parseInt(id), hash);
+            try {
+                for (const [id, hash] of Object.entries(JSON.parse(res.body))) {
+                    if (app.bailout) return;
+                    added += await app.util.killmails.add(app, parseInt(id), hash);
+                }
+            } catch (e) {
+                console.log('https://zkillboard.com/api/history/' + key + '.json', e.message);
+                await app.sleep(10000);
+                return;
             }
         }
         await app.redis.hset("zkb:dailies_lastcount", key, currentCount);

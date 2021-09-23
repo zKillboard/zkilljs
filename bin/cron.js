@@ -2,10 +2,10 @@
 
 var tasks = {
     'balance_resources': createTaskSettings(5),
-    'ztop': createTaskSettings(1),
+    'ztop': createTaskSettings(5),
 
     // maintenance fun
-    'trigger_price_checks': createTaskSettings(1),
+    'trigger_price_checks': createTaskSettings(3600),
     'update_prices': createTaskSettings(1),
     'update_factions.js': createTaskSettings(60),
     'update_information.js': createTaskSettings(1),
@@ -19,7 +19,7 @@ var tasks = {
     'listen_redisq.js': createTaskSettings(15),
     //'fetch_wars.js': createTaskSettings(9600),
     //'fetch_warmails': createTaskSettings(1),
-    'fetch_dailies': createTaskSettings(86400, 0, -50000),
+    'fetch_dailies': createTaskSettings(300),
 
     // killmail consumers
     'fetch_mails.js': createTaskSettings(1),
@@ -27,15 +27,16 @@ var tasks = {
     'update_stats_prepare.js': createTaskSettings(1),
 
     // statistics
-    'update_stats.js': createTaskSettings(60),
-    'publish_stats_updates.js': createTaskSettings(15, 0, -10),
-    'publish_topten_updates.js': createTaskSettings(900, 0, -30),
+    'update_stats.js': createTaskSettings(15),
+    'publish_stats_updates.js': createTaskSettings(15),
+    'publish_topten_updates.js': createTaskSettings(900),
+    //'publish_topten_updates.js': createTaskSettings(900, 0, 60),
     //'update_stats_top_lists.js': createTaskSettings(60, 0, -10),
     'populate_ranks.js': createTaskSettings(86400),
 
     // cleanups
-    'update_stats_week_cleanup.js': createTaskSettings(900, 0, 30),
-    'update_stats_recent_cleanup.js': createTaskSettings(10800, 0, 60),
+    'update_stats_week_cleanup.js': createTaskSettings(900),
+    'update_stats_recent_cleanup.js': createTaskSettings(10800),
 }
 
 var app = undefined;
@@ -171,6 +172,7 @@ var watch = require('node-watch');
 watch('.env', {recursive: true}, restart);
 watch('bin/cron.js', {recursive: true}, restart);
 watch('cron/', {recursive: true}, restart);
+watch('util/', {recursive: true}, restart);
 
 async function restart(evt, name) {
     await app.redis.set("RESTART", "true");

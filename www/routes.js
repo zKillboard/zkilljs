@@ -48,65 +48,53 @@ async function doStuff(req, res, next, controllerFile, pugFile) {
 
         req.verify_query_params = verify_query_params;
 
-        var rendered = await app.redis.get('zkilljs:rendered:' + req.url);
-        if (false && rendered != null) {
-            var ttl = await app.redis.ttl('zkilljs:rendered:' + req.url);
-            res.set('Cache-Control', 'public, max-age=' + ttl);
-            console.log('sending redis cache result');
-            res.send(rendered);
-            res.end();
-            return;
-        }
+        if (await if_rendered_send(app, req, res)) return;
 
         let result = wrap_promise(controller(req, res));
-        await app.sleep(1); // give the above a chance to execute
+        await app.sleep(1);
 
-        // For long running queries (such as top groups), redirect after 15 seconds to keep the connection
-        // from timing out. 
+        // For long running queries (such as top groups), redirect after 15 seconds to keep the connection from timing out. 
         var now = app.now();
         while (result.isFinished() == false) {
             if ((app.now() - now) > 15) {
                 res.redirect(req.url);
+                res.end();
                 return;
             }
             await app.sleep(1);
         }
+
         result = await result;
+       
 
         if (result == undefined) result = null;
         var maxAge = Math.min(3600, (result == null ? 0 : (result.maxAge || 0)));
         if (result != undefined && result.content_type != undefined) res.setHeader("Content-Type", result.content_type)
 
-        res.set('Cache-Control', 'public, max-age=' + maxAge);
         
         if (result === null || result === undefined) {
             res.sendStatus(404);
         } else if (typeof result === "object") {
             if (pugFile !== undefined) {
-                var rendered = (maxAge > 0 ? await app.redis.get('zkilljs:rendered:' + req.url) : null);
-                if (false && rendered != null) {
-                    console.log('sending redis cache result');
-                    res.send(rendered);
-                } else {
-                    if (compiled[pugFile] == null) {
-                        compiled[pugFile] = pug.compileFile(__dirname + '/views/' + pugFile);
-                    }
-                    var o = {};
-                    Object.assign(o, res.locals);
-                    Object.assign(o, result);
+                if (await if_rendered_send(app, req, res)) return;
 
-                    var render = compiled[pugFile];
-                    var rendered = render(o, {
-                        debug: true,
-                        cache: false
-                    });
-                    res.send(rendered);
-
-                    if (maxAge > 0) await app.redis.setex('zkilljs:rendered:' + req.url, maxAge, rendered);
-
-                    // The above is several times faster, TODO figure out why... 
-                    //res.render(pugFile, result);
+                if (compiled[pugFile] == null) {
+                    compiled[pugFile] = pug.compileFile(__dirname + '/views/' + pugFile);
                 }
+                var o = {};
+                Object.assign(o, res.locals);
+                Object.assign(o, result);
+
+                var render = compiled[pugFile];
+                var rendered = render(o, {
+                    debug: true,
+                    cache: false
+                });
+                
+                if (maxAge > 0) res.set('Cache-Control', 'public, max-age=' + maxAge);
+                res.send(rendered);
+
+                if (maxAge > 0) await app.redis.setex('zkilljs:rendered:' + req.url, maxAge, rendered);
             } else if (result.json !== undefined) res.json(result.json);
         } else if (typeof result == "string") {
             res.redirect(result);
@@ -238,6 +226,19 @@ function rebuild_query(base_url, query_params, valid_array, required) {
         url += (key + '=' + rebuild[key]);
     }
     return url;
+}
+
+async function if_rendered_send(app, req, res) {
+    var render_cache_key = 'zkilljs:rendered:' + req.url;
+    var rendered = await app.redis.get(render_cache_key);
+    if (rendered != null) {
+        console.log(req.url, 'rendered sent');
+        res.set('Cache-Control', 'public, max-age=' + await app.redis.ttl(render_cache_key));
+        res.send(rendered);
+        res.end();
+        return true;
+    }
+    return false;
 }
 
 function wrap_promise(promise) {

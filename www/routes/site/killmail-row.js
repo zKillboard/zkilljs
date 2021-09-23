@@ -47,23 +47,9 @@ async function getData(req, res) {
             rawmail: rawmail,
             victims: victim_array.join(','),
         },
-        maxAge: 0
+        maxAge: 3600
     };
 
     ret.json = await app.util.info.fill(app, ret.json);
-
-    // ret.json.rawmail.calculated_security_status = get_ccp_security_level(ret.json.rawmail.solar_system_security_status)
-
-    // console.log(ret.json.rawmail.solar_system_security_status, ret.json.rawmail.solar_system_security_rounded);
-    return ret;
-}
-
-function get_ccp_security_level(security_status) {
-    return security_status;
-
-    var ret = security_status.number_format(0, 1);
-    if (ret == 0 && security_status > 0) {
-        ret = 0.1;
-    }
     return ret;
 }

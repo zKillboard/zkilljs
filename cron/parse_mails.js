@@ -26,7 +26,7 @@ const match = {
 
 async function f(app) {
     if (firstRun) {
-        sw.start(app, app.db.killhashes, match, parse_mail, 99999);
+        sw.start(app, app.db.killhashes, match, parse_mail, 10);
         firstRun = false;
     }
 }

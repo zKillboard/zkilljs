@@ -61,7 +61,7 @@ img.image {
 }
 
 .killrow {
-    border-top: solid 1px #222;
+    border-bottom: solid 1px #222;
 }
 
 .killrowblock {
@@ -88,12 +88,12 @@ div.killrow ul.info1 {
 }
 
 div.killrow ul.info2 {
-    max-width:  100vw
+    width: 9em;
 }
 
 div.killrow ul.victim,
 div.killrow ul.finalblow {
-    max-width:  18em;
+    max-width:  15em;
 }
 
 div.killrow ul.image {
@@ -364,9 +364,9 @@ hr {
 }
 
 .top10block table, .topiskblock table {
-    min-width: 200px;
-    width:  200px;
-    max-width:  200px;
+    min-width: 175px;
+    width:  175px;
+    max-width:  175px;
     table-layout: fixed;
     overflow:  hidden;
 }
