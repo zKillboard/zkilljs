@@ -48,7 +48,7 @@ async function add(app, result, data, epoch) {
     data[epoch + '-dangerlevel'] = get(result, epoch, 'snuggly');
     data[epoch + '-solopct'] = get(result, epoch, 'solo');
     data[epoch + '-avg-inv-cnt'] = get(result, epoch, 'avg_inv_cnt');
-    data[epoch + '-zgrade'] = get(result, epoch, 'grade');
+    //data[epoch + '-zgrade'] = get(result, epoch, 'grade');
     data[epoch + '-zscore'] = get(result, epoch, 'score');
 
     var labels = get(result, epoch, 'labels');
