@@ -652,7 +652,7 @@ function ws_message(msg) {
                 console.log('reloading');
                 setTimeout(function() { location.reload(true); }, 1000 + Math.random(500, 2000)); 
             }
-            $("#mails_parsed").text(json.mails_parsed);
+            $("#mails_parsed").text(Number.parseInt(json.mails_parsed || 0).toLocaleString());
             break;
         default:
             console.log(json);
