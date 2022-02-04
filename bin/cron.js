@@ -30,8 +30,8 @@ var tasks = {
     'update_stats.js': createTaskSettings(15),
     'publish_stats_updates.js': createTaskSettings(15),
     'publish_topten_updates.js': createTaskSettings(900),
-    //'publish_topten_updates.js': createTaskSettings(900, 0, 60),
-    //'update_stats_top_lists.js': createTaskSettings(60, 0, -10),
+    'publish_topten_updates.js': createTaskSettings(900, 0, 60),
+    'update_stats_top_lists.js': createTaskSettings(60, 0, -10),
     'populate_ranks.js': createTaskSettings(86400),
 
     // cleanups
