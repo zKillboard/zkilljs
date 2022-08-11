@@ -1,16 +1,16 @@
 include mixins.pug
 
-- var rawmail = json.rawmail
+- var rawmail = rawmail
 
--var rowid = 'killmail-' + json.rawmail.killmail_id
--var time = json.rawmail.killmail_time.replace("T", "<br/>").replace("Z", "");
+-var rowid = 'killmail-' + rawmail.killmail_id
+-var time = rawmail.killmail_time.replace("T", "<br/>").replace("Z", "");
 
-div.row.m-0.p-0.killrow(victims=json.victims labels=json.rawmail.labels epoch=json.rawmail.epoch)
+div.row.m-0.p-0.killrow(victims=victims labels=rawmail.labels epoch=rawmail.epoch)
 	div.killrowblock.col-12.col-md-4.m-0.p-0
 		ul.image
-			-var url = '/killmail/' + json.rawmail.killmail_id
-			-var image = 'https://images.evetech.net/types/' + json.rawmail.victim.ship_type_id + '/icon?size=' + 64
-			-var name = 'Killmail ' + json.rawmail.killmail_id
+			-var url = '/killmail/' + rawmail.killmail_id
+			-var image = 'https://images.evetech.net/types/' + rawmail.victim.ship_type_id + '/icon?size=' + 64
+			-var name = 'Killmail ' + rawmail.killmail_id
 			+tag_image('span', url, image, name, 64)
 		ul.info1
 			li
@@ -19,45 +19,45 @@ div.row.m-0.p-0.killrow(victims=json.victims labels=json.rawmail.labels epoch=js
 				span.killmail-icon
 					i.bi.bi-check.aggressor
 					i.bi.bi-x.victim
-				span.fnumber= json.rawmail.total_value
+				span.fnumber= rawmail.total_value
 		ul.info2
-			+type_id_link('li', 'system', json.rawmail.solar_system_id, json.rawmail.solar_system_name, null, 'sec' + json.rawmail.solar_system_security_rounded)
-			+type_id_link('li', 'constellation', json.rawmail.constellation_id, json.rawmail.constellation_name)
-			+type_id_link('li', 'region', json.rawmail.region_id, json.rawmail.region_name)
+			+type_id_link('li', 'system', rawmail.solar_system_id, rawmail.solar_system_name, null, 'sec' + rawmail.solar_system_security_rounded)
+			+type_id_link('li', 'constellation', rawmail.constellation_id, rawmail.constellation_name)
+			+type_id_link('li', 'region', rawmail.region_id, rawmail.region_name)
 	div.killrowblock.col-12.col-md-4.m-0.p-0
 		ul.image
-			if json.rawmail.victim.alliance_id > 0
-				+alli_image('li', json.rawmail.victim.alliance_id, json.rawmail.victim.alliance_name, 64)
-			else if json.rawmail.victim.corporation_id > 1999999 || parseInt(json.rawmail.final_blow.character_id) == 0
-				+corp_image('li', json.rawmail.victim.corporation_id, json.rawmail.victim.corporation_name, 64)
+			if rawmail.victim.alliance_id > 0
+				+alli_image('li', rawmail.victim.alliance_id, rawmail.victim.alliance_name, 64)
+			else if rawmail.victim.corporation_id > 1999999 || parseInt(rawmail.final_blow.character_id) == 0
+				+corp_image('li', rawmail.victim.corporation_id, rawmail.victim.corporation_name, 64)
 			else
-				+char_image('li', json.rawmail.victim.character_id, json.rawmail.victim.character_name, 64)
+				+char_image('li', rawmail.victim.character_id, rawmail.victim.character_name, 64)
 		ul.victim
 			li
-				+char_id_link('span', json.rawmail.victim.character_id, json.rawmail.victim.character_name)
-				if json.rawmail.victim.character_id > 0
+				+char_id_link('span', rawmail.victim.character_id, rawmail.victim.character_name)
+				if rawmail.victim.character_id > 0
 					|   -  
-				+type_id_link('span', 'item', json.rawmail.victim.ship_type_id, json.rawmail.victim.ship_type_name)
-			+corp_id_link('li', json.rawmail.victim.corporation_id, json.rawmail.victim.corporation_name)
-			+alli_id_link('li', json.rawmail.victim.alliance_id, json.rawmail.victim.alliance_name)
+				+type_id_link('span', 'item', rawmail.victim.ship_type_id, rawmail.victim.ship_type_name)
+			+corp_id_link('li', rawmail.victim.corporation_id, rawmail.victim.corporation_name)
+			+alli_id_link('li', rawmail.victim.alliance_id, rawmail.victim.alliance_name)
 	div.killrowblock.col-12.col-md-4.m-0.p-0
 		ul.image
-			if json.rawmail.final_blow.alliance_id > 0
-				+alli_image('li', json.rawmail.final_blow.alliance_id, json.rawmail.final_blow.alliance_name, 64)
-			else if json.rawmail.final_blow.corporation_id > 1999999 || parseInt(json.rawmail.final_blow.character_id) == 0
-				+corp_image('li', json.rawmail.final_blow.corporation_id, json.rawmail.final_blow.corporation_name, 64)
-			else if json.rawmail.final_blow.character_id > 0
-				+char_image('li', json.rawmail.final_blow.character_id, json.rawmail.final_blow.character_name, 64)
+			if rawmail.final_blow.alliance_id > 0
+				+alli_image('li', rawmail.final_blow.alliance_id, rawmail.final_blow.alliance_name, 64)
+			else if rawmail.final_blow.corporation_id > 1999999 || parseInt(rawmail.final_blow.character_id) == 0
+				+corp_image('li', rawmail.final_blow.corporation_id, rawmail.final_blow.corporation_name, 64)
+			else if rawmail.final_blow.character_id > 0
+				+char_image('li', rawmail.final_blow.character_id, rawmail.final_blow.character_name, 64)
 			else
-				+type_image('li', json.rawmail.final_blow.ship_type_id, json.rawmail.final_blow.ship_type_name, 64)
+				+type_image('li', rawmail.final_blow.ship_type_id, rawmail.final_blow.ship_type_name, 64)
 		ul.finalblow
 			- var tag
-			- if (json.rawmail.stats == false) tag = 'nostats'
-			- else if (json.rawmail.labels.indexOf('solo') != -1) tag = 'solo'
-			- else tag = ' (' + json.rawmail.involved_cnt + ')'
-			+char_id_link('li', json.rawmail.final_blow.character_id, json.rawmail.final_blow.character_name + ' ', tag)
-			+corp_id_link('li', json.rawmail.final_blow.corporation_id, json.rawmail.final_blow.corporation_name)
-			+alli_id_link('li', json.rawmail.final_blow.alliance_id, json.rawmail.final_blow.alliance_name)
-			if (!(json.rawmail.final_blow.character_id > 0 || json.rawmail.final_blow.corporation_id > 0 || json.rawmail.final_blow.alliance_id > 0)) 
-				+type_id_link('li', 'type', json.rawmail.final_blow.ship_type_id, json.rawmail.final_blow.ship_type_name)
+			- if (rawmail.stats == false) tag = 'nostats'
+			- else if (rawmail.labels.indexOf('solo') != -1) tag = 'solo'
+			- else tag = ' (' + rawmail.involved_cnt + ')'
+			+char_id_link('li', rawmail.final_blow.character_id, rawmail.final_blow.character_name + ' ', tag)
+			+corp_id_link('li', rawmail.final_blow.corporation_id, rawmail.final_blow.corporation_name)
+			+alli_id_link('li', rawmail.final_blow.alliance_id, rawmail.final_blow.alliance_name)
+			if (!(rawmail.final_blow.character_id > 0 || rawmail.final_blow.corporation_id > 0 || rawmail.final_blow.alliance_id > 0)) 
+				+type_id_link('li', 'type', rawmail.final_blow.ship_type_id, rawmail.final_blow.ship_type_name)
 	div.clearfix

@@ -1,5 +1,10 @@
 'use strict';
 
+module.exports = {
+    exec: f,
+    span: 1
+}
+
 // Looks for any documents that have status set in the killmails collection,
 // if found, applies the status to the applicable document in killhashes 
 // and removes the status from the killmail document
@@ -17,5 +22,3 @@ async function f(app) {
 		await app.db.killmails.updateMany({killmail_id: row.killmail_id}, {'$unset': {status: 1}}, {multi: true});
 	}
 }
-
-module.exports = f;

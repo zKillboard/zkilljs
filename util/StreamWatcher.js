@@ -47,21 +47,24 @@ function createStreamMatch(match) {
 
 async function iterate(app, iterator, f, isStream, set) {
     let count = 0;
-    while (await iterator.hasNext()) {
-        while (set.size >= 100) await app.sleep(1); // don't flood the stack        
-        call(app, f, (isStream ? (await iterator.next()).fullDocument : await iterator.next()), set);
-        count++;
+    try {
+        while (await iterator.hasNext()) {
+            while (set.size >= 100) await app.sleep(1); // don't flood the stack        
+            call(app, f, (isStream ? (await iterator.next()).fullDocument : await iterator.next()), set);
+            count++;
+        }
+    } catch(e) {
+        console.log(e);
+    } finally {
+        return count;
     }
-    return count;
 }
 
 async function call(app, f, doc, set) {
     const s = Symbol();
     try {
         set.add(s);
-        //let now = Date.now();
         await f(app, doc);
-        //console.log(f.name + ': ' + (Date.now() - now) + 'ms');
     } catch (e) {
         console.log(e);
     } finally {

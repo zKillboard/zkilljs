@@ -1,6 +1,6 @@
 const mysqlserver = require('mysql');
 
-class mysql {
+/*class mysql {
     constructor(config) {
         //this.connection = mysql.createConnection( config );
         this.connection = mysqlserver.createPool(config);
@@ -39,4 +39,4 @@ class mysql {
     }
 }
 
-module.exports = mysql;
+module.exports = mysql;*/

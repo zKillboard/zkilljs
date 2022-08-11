@@ -2,7 +2,6 @@ var ws;
 var pageActive = Date.now();
 var subscribed_channels = [];
 var browserHistory = undefined;
-var server_started = 0;
 var jquery_loaded = false;
 var path_cache = {};
 var path_hash = {};
@@ -208,6 +207,11 @@ function loadOverview(path, type, id) {
     handle_extra_filters();
 }
 
+function catchErrorHandler(e) {
+    if (e.code == 20) return; // fetch was aborted on purpose
+    console.log(e);
+}
+
 function load_killmails(url, subscribe) {
     $("#killlist").html($("#spinner").html());
     fetch(url, {
@@ -225,7 +229,7 @@ function load_killmails(url, subscribe) {
                 if (subscribe) ws_action('sub', subscribe);
             });
         }
-    });
+    }).catch(catchErrorHandler);
 }
 
 // Prevents the kill list from becoming too large and causing the browser to eat up too much memory
@@ -286,7 +290,7 @@ function apply(element, path, subscribe, delay) {
                 return;
             }
             handleResponse(res, element, path, subscribe);
-        });
+        }).catch(catchErrorHandler);
     }
 }
 
@@ -296,7 +300,7 @@ function handleResponse(res, element, path, subscribe) {
             applyHTML(element, html);
             $(element).fadeIn();
             if (subscribe) ws_action('sub', subscribe);
-        });
+        }).catch(catchErrorHandler);
     }
 }
 
@@ -339,7 +343,7 @@ function applyJSON(path) {
             return;
         }
         handleJSON(res);
-    });
+    }).catch(catchErrorHandler);
 }
 
 /* Actions to be applied after a page load */
@@ -567,7 +571,7 @@ function intToString(value) {
 
 function ws_connect() {
     try {
-        ws = new ReconnectingWebSocket('wss://' + window.location.hostname + '/websocket/', '', {
+        ws = new ReconnectingWebSocket(websocket_url, '', {
             maxReconnectAttempts: 15
         });
         ws.onmessage = function (event) {
@@ -649,7 +653,6 @@ function ws_message(msg) {
             var started = json.server_started;
             if (server_started == 0) server_started = started;
             else if (started != server_started) {
-                console.log('reloading');
                 setTimeout(function() { location.reload(true); }, 1000 + Math.random(500, 2000)); 
             }
             $("#mails_parsed").text(Number.parseInt(json.mails_parsed || 0).toLocaleString());
@@ -695,6 +698,7 @@ function load_toplists_box(modifiers = null) {
     if (modifiers.length > 0) {
         params = "?modifiers=" + modifiers.join(',');
     }
+    if (pagepath == undefined) return;
     apply('overview-toptens', '/site/toptens/' + getSelectedStatsEpoch() + pagepath + '.html' + params, 'toplistsfeed:' + pagepath, true, true);
 }
 
@@ -856,6 +860,7 @@ function filter_change() {
     abort_fetches();
     var modifiers = build_modifiers();
 
+    if (pagepath == undefined) return;
     var url = '/site/killmails' + pagepath + '.json';
     if (modifiers.length > 0) url = url + '?modifiers=' + modifiers.join(',');
 

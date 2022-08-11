@@ -2,28 +2,28 @@ include mixins.pug
 
 h1.d-none#page-title= page_title
 ul#info-box
-	+show_image('li', json.type, json.id, json.name, 128)
+	+show_image('li', type, id, name, 128)
 
 	li
 		table#info-table.table.table-borderless.table-hover.table-sm.w-100
-			-var founded = (json.founded == undefined ? '' : ('' + json.date_founded).replace('T', ' ').replace('Z', ''))
-			+info_row_a('Label:', 'label', json.label_id, json.label_id, 'uppercase') 
-			+info_row_a('Character:', 'character', json.character_id, json.character_name)
-			+info_row_a('Corporation:', 'corporation', json.corporation_id, json.corporation_name)
-			+info_row_a('Alliance:', 'alliance', json.alliance_id, json.alliance_name)
-			+info_row_a('Faction:', 'faction', json.faction_id, json.faction_name)
-			+info_row('Ticker:', json.ticker)
-			+info_row_a('Item:', 'item', json.item_id, json.item_name)
-			+info_row_a('Group:', 'group', json.group_id, json.group_name)
-			if json.inactive == false
-				+info_row('Members:', json.member_count, 'integer')
+			-var founded = (founded == undefined ? '' : ('' + date_founded).replace('T', ' ').replace('Z', ''))
+			+info_row_a('Label:', 'label', label_id, label_id, 'uppercase') 
+			+info_row_a('Character:', 'character', character_id, character_name)
+			+info_row_a('Corporation:', 'corporation', corporation_id, corporation_name)
+			+info_row_a('Alliance:', 'alliance', alliance_id, alliance_name)
+			+info_row_a('Faction:', 'faction', faction_id, faction_name)
+			+info_row('Ticker:', ticker)
+			+info_row_a('Item:', 'item', item_id, item_name)
+			+info_row_a('Group:', 'group', group_id, group_name)
+			if inactive == false
+				+info_row('Members:', member_count, 'integer')
 			+info_row('Founded:', founded)
-			+info_row_a('Location: ', 'location', json.location_id, json.location_name)
-			+info_row_a('System:', 'system', json.solar_system_id, json.solar_system_name)
-			+info_row_a('Constellation:', 'constellation', json.constellation_id, json.constellation_name)
-			+info_row_a('Region:', 'region', json.region_id, json.region_name)
-			+info_row('Security:', json.security_status, 'decimal')
-			if json.inactive == true
+			+info_row_a('Location: ', 'location', location_id, location_name)
+			+info_row_a('System:', 'system', solar_system_id, solar_system_name)
+			+info_row_a('Constellation:', 'constellation', constellation_id, constellation_name)
+			+info_row_a('Region:', 'region', region_id, region_name)
+			+info_row('Security:', security_status, 'decimal')
+			if inactive == true
 				td Inactive:
 				td
 					| Information may be out of date.

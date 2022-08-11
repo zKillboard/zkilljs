@@ -1,4 +1,9 @@
-module.exports = f;
+'use strict';
+
+module.exports = {
+    exec: f,
+    span: 5
+}
 
 var fs = require('fs');
 var util = require('util');
@@ -14,28 +19,20 @@ var epochs = {
 var first_run = true;
 
 async function f(app) {
-    await ztop(app);
-    /*if (first_run) {
+    if (first_run == true) {
         first_run = false;
-        constant_ztop(app);
-    }*/
+    }
+    await ztop(app);
 }
 
 async function cleanup(app) {
-    let keys = await app.redis.keys('ztop:*');
-
-    for (let key of keys) {
-        await app.redis.del(key); 
-    }
-
-    first_run = false;
+    await clear_keys(app, await app.redis.keys('ztop:*'));
 }
 
-async function constant_ztop(app) {
-    try {
-        await ztop(app);
-    } finally {
-        setTimeout(constant_ztop.bind(null, app), 1000);
+async function clear_keys(app, keys) {
+    for (let key of keys) {
+        console.log('del', key);
+        await app.redis.del(key); 
     }
 }
 
@@ -62,22 +59,21 @@ async function ztop(app) {
     }
     out.push(str + '    seconds');
 
-    let values = [];
-    let keys = Object.keys(app.ztops); //await app.redis.keys("zkb:ztop:*");
-    
-    for (let key of keys) {
-        await app.redis.setex('ztop:base:' + key, 86400, "true");
-        var value = app.ztops[key];
+    let keys = await app.redis.keys('zkb:ztop:*');
 
-        app.ztops[key] = 0;
-        str = '';
+    for (let key of keys) {
+        let base = key.replace('zkb:ztop:', '');
+        await app.redis.setex('ztop:base:' + base, 86400, "true");
+        let value = parseInt(await app.redis.get(key));
+
         for (let epoch in epochs) {
-            var redis_key = 'ztop:' + key + ':' + epochs[epoch] + ':' + now;
+            var redis_key = 'ztop:' + base + ':' + epochs[epoch] + ':' + now;
             if (value > 0) {
                 await app.redis.incrby(redis_key, value);
                 await app.redis.expire(redis_key, epochs[epoch]);
             }
         }
+        await app.redis.incrby(key, -1 * parseInt(value));
     }
 
     keys = await app.redis.keys('ztop:base:*');

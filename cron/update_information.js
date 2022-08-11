@@ -1,5 +1,10 @@
 'use strict';
 
+module.exports = {
+    exec: f,
+    span: 1
+}
+
 var adds = ['character_id', 'corporation_id', 'alliance_id', 'group_id', 'category_id', 'constellation_id', 'region_id', 'creator_corporation_id', 'executor_corporation_id', 'creator_id', 'ceo_id', 'types', 'groups', 'systems', 'constellations', 'star_id'];
 var maps = {
     'creator_corporation_id': 'corporation_id',
@@ -77,8 +82,9 @@ async function populateSet(app, typeValue) {
             if (app.bailout == true || app.no_api == true) break;
 
             // limit to 10/s 
-            if (typeValue == 'character_id' || typeValue == 'corporation_id' || typeValue == 'alliance_id') await app.sleep(100);
-            else await app.sleep(1000);
+            /*if (typeValue == 'character_id' || typeValue == 'corporation_id' || typeValue == 'alliance_id') await app.sleep(100);
+            else await app.sleep(1000);*/
+            await app.sleep(100);
             var p = fetch(app, await rows.next());
             let wait = 20;
             while (set.size > 100) {
@@ -126,7 +132,7 @@ async function fetch(app, row) {
 
         await app.redis.hset('zkilljs:info:' + row.type, row.id, JSON.stringify(row));
 
-        let url = app.esi + urls[row.type].replace(':id', row.id);
+        let url = process.env.esi_url + urls[row.type].replace(':id', row.id);
         await app.util.assist.esi_limiter(app);
         let res = await app.phin({
             url: url,
@@ -163,7 +169,7 @@ async function fetch(app, row) {
                 $set: body
             });
 
-            app.zincr('info_' + row.type);
+            app.util.ztop.zincr(app, 'info_' + row.type);
 
             let keys = Object.keys(body);
             for (let key of keys) {
@@ -190,7 +196,6 @@ async function fetch(app, row) {
             else if ((row.type == 'corporation_id' || row.type == 'alliance_id') && row.membercount == 0) searchname = searchname + ' (closed)';
 
             await app.mysql.query('replace into autocomplete values (?, ?, ?, ?)', [row.type, row.id, searchname, row.ticker]);
-
             return true;
             break;
         case 304: // ETAG match
@@ -244,8 +249,6 @@ async function fetch(app, row) {
         set.delete(row);
     }
 }
-
-module.exports = f;
 
 function clear_no_api(app) {
     app.no_api = false;

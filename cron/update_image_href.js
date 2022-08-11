@@ -1,6 +1,9 @@
 'use strict';
 
-module.exports = f;
+module.exports = {
+    exec: f,
+    span: -1
+}
 
 const imageServer = 'https://images.evetech.net/';
 

@@ -1,6 +1,9 @@
 'use strict';
 
-module.exports = f;
+module.exports = {
+    exec: f,
+    span: 5
+}
 
 async function f(app) {
     var promises = [];
@@ -14,6 +17,7 @@ async function f(app) {
     }).toArray();
 
     for (const row of result) {
+        if (app.bailout) break;
         promises.push(fetch_locations(app, row));
         if (promises.length > 10) {
             var p = promises.shift();

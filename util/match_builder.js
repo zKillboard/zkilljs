@@ -1,6 +1,7 @@
 'use strict';
 
 async function match_builder(app, req, kl_default = 'all') {
+    if (req == undefined) return;
 
 	if (req.params.type == 'system') {
 		req.params.type = 'solar_system';

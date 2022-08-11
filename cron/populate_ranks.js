@@ -1,5 +1,10 @@
 'use strict';
 
+module.exports = {
+    exec: f,
+    span: 86400
+}
+
 /*
 	Run daily, ensures all entities are populated into the Redis sorted sets
 	Rotate and expire for ranking history (TODO)
@@ -33,5 +38,3 @@ async function add_killed(app, row, epoch, date, date7) {
     if (killed > 0) await app.redis.zadd(rnowkey, Math.floor(killed * score), row.id);
     else await app.redis.zrem(rnowkey, row.id);
 }
-
-module.exports = f;

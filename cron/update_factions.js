@@ -1,14 +1,20 @@
 'use strict';
 
+module.exports = {
+    exec: f,
+    span: 60
+}
+
+
 async function f(app) {
     var factionCount = await app.db.information.countDocuments({type: 'faction_id', last_updated: {'$lt': (Date.now() / 1000)}});
     if (factionCount == 0) return;
     
     console.log('Updating factions');
     await app.util.assist.esi_limiter(app);
-    let res = await app.phin(app.esi + '/latest/universe/factions/');
+    let res = await app.phin(process.env.esi_url + '/latest/universe/factions/');
     if (res.statusCode == 200) {
-        app.zincr('esi_fetched');
+        app.util.ztop.zincr(app, 'esi_fetched');
         let json = JSON.parse(res.body);
         for (let row of json) {
             let infoRow = await app.db.information.findOne({
@@ -25,5 +31,3 @@ async function f(app) {
         }
     } else throw 'Invalid faction result';
 }
-
-module.exports = f;

@@ -1,5 +1,10 @@
 'use strict';
 
+module.exports = {
+    exec: f,
+    span: 1
+}
+
 var concurrent = 0;
 var firstRun = true;
 
@@ -27,7 +32,7 @@ async function populateSet(app) {
             prepStats(app, await killhashes.next());
 
             prepped = true;
-            app.zincr('stats_prepped');
+            app.util.ztop.zincr(app, 'stats_prepped');
         }
         while (concurrent > 0) await app.sleep(1);
     } catch (e) {
@@ -123,5 +128,3 @@ async function add_killmail(app, killmail, type, id) {
     await app.db.statistics.updateOne({type: type, id: id, sequence: { $lt: killmail.sequence } }, { $set: set, });
     sequenceUpdates.set(addKey, killmail.sequence);
 }
-
-module.exports = f;

@@ -1,9 +1,9 @@
 include mixins.pug
 include mixins-attackers.pug
 
-- var rawmail = json.rawmail;
-- var killmail = json.killmail;
-- var victim = json.rawmail.victim;
+- var rawmail = rawmail;
+- var killmail = killmail;
+- var victim = rawmail.victim;
 - var time = rawmail.killmail_time.replace('T', ' ').replace('Z', '');
 
 div.row.m-0.p-0
@@ -126,6 +126,6 @@ div.row.m-0.p-0
 				div#killmail-comments
 
 - //var fwDoc = document.getElementById("fittingwheel").contentDocument
-- var fw = JSON.stringify(json.killmail.fittingwheel, undefined)
+- var fw = JSON.stringify(killmail.fittingwheel, undefined)
 pre#fwraw(style="display: none;")= fw
 pre#fwship(style="display: none;")= victim.ship_type_id

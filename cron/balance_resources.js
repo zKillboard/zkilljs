@@ -1,5 +1,10 @@
 'use strict';
 
+module.exports = {
+    exec: f,
+    span: 5
+}
+
 async function f(app) {
     if (process.env.balance_resources == 'true') {
         app.delay_parse = false; // await hasMinimum(app.db.killhashes, {status: 'pending'}, 25);
@@ -31,5 +36,3 @@ async function hasMinimum(collection, query, min) {
     }
     return false;
 }
-
-module.exports = f;

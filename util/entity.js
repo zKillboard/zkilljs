@@ -62,11 +62,14 @@ const entity = {
                 await entity.add(app, type, id, false);
             }
 
-            if (app.bailout) throw 'bailing out!';
+            if (app.bailout) {
+                console.stack('bailing');
+                throw 'bailing out!';
+            }
             await app.sleep(1000);
             count++;
-            // if (count > 10) throw 'Taking too long with this wait for ' + type + ' ' + id;
-            //console.log('entity.wait: Waiting on ' + type + ' ' + id);
+            //if (count > 10) throw 'Taking too long with this wait for ' + type + ' ' + id;
+            //console.log('entity.wait: Waiting on ', type, id);
         }
     },
 

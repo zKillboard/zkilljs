@@ -1,6 +1,9 @@
 'use strict';
 
-module.exports = f;
+module.exports = {
+    exec: f,
+    span: 1
+}
 
 const involved_add_cache = {};
 const added_cache = {};
@@ -173,16 +176,16 @@ async function parse_mail(app, killhash) {
 
         await remove_alltime;
         await remove_recent;
-        await remove_week;
+        await remove_week; 
 
         await app.db.killmails.insertOne(killmail);
 
         if (killmail.epoch > (now - (90 * 86400))) await app.db.killmails_90.insertOne(killmail);
         if (killmail.epoch > (now - (7 * 86400))) await app.db.killmails_7.insertOne(killmail);
         await app.db.killhashes.updateOne(killhash, parsed);
-        app.zincr('mails_parsed');
+        app.util.ztop.zincr(app, 'mails_parsed');
     } catch (e) {
-        console.log(e, killhash);
+        //console.log('ERROR', e, killhash);
         await app.db.killhashes.updateOne(killhash, {
             $set: {
                 status: 'parse-error'

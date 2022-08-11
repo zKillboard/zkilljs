@@ -1,4 +1,7 @@
+'use strict';
+
 let price_cache = {};
+let cache = {};
 
 setInterval(function () {
     price_cache = {};
@@ -43,7 +46,6 @@ const price = {
     cacheIt(app, rkey, price) {
         price = this.getFloat(rkey, price);
         price_cache[rkey] = price;
-        // app.redis.setex(rkey, 3600, price);
 
         return price;
     },
@@ -129,7 +131,7 @@ const price = {
         }
 
         // Some groupIDs have hardcoded prices
-        item = await app.util.entity.info(app, 'item_id', item_id, true);
+        const item = await app.util.entity.info(app, 'item_id', item_id, true);
         if (item != undefined && item.group_id == 29) return 10000; // Capsules
         if (item != undefined && item.name.indexOf("SKIN") != -1) return 0.01;
 
@@ -156,7 +158,7 @@ async function fetch(app, item_id, date, skip_fetch) {
     date = price.format_date(d);
 
     let key = date + ':' + item_id;
-    if (app.cache.prices[key] != undefined) return app.cache.prices[key];
+    if (cache[key] != undefined) return cache[key];
 
     let marketHistory;
     let todays_key = app.util.price.get_todays_price_key();
@@ -197,7 +199,7 @@ async function fetch(app, item_id, date, skip_fetch) {
     let priceList = [];
     let marketlength = Object.keys(marketHistory).length;
     do {
-        useDate = price.format_date(useTime);
+        const useDate = price.format_date(useTime);
         if (marketHistory[useDate] != undefined) {
             priceList.push(marketHistory[useDate]);
         }
@@ -229,8 +231,8 @@ async function fetch(app, item_id, date, skip_fetch) {
     let datePrice = marketHistory[date] >= 0.01 ? marketHistory[date] : 0;
     if (datePrice > 0.01 && datePrice < avgPrice) avgPrice = datePrice;
 
-    app.cache.prices[key] = avgPrice;
-    return app.cache.prices[key];
+    cache[key] = avgPrice; // TODO fix this caching
+    return cache[key];
 }
 
 async function get_build_price(app, item_id, date) {
@@ -252,21 +254,21 @@ async function get_build_price(app, item_id, date) {
 async function get_blueprint(app, item_id) {
     try {
         await app.util.pmm.acquire(app, 'get_blueprints');
-        if (app.cache.blueprints == undefined) {
+        if (cache.blueprints == undefined) {
             let reqs = await import_reqs(app);
 
-            app.cache.blueprints = {};
+            cache.blueprints = {};
             console.log('Fetching https://sde.zzeve.com/industryActivityProducts.json');
             let res = await app.phin('https://sde.zzeve.com/industryActivityProducts.json');
             let json = JSON.parse(res.body);
             for (let i = 0; i < json.length; i++) {
                 let blueprint = json[i];
                 blueprint.reqs = reqs['item_id:' + blueprint.typeID];
-                app.cache.blueprints[blueprint.productTypeID] = blueprint;
+                cache.blueprints[blueprint.productTypeID] = blueprint;
             }
 
         }
-        return app.cache.blueprints[item_id];
+        return cache.blueprints[item_id];
     } finally {
         await app.util.pmm.release('get_blueprints');
     }

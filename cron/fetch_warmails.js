@@ -1,5 +1,7 @@
 'use strict';
 
+// interval 1
+
 const sw = require('../util/StreamWatcher.js');
 const match = {
     check_wars: true
@@ -19,7 +21,7 @@ async function fetchWarMails(app, row) {
     let page = 1;
     let url, res, json;
     do {
-        let url = app.esi + '/v1/wars/' + row.id + '/killmails/?page=' + page;
+        let url = process.env.esi_url + '/v1/wars/' + row.id + '/killmails/?page=' + page;
         await app.util.assist.esi_limiter(app);
         let res = await app.phin(url);
         if (res.statusCode != 200) return; // Something went wrong!
@@ -38,5 +40,3 @@ async function fetchWarMails(app, row) {
         }
     });
 }
-
-module.exports = f;

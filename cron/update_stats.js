@@ -1,5 +1,10 @@
 'use strict';
 
+module.exports = {
+    exec: f,
+    span: 15
+}
+
 const types = [
     "character_id",
     "corporation_id",
@@ -57,7 +62,7 @@ async function update_stats(app, collection, epoch, type, find) {
             if (record.id !== NaN) {
                 await update_record(app, collection, epoch, record);
                 iterated++;
-                app.zincr('stats_calced_' + epoch);
+                app.util.ztop.zincr(app, 'stats_calced_' + epoch);
             }
         }
     } catch (e) {
@@ -173,5 +178,3 @@ async function update_record(app, collection, epoch, record) {
         set = null;
     }
 }
-
-module.exports = f;

@@ -1,4 +1,9 @@
-module.exports = f;
+'use strict';
+
+module.exports = {
+    exec: f,
+    span: 15
+}
 
 let url = 'https://redisq.zkillboard.com/listen.php?ttw=1';
 

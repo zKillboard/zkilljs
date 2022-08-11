@@ -1,10 +1,10 @@
 include mixins.pug
 
 div#loaded-topisk
-	if json.topisk && json.topisk.length > 0
+	if topisk && topisk.length > 0
 		div#topisk-block.p-0.m-0
 			div.d-flex.align-content-around.flex-wrap
-				each row in json.topisk
+				each row in topisk
 					div.topiskblock.mr-auto
 						table.table.table-sm.table-borderless.p-0.m-0
 							tbody
@@ -33,9 +33,9 @@ div#loaded-topisk
 		br
 hr
 div#fulltoptenblock
-	if json.types
+	if types
 		div#toptensfullblock.row.d-flex.flex-wrap
-			each arr,type in json.types
+			each arr,type in types
 				div.top10block.mr-4
 					- var name = type.replace('_id', '_name');
 					- var first = arr[0]
@@ -55,8 +55,8 @@ div#fulltoptenblock
 		br
 		br
 	hr
-	i= json.timespan
-	if json.next_update
+	i= timespan
+	if next_update
 		hr
-		i= 'Next update: ' + json.next_update
+		i= 'Next update: ' + next_update
 

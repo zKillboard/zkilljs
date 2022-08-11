@@ -1,5 +1,9 @@
-module.exports = f;
+'use strict';
 
+module.exports = {
+    exec: f,
+    span: 1
+}
 
 var firstRun = true;
 
@@ -8,7 +12,7 @@ const sw = require('../util/StreamWatcher.js');
 async function f(app) {
     if (firstRun) {
         // clear failure reasons on mails that are successful
-        // app.db.killhashes.updateMany({status: 'done', failure_reason : {$exists: true}}, {$unset: {failure_reason : 1}}, {multi: true});
+        app.db.killhashes.updateMany({status: 'done', failure_reason : {$exists: true}}, {$unset: {failure_reason : 1}}, {multi: true});
         
         resetBadMails(app);
 
@@ -19,7 +23,8 @@ async function f(app) {
 
 const http_codes_reattempt = [401, 420, 502, 503, 504];
 async function resetBadMails(app) {
-    for (i = 0; i < http_codes_reattempt.length; i++) {
+    await app.db.killhashes.updateMany({status: 'parse-error'}, {$set: {status: 'pending'}}, {multi: true});
+    for (let i = 0; i < http_codes_reattempt.length; i++) {
         let code = http_codes_reattempt[i];
         await app.db.killhashes.updateMany({status: 'failed', failure_reason: 'http ' + code}, {$set: {status: 'pending'}}, {multi: true});
     }
@@ -42,12 +47,12 @@ async function fetch(app, mail) {
             return;
         }
 
-        let url = app.esi + '/v1/killmails/' + mail.killmail_id + '/' + mail.hash + '/';
-        let res = await app.phin(url);
+        let url = process.env.esi_url + '/v1/killmails/' + mail.killmail_id + '/' + mail.hash + '/';
+        let res = await app.phin({url: url, timeout: 5000});
         await app.util.assist.esi_result_handler(app, res);
 
         if (res.statusCode == 200) {
-            app.zincr('mails_fetched');
+            app.util.ztop.zincr(app, 'mails_fetched');
 
             var body = JSON.parse(res.body);
 

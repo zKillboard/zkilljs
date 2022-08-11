@@ -1,5 +1,10 @@
 'use strict';
 
+module.exports = {
+    exec: f,
+    span: 3600
+}
+
 async function f(app) {
     const alliances = await app.db.information.find({type: 'alliance_id'}).toArray();
 
@@ -24,5 +29,3 @@ async function f(app) {
     }
 
 }
-
-module.exports = f;

@@ -1,5 +1,7 @@
 'use strict';
 
+// interval 9600
+
 let max_war_id = 0;
 
 async function f(app) {
@@ -11,7 +13,7 @@ async function f(app) {
     do {
     	if (app.bailout || app.no_api) return;
         
-        let url = app.esi + '/v1/wars/' + (min_id == 9999999999 ? '' : '?max_war_id=' + min_id);
+        let url = process.env.esi_url + '/v1/wars/' + (min_id == 9999999999 ? '' : '?max_war_id=' + min_id);
 
         await app.util.assist.esi_limiter(app);
         res = await app.phin(url);
@@ -38,5 +40,3 @@ async function f(app) {
     } while (json.length > 0 && min_id > 1 && min_id > max_war_id);
     max_war_id = max_id;
 }
-
-module.exports = f;

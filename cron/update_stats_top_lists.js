@@ -1,5 +1,11 @@
 'use strict';
 
+module.exports = {
+    exec: f,
+    span: 60,
+    offset: -10
+}
+
 var types = [
     'character_id',
     'corporation_id',
@@ -43,7 +49,7 @@ async function do_epoch(app, epoch) {
             await do_update(app, epoch, await result.next());
             iterated = true;
 
-            app.zincr('stats_toplist_' + epoch);
+            app.util.ztop.zincr(app, 'stats_toplist_' + epoch);
         }
     } finally {
         setTimeout(function() { do_epoch(app, epoch); }, (iterated == true ? 1 : 1000));
@@ -131,5 +137,3 @@ async function do_queries(app, collection, record, match, existing, total_kills,
     }
     return ret;
 }
-
-module.exports = f;

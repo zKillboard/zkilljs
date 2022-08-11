@@ -1,5 +1,10 @@
 'use strict';
 
+module.exports = {
+    exec: f,
+    span: 1
+}
+
 const set = new Set();
 
 async function f(app) {
@@ -59,7 +64,7 @@ async function update_price(app, row, todays_price_key) {
         }
 
         // console.log('Fetching price for', item_id);
-        var url = app.esi + '/v1/markets/10000002/history/?type_id=' + item_id;
+        var url = process.env.esi_url + '/v1/markets/10000002/history/?type_id=' + item_id;
         await app.util.assist.esi_limiter(app);
         let res = await app.phin(url);
         await app.util.assist.esi_result_handler(app, res);
@@ -72,21 +77,19 @@ async function update_price(app, row, todays_price_key) {
                 }
             }
             await app.db.prices.updateOne(row, {'$set': updates});
-            app.zincr('price_fetch');
+            app.util.ztop.zincr(app, 'price_fetch');
         } else if (res.statusCode == 404) {
             updates.no_fetch = true;
             await app.db.prices.updateOne(row, {'$set': updates });
             //console.log('Marking price check for ' + item_id + ' as no_fetch');
-            app.zincr('price_fetch_error');
+            app.util.ztop.zincr(app, 'price_fetch_error');
             await app.sleep(1000);
         } else {
             console.log('Price fetch ended in error: ' + res.statusCode, url);
-            app.zincr('price_fetch_error');
+            app.util.ztop.zincr(app, 'price_fetch_error');
             await app.sleep(1000);
         }
     } finally {
         set.delete(s);
     }
 }
-
-module.exports = f;

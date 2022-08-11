@@ -5,37 +5,37 @@ var router = express.Router({
 module.exports = router;
 
 // Site
-addGet('/index.html', 'site/index', 'index.pug');
-addGet('/site/information/:type/:id.html', 'site/information.js', 'information.pug');
-addGet('/site/killmails/:type/:id.json', 'site/kill-list.js', 'kill-list.pug');
-addGet('/site/statistics/:type/:id.html', 'site/statistics.js', 'statistics.pug');
-addGet('/site/toptens/:epoch/:type/:id.html', 'site/toptens.js');
+//addGet('/index.html', 'site/index', 'index.pug');
+//addGet('/site/information/:type/:id.html', 'site/information.js', 'information.pug');
+//addGet('/site/killmails/:type/:id.json', 'site/kill-list.js', 'kill-list.pug');
+//addGet('/site/statistics/:type/:id.html', 'site/statistics.js', 'statistics.pug');
+//addGet('/site/toptens/:epoch/:type/:id.html', 'site/toptens.js');
 addGet('/site/ztop.txt', 'site/ztop.js', 'ztop.pug');
 
 // Cached endpoints
-addGet('/cache/1hour/killmail/:id.html', 'site/killmail.js', 'killmail.pug');
-addGet('/cache/1hour/killmail/:id/remaining.html', 'site/killmail-remaining.js', 'killmail-remaining.pug');
-addGet('/cache/1hour/killmail/row/:id.html', 'site/killmail-row.js', 'killmail-row.pug');
-addGet('/cache/1hour/killmails/:type/:id.json', 'site/kill-list.js');
-addGet('/cache/1hour/toptens/:epoch/:type/:id.html', 'site/toptens.js', 'toptens.pug');
-addGet('/cache/1hour/autocomplete/', 'site/autocomplete.js');
+//addGet('/cache/1hour/killmail/:id.html', 'site/killmail.js', 'killmail.pug');
+//addGet('/cache/1hour/killmail/:id/remaining.html', 'site/killmail-remaining.js', 'killmail-remaining.pug');
+//addGet('/cache/1hour/killmail/row/:id.html', 'site/killmail-row.js', 'killmail-row.pug');
+//addGet('/cache/1hour/killmails/:type/:id.json', 'site/kill-list.js');
+//addGet('/cache/1hour/toptens/:epoch/:type/:id.html', 'site/toptens.js', 'toptens.pug');
+//addGet('/cache/1hour/autocomplete/', 'site/autocomplete.js');
 
-addGet('/cache/1hour/api/information/:type/:id/:field.html', 'site/information', 'raw.pug');
-addGet('/cache/1hour/stats_box/:type/:id.json', 'api/stats_box.js');
+//addGet('/cache/1hour/api/information/:type/:id/:field.html', 'site/information', 'raw.pug');
+//addGet('/cache/1hour/stats_box/:type/:id.json', 'api/stats_box.js');
 
 // API endpoints
-addGet('/api/1hour/information/:type/:id.json', 'api/information.js');
-addGet('/api/1hour/killmail/:id.json', 'api/killmail.js');
-addGet('/api/1hour/statistics/:type/:id.json', 'api/statistics.js');
-addGet('/api/1hour/killmails/recent/:type/:id.json', 'api/killmails.js');
-addGet('/api/1hour/killmails/:date/:type/:id.json', 'api/killmails-daily.js');
+//addGet('/api/1hour/information/:type/:id.json', 'api/information.js');
+//addGet('/api/1hour/killmail/:id.json', 'api/killmail.js');
+//addGet('/api/1hour/statistics/:type/:id.json', 'api/statistics.js');
+//addGet('/api/1hour/killmails/recent/:type/:id.json', 'api/killmails.js');
+//addGet('/api/1hour/killmails/:date/:type/:id.json', 'api/killmails-daily.js');
 
 addGet('/api/mongo.json', 'api/mongo.js');
 
 addGet('/:type/:id', 'site/index', 'index.pug');
 addGet('/', 'site/index', 'index.pug');
 
-addGet('/robots.txt', 'site/robotstxt.js', 'robotstxt.pug');
+//addGet('/robots.txt', 'site/robotstxt.js', 'robotstxt.pug');
 
 const pug = require('pug');
 var compiled = {};

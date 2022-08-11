@@ -1,5 +1,10 @@
 'use strict';
 
+module.exports = {
+    exec: f,
+    span: 300
+}
+
 async function f(app) {
     if (app.no_fetch_dailies) return;
 
@@ -56,5 +61,3 @@ async function f(app) {
     }
     if (added > 0) console.log('fetch_dailies added ' + added + ' killmails');
 }
-
-module.exports = f;
