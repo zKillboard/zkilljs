@@ -3,6 +3,6 @@
   "version": "0.0.1",
   "license": "MIT",
   "dependencies": {
-    "fundamen": "^0.0.7"
+    "fundamen": "0.1.*"
   }
 }
