@@ -27,6 +27,8 @@
 // del "zkilljs:epoch:week:sequence" "zkilljs:epoch:recent:sequence"
 
 async function f(app) {
+    while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
+
     let a = app.db.killmails.removeMany({});
     let b = app.db.statistics.removeMany({});
     let c = app.db.killhashes.updateMany({status: {$ne: {status: 'fetched'}}}, {

@@ -8,6 +8,8 @@ module.exports = {
 const set = new Set();
 
 async function f(app) {
+    while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
+    
     if (app.no_parsing || app.no_api) return;
 
     let todays_price_key = app.util.price.get_todays_price_key();

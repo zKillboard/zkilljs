@@ -18,6 +18,8 @@ async function f(app) {
 }
 
 async function populateSet(app) {
+    while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
+    
     let prepped = false;
     try {
         if (app.no_stats || app.delay_stats) return;

@@ -5,10 +5,10 @@ module.exports = {
     span: 5
 }
 
-var fs = require('fs');
-var util = require('util');
+const fs = require('fs');
+const util = require('util');
 
-var epochs = {
+const epochs = {
     moment: 5,
     minute: 60,
     five: 300,
@@ -16,9 +16,11 @@ var epochs = {
     //day: 86400,
 }
 
-var first_run = true;
+let first_run = true;
 
 async function f(app) {
+    while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
+    
     if (first_run == true) {
         first_run = false;
     }
@@ -39,7 +41,7 @@ async function clear_keys(app, keys) {
 async function ztop(app) {
     let out = [];
 
-    var now = app.now();
+    const now = app.now();
 
     out.push([new Date()]);
 
@@ -53,7 +55,7 @@ async function ztop(app) {
         ].join(', '));
     out.push([]);
 
-    var str = '';
+    let str = '';
     for (let epoch in epochs) {
         str += (('           ' + (epochs[epoch])).toLocaleString()).slice(-12);
     }
@@ -67,10 +69,10 @@ async function ztop(app) {
         let value = parseInt(await app.redis.get(key));
 
         for (let epoch in epochs) {
-            var redis_key = 'ztop:' + base + ':' + epochs[epoch] + ':' + now;
+            const redis_key = 'ztop:' + base + ':' + epochs[epoch] + ':' + now;
             if (value > 0) {
                 await app.redis.incrby(redis_key, value);
-                await app.redis.expire(redis_key, epochs[epoch]);
+                await app.redis.expire(redis_key, epochs[epoch] * 2);
             }
         }
         await app.redis.incrby(key, -1 * parseInt(value));
@@ -83,21 +85,21 @@ async function ztop(app) {
         key = key.replace('ztop:base:', '');
 
         for (let epoch in epochs) {
-            var total = await get_total(app, 'ztop:' + key + ':' + epochs[epoch]);
+            const total = await get_total(app, 'ztop:' + key + ':' + epochs[epoch]);
             str += ('           ' + total.toLocaleString()).slice(-12);
             if (epoch == 'hour') await app.redis.setex('www:status:' + key, 3600, total);
         }
         out.push(str + '    ' + key);
     }
 
-    var output = out.join('\n');
+    let output = out.join('\n');
     await app.redis.setex("server-information", 60, output);
     await fs.writeFileSync('/tmp/ztop.txt', output, 'utf-8');
 }
 
 async function get_total(app, redis_base) {
     let keys = await app.redis.keys(redis_base + ':*');
-    var total = 0;
+    let total = 0;
     for (let i = 0; i < keys.length; i++) {
         let key = keys[i];
         let value = await app.redis.get(key);

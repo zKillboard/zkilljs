@@ -9,6 +9,8 @@ module.exports = {
 // if found, applies the status to the applicable document in killhashes 
 // and removes the status from the killmail document
 async function f(app) {
+	while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
+	
 	var result = await app.db.killmails.find({status: {'$exists': 1}});
 	var row;
 	while (await result.hasNext()) {

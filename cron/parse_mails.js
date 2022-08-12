@@ -28,6 +28,8 @@ const match = {
 };
 
 async function f(app) {
+    while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
+    
     if (firstRun) {
         sw.start(app, app.db.killhashes, match, parse_mail, 10);
         firstRun = false;

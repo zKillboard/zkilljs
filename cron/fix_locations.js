@@ -3,6 +3,8 @@
 var types = ['solar_system_id', 'constellation_id', 'region_id', 'location_id'];
 
 async function f(app) {
+    while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
+    
     var iter = await app.db.killmails.find({
         'involved.location_id': NaN
     });
@@ -28,7 +30,6 @@ async function f(app) {
 
         }
     }
-    console.log('done');
     process.exit();
 }
 

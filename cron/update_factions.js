@@ -7,6 +7,8 @@ module.exports = {
 
 
 async function f(app) {
+    while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
+    
     var factionCount = await app.db.information.countDocuments({type: 'faction_id', last_updated: {'$lt': (Date.now() / 1000)}});
     if (factionCount == 0) return;
     

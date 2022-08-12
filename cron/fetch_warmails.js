@@ -1,6 +1,9 @@
 'use strict';
 
-// interval 1
+module.exports = {
+    exec: f,
+    span: 1
+}
 
 const sw = require('../util/StreamWatcher.js');
 const match = {
@@ -9,6 +12,8 @@ const match = {
 var firstRun = true;
 
 async function f(app) {
+    while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
+    
     if (process.env.fetch_wars != true) return;
 
     if (firstRun) {
@@ -39,4 +44,5 @@ async function fetchWarMails(app, row) {
             check_wars: 1
         }
     });
+    await app.db.information.updateOne(row, {$set: {last_updated: app.now()}});
 }

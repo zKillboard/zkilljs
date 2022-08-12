@@ -8,6 +8,8 @@ module.exports = {
 const imageServer = 'https://images.evetech.net/';
 
 async function f(app) {
+    while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
+    
     let information = await app.db.information.find();
     while (await information.hasNext()) {
         const row = await information.next();

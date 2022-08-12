@@ -6,6 +6,8 @@ module.exports = {
 }
 
 async function f(app) {
+	while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
+	
 	var url = process.env.esi_url + '/latest/status/';
 	await app.util.assist.esi_limiter(app);
 	let res = await app.phin(url);

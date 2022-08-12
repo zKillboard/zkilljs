@@ -3,6 +3,8 @@
 module.exports = f;
 
 async function f(app) {
+    while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
+    
     var groups = await app.db.information.find({type: 'group_id'});
     let row = null;
     do {

@@ -5,6 +5,8 @@
 let max_war_id = 0;
 
 async function f(app) {
+    while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
+    
     if (app.no_parsing) return;
 
     if (process.env.fetch_wars != true) return;

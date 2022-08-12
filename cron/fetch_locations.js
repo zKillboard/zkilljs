@@ -6,6 +6,8 @@ module.exports = {
 }
 
 async function f(app) {
+    while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
+    
     var promises = [];
     // Set locations fetched flag to false where it is missign for solar systems
     await app.db.information.updateMany({type: 'solar_system_id', locations_fetched: {'$exists': false}}, {$set: {locations_fetched: false}}, {multi: true});

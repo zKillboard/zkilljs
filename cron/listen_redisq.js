@@ -5,15 +5,17 @@ module.exports = {
     span: 15
 }
 
-let url = 'https://redisq.zkillboard.com/listen.php?ttw=1';
+const url = 'https://redisq.zkillboard.com/listen.php?ttw=1';
 
 async function f(app) {
+    while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
+    
     if (process.env.listen_redisq != 'true') return;
 
     try {
         do {
             if (app.bailout) return;
-            let res = await app.phin(url);
+            let res = await app.phin({url: url, timeout: 15000});
             if (res.statusCode != 200) return;
 
             var body = JSON.parse(res.body);

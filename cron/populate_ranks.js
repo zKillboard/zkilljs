@@ -10,6 +10,8 @@ module.exports = {
 	Rotate and expire for ranking history (TODO)
 */
 async function f(app) {
+    while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
+    
     var row;
     const date_now = new Date();
     const date_week_ago = new Date(date_now.getTime() - (86400000 * 7));

@@ -2,10 +2,11 @@
 
 module.exports = {
     exec: f,
-    span: 300
+    span: 15
 }
 
 async function f(app) {
+    while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
     if (app.no_fetch_dailies) return;
 
     if (process.env.fetch_dailies != 'true') return;
@@ -58,6 +59,7 @@ async function f(app) {
         }
         await app.redis.hset("zkb:dailies_lastcount", key, currentCount);
         await app.redis.srem("zkb:dailies", key);
+        if (process.env.balance_resources == 'true') break; // Finish processing, come back later
     }
     if (added > 0) console.log('fetch_dailies added ' + added + ' killmails');
 }

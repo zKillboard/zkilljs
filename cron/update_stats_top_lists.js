@@ -27,32 +27,23 @@ var collections = {
 };
 
 var sequential = 0;
-var first_run = true;
 
 async function f(app) {
-    if (first_run) {
-        var epochs = Object.keys(collections);
-        for (var i = 0; i < epochs.length; i++) {
-            do_epoch(app, epochs[i]);
-        }
-        first_run = false;
+    while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
+    
+    var epochs = Object.keys(collections);
+    for (var i = 0; i < epochs.length; i++) {
+        await do_epoch(app, epochs[i]);
     }
 }
 
 async function do_epoch(app, epoch) {
-    var iterated = false;
-    try {
-        var result = await app.db.statistics.find({[epoch + '.update_top']: true}).limit(1000);
-        while (await result.hasNext()) {
-            if (app.bailout || app.no_stats || app.delay_stat) return app.sleep(1000);
+    var result = await app.db.statistics.find({[epoch + '.update_top']: true}).limit(1000);
+    while (await result.hasNext()) {
+        if (app.bailout || app.no_stats || app.delay_stat) return app.sleep(1000);
 
-            await do_update(app, epoch, await result.next());
-            iterated = true;
-
-            app.util.ztop.zincr(app, 'stats_toplist_' + epoch);
-        }
-    } finally {
-        setTimeout(function() { do_epoch(app, epoch); }, (iterated == true ? 1 : 1000));
+        await do_update(app, epoch, await result.next());
+        app.util.ztop.zincr(app, 'stats_toplist_' + epoch);
     }
 }
 

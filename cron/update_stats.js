@@ -31,6 +31,8 @@ const epoch_keys = Object.keys(epochs);
 var first_run = true;
 
 async function f(app) {
+    while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
+    
     if (first_run) {
         for (const type of types) {
             for (const epoch of epoch_keys) {

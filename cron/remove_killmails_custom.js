@@ -3,6 +3,8 @@
 let epochs = ['killmails', 'killmails_90', 'killmails_7'];
 
 async function f(app) {
+    while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
+    
     var key = process.argv[3];
     var id = process.argv[4];
     id = parseInt(id);
@@ -15,7 +17,6 @@ async function f(app) {
         await app.util.killmails.remove_killmail(app, 'killmails', row, 'alltime');
         await app.db.killhashes.updateOne({killmail_id: row.killmail_id}, {$set: {status: 'fetched'}});
     }
-    console.log('done');
 }
 
 module.exports = f;

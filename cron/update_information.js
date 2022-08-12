@@ -54,6 +54,8 @@ var firstRun = true;
 let esi_error = 0;
 
 async function f(app) {
+    while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
+    
     if (firstRun) {
         firstRun = false;
         for (const typeValue of types) populateSet(app, typeValue);

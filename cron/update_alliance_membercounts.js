@@ -6,6 +6,8 @@ module.exports = {
 }
 
 async function f(app) {
+    while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
+    
     const alliances = await app.db.information.find({type: 'alliance_id'}).toArray();
 
     for (const alliance of alliances) {

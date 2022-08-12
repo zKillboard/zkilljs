@@ -1,18 +1,21 @@
 'use strict';
 
+module.exports = {
+    exec: f,
+    span: 1
+}
 
-var first = true;
+let first = true;
 
 async function f(app) {
     if (first) {
-
         let success = false;
         do {
             try {
 
-                var collections = await app.db.listCollections().toArray();
+                let collections = await app.db.listCollections().toArray();
                 for (let i = 0; i < collections.length; i++) {
-                    console.log('Prepping ' + collections[i].name);
+                    //console.log('Prepping ' + collections[i].name);
                     app.db[collections[i].name] = app.db.collection(collections[i].name);
                 }
 
@@ -27,11 +30,18 @@ async function f(app) {
 
         await applyIndexes(app);
         first = false;
-    }
 
+        let collections = await app.db.listCollections().toArray();
+        for (let i = 0; i < collections.length; i++) {
+            app.db[collections[i].name] = await app.db.collection(collections[i].name);
+        }
+
+        app.zindexes_added = true;
+        console.log('indexes verified')
+    }
 }
 
-var bg = {background: true};
+let bg = {background: true};
 
 async function applyIndexes(app) {
     await create_collection(app, 'datacache');
@@ -95,7 +105,6 @@ async function applyIndexes(app) {
     await create_killmail_collection(app, 'settings');
     await createIndex(app.db.collection('settings'), {key: 1}, {unique: true});
     
-    console.log('done');
 }
 
 async function create_collection(app, name) {
@@ -108,7 +117,7 @@ async function create_collection(app, name) {
 }
 
 async function createIndex(collection, index, options) {
-    console.log("Creating", index, options);
+    //console.log("Creating", index, options);
     await collection.createIndex(index, options);
 }
 
@@ -177,5 +186,3 @@ var ind = [
     'constellation_id',
     'region_id',
 ];
-
-module.exports = f;

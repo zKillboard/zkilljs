@@ -10,6 +10,8 @@ var firstRun = true;
 const sw = require('../util/StreamWatcher.js');
 
 async function f(app) {
+    while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
+    
     if (firstRun) {
         // clear failure reasons on mails that are successful
         app.db.killhashes.updateMany({status: 'done', failure_reason : {$exists: true}}, {$unset: {failure_reason : 1}}, {multi: true});
@@ -85,5 +87,7 @@ async function fetch(app, mail) {
         }
     } catch (e) {
         console.trace(e.stack);
+        console.log(e.code);
+        await app.sleep(1000);
     }
 }
