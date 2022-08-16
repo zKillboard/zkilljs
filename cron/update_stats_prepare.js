@@ -24,19 +24,19 @@ async function populateSet(app) {
     try {
         if (app.no_stats || app.delay_stats) return;
 
-        let killhashes = await app.db.killhashes.find({status: 'parsed'}).limit(10000);
+        let killhashes = await app.db.killhashes.find({status: 'parsed'}).sort({_id: -1}).limit(10000);
 
         while (await killhashes.hasNext()) {
-            if (app.no_stats || app.delay_prep) break;
+            if (app.bailout || app.no_stats || app.delay_prep) break;
 
-            while (concurrent >= 5) await app.sleep(1);
+            while (concurrent >= 5) await app.sleep(10);
 
             prepStats(app, await killhashes.next());
 
             prepped = true;
-            app.util.ztop.zincr(app, 'stats_prepped');
+            app.util.ztop.zincr(app, 'killmail_process_stats');
         }
-        while (concurrent > 0) await app.sleep(1);
+        while (concurrent > 0) await app.sleep(10);
     } catch (e) {
         console.log(e);
     } finally {

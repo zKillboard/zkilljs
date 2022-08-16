@@ -26,7 +26,7 @@ module.exports = {
             if (e.code != 136) console.log('StremWatcher exception', '\n', match, '\n', e);
         } finally {
             if (app.bailout) return;
-            while (set.size > 0) await app.sleep(1);            
+            while (set.size > 0) await app.sleep(10);            
             if (count == 0) await app.sleep(1000);
             this.start(app, collection, match, f, limit, sort); // start again
         }
@@ -49,8 +49,11 @@ async function iterate(app, iterator, f, isStream, set) {
     let count = 0;
     try {
         while (await iterator.hasNext()) {
-            while (set.size >= 100) await app.sleep(1); // don't flood the stack        
-            call(app, f, (isStream ? (await iterator.next()).fullDocument : await iterator.next()), set);
+            while (set.size >= 25) await app.sleep(1); // don't flood the stack
+            const s = Symbol();
+            set.add(s);
+    
+            call(app, f, (isStream ? (await iterator.next()).fullDocument : await iterator.next()), set, s);
             count++;
         }
     } catch(e) {
@@ -60,13 +63,12 @@ async function iterate(app, iterator, f, isStream, set) {
     }
 }
 
-async function call(app, f, doc, set) {
-    const s = Symbol();
+async function call(app, f, doc, set, s) {
     try {
-        set.add(s);
         await f(app, doc);
     } catch (e) {
         console.log(e);
+        await app.sleep(1000);
     } finally {
         set.delete(s);
     }

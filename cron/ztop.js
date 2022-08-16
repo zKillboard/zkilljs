@@ -19,21 +19,22 @@ const epochs = {
 let first_run = true;
 
 async function f(app) {
-    while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
-    
-    if (first_run == true) {
+    while (app.zinitialized != true) await app.sleep(100);
+
+    await ztop(app);
+    if (first_run) {
+        cleanup(app);
         first_run = false;
     }
-    await ztop(app);
 }
 
 async function cleanup(app) {
+    await clear_keys(app, await app.redis.keys('zkb:ztop:*'));
     await clear_keys(app, await app.redis.keys('ztop:*'));
 }
 
 async function clear_keys(app, keys) {
     for (let key of keys) {
-        console.log('del', key);
         await app.redis.del(key); 
     }
 }
@@ -46,13 +47,13 @@ async function ztop(app) {
     out.push([new Date()]);
 
     out.push([
-        memUsage(app),
-        text('Fetching', false), 
+        text('Fetching', false),
         text('Parsing', app.delay_parse), 
         text('Prepping', app.delay_prep), 
         text('Statting', app.delay_stat), 
-        text('Dailies', app.no_fetch_dailies)
+        text('Dailies', !app.fetch_dailies)
         ].join(', '));
+    out.push(memUsage(app));
     out.push([]);
 
     let str = '';
@@ -61,36 +62,36 @@ async function ztop(app) {
     }
     out.push(str + '    seconds');
 
-    let keys = await app.redis.keys('zkb:ztop:*');
+    const ztops = app.util.ztop.get_ztops();
+
+    let keys = Object.keys(ztops);
+    let second = app.now();
+    second = second - (second % 5);
 
     for (let key of keys) {
-        let base = key.replace('zkb:ztop:', '');
-        await app.redis.setex('ztop:base:' + base, 86400, "true");
-        let value = parseInt(await app.redis.get(key));
-
+        await app.redis.setex('ztop:base:' + key, 3600, 'true');
         for (let epoch in epochs) {
-            const redis_key = 'ztop:' + base + ':' + epochs[epoch] + ':' + now;
-            if (value > 0) {
-                await app.redis.incrby(redis_key, value);
-                await app.redis.expire(redis_key, epochs[epoch] * 2);
-            }
+            let rkey = 'ztop:' + key + ':' + epoch + ':' + second;
+            await app.redis.incrby(rkey, ztops[key]);
+            await app.redis.expire(rkey, epochs[epoch] - 1);
         }
-        await app.redis.incrby(key, -1 * parseInt(value));
     }
 
-    keys = await app.redis.keys('ztop:base:*');
-    keys.sort();
-    for (let key of keys) {
+
+    let base_keys = await app.redis.keys('ztop:base:*');
+    base_keys.sort();
+    for (let key of base_keys) {
         str = '';
         key = key.replace('ztop:base:', '');
 
         for (let epoch in epochs) {
-            const total = await get_total(app, 'ztop:' + key + ':' + epochs[epoch]);
+            const total = (epoch == 'moment' ? ztops[key] || 0 : await get_total(app, 'ztop:' + key + ':' + epoch));
             str += ('           ' + total.toLocaleString()).slice(-12);
-            if (epoch == 'hour') await app.redis.setex('www:status:' + key, 3600, total);
+            // if (epoch == 'hour') await app.redis.setex('www:status:' + key, 3600, total);
         }
         out.push(str + '    ' + key);
     }
+
 
     let output = out.join('\n');
     await app.redis.setex("server-information", 60, output);

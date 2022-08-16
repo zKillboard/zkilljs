@@ -126,7 +126,7 @@ const stats = {
     },
 
     facet_query: async function (app, collection, match) {
-        while (app.fquery >= 5) await app.sleep(1); // poor man's sempahore
+        while (app.fquery >= 5) await app.sleep(10); // poor man's sempahore
 
         var time_start = Date.now();
 
@@ -325,18 +325,6 @@ const stats = {
         }).toArray();
 
         return result;
-    },
-
-    wait_for_stats: async function (app, epoch) {
-        if (epoch == undefined) throw 'Invalid epoch';
-        var count;
-        do {
-            if (app.bailout == true) throw 'bailing!';
-            count = await app.db.statistics.countDocuments({
-                ['update_' + epoch]: true
-            });
-            if (count > 0) await app.sleep(1);
-        } while (count > 0);
     }
 }
 

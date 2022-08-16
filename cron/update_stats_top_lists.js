@@ -40,7 +40,7 @@ async function f(app) {
 async function do_epoch(app, epoch) {
     var result = await app.db.statistics.find({[epoch + '.update_top']: true}).limit(1000);
     while (await result.hasNext()) {
-        if (app.bailout || app.no_stats || app.delay_stat) return app.sleep(1000);
+        if (app.bailout || app.no_stats || app.delay_stat) return await app.sleep(1000);
 
         await do_update(app, epoch, await result.next());
         app.util.ztop.zincr(app, 'stats_toplist_' + epoch);

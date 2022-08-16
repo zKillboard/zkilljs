@@ -14,7 +14,7 @@ async function f(app) {
     
     if (firstRun) {
         // clear failure reasons on mails that are successful
-        app.db.killhashes.updateMany({status: 'done', failure_reason : {$exists: true}}, {$unset: {failure_reason : 1}}, {multi: true});
+        await app.db.killhashes.updateMany({status: 'done', failure_reason : {$exists: true}}, {$unset: {failure_reason : 1}}, {multi: true});
         
         resetBadMails(app);
 
@@ -37,24 +37,30 @@ async function resetBadMails(app) {
 async function fetch(app, mail) {
     if (app.no_api) return await app.sleep(1000);
     try {
-        if (await app.db.rawmails.countDocuments({
-                killmail_id: mail.killmail_id
-            }) > 0) {
+        if (await app.db.rawmails.countDocuments({killmail_id: mail.killmail_id}) > 0) {
+            await app.db.killhashes.updateOne(mail, { $set: {status: 'fetched', success: true}});
+            return;
+        }
+
+        if (await app.db.esimails.countDocuments({killmail_id: mail.killmail_id}) > 0) {
+            const esimail = await app.db.esimails.findOne({killmail_id: mail.killmail_id});
+            await app.db.rawmails.insertOne(esimail);
+            await app.db.esimails.deleteOne({killmail_id: mail.killmail_id}); 
             await app.db.killhashes.updateOne(mail, {
                 $set: {
                     status: 'fetched',
                     success: true
                 }
             });
+            app.util.ztop.zincr(app, 'killmail_imported_cached');
             return;
         }
 
         let url = process.env.esi_url + '/v1/killmails/' + mail.killmail_id + '/' + mail.hash + '/';
         let res = await app.phin({url: url, timeout: 5000});
-        await app.util.assist.esi_result_handler(app, res);
 
         if (res.statusCode == 200) {
-            app.util.ztop.zincr(app, 'mails_fetched');
+            app.util.ztop.zincr(app, 'killmail_imported_esi');
 
             var body = JSON.parse(res.body);
 
@@ -74,6 +80,7 @@ async function fetch(app, mail) {
                     success: true
                 }
             });
+            app.util.ztop.zincr(app, 'killmail_imported_esi');
             return true;
         } else {
             await app.db.killhashes.updateOne(mail, {
@@ -86,8 +93,7 @@ async function fetch(app, mail) {
             });
         }
     } catch (e) {
-        console.trace(e.stack);
-        console.log(e.code);
+        console.log(e.stack);
         await app.sleep(1000);
     }
 }

@@ -29,7 +29,7 @@ var urls = {
     'constellation_id': '/v1/universe/constellations/:id/',
     'region_id': '/v1/universe/regions/:id/',
     'star_id': '/v1/universe/stars/:id/',
-    //'war_id': '/v1/wars/:id/'
+    'war_id': '/v1/wars/:id/'
 };
 var types = Object.keys(urls);
 
@@ -71,23 +71,19 @@ async function populateSet(app, typeValue) {
         const fullStop = app.no_api || app.no_parsing || app.no_stats || app.bailout;
         const dayAgo = (fullStop ? 1 : (Math.floor(Date.now() / 1000) - 86400));
 
-        let rows = await app.db.information.find({
-            last_updated: {
-                $lt: dayAgo
-            },
-            type: typeValue
-        }).sort({
-            last_updated: 1
-        }).limit(1000); // Limit so we reset this query often
+        let rows = await app.db.information.find({type: typeValue, last_updated: {$lt: dayAgo}}).sort({last_updated: 1}).limit(10);
 
         while (await rows.hasNext()) {
             if (app.bailout == true || app.no_api == true) break;
+            const row = await rows.next();
 
-            // limit to 10/s 
-            /*if (typeValue == 'character_id' || typeValue == 'corporation_id' || typeValue == 'alliance_id') await app.sleep(100);
-            else await app.sleep(1000);*/
-            await app.sleep(100);
-            var p = fetch(app, await rows.next());
+            let sleep_time = 1000;
+            if (row.last_updated == 0 || typeValue == 'character_id' || typeValue == 'corporation_id' || typeValue == 'alliance_id') sleep_time = 100;
+            if (row.type == 'war_id') sleep_time = 1000;
+            
+            await app.sleep(sleep_time);
+
+            var p = fetch(app, row);
             let wait = 20;
             while (set.size > 100) {
                 wait--;
@@ -100,7 +96,7 @@ async function populateSet(app, typeValue) {
 
         // Wait for all calls to finish and return
         while (set.size > 0) {
-            await app.sleep(1);
+            await app.sleep(100);
         }
     } catch (e) {
         console.log(e, 'dropped on ' + typeValue);
@@ -135,14 +131,8 @@ async function fetch(app, row) {
         await app.redis.hset('zkilljs:info:' + row.type, row.id, JSON.stringify(row));
 
         let url = process.env.esi_url + urls[row.type].replace(':id', row.id);
-        await app.util.assist.esi_limiter(app);
-        let res = await app.phin({
-            url: url,
-            headers: {
-                // 'If-None-Match': (row.type == 'alliance_id' ? '' : row.etag || '')
-            }
-        });
-        await app.util.assist.esi_result_handler(app, res);
+
+        let res = await app.phin({url: url, timeout: 15000});
 
         if (res.statusCode != 200 && res.statusCode != 304) {
             esi_err_log(app);
@@ -154,9 +144,14 @@ async function fetch(app, row) {
             body.inactive = false;
             body.last_updated = now;
             body.etag = res.headers.etag;
+
             if (row.type == 'war_id') {
                 // Special case for wars, something with this war changed
-                body.check_wars = true;
+                var total_kills = body.aggressor.ships_killed + body.defender.ships_killed;
+                if ((row.total_kills || 0) != total_kills) {
+                    body.total_kills = total_kills;
+                    body.check_wars = true;
+                }
             }
 
             // Characters, corporations, and alliances don't always have alliance or faction id set
@@ -165,6 +160,10 @@ async function fetch(app, row) {
                 body.faction_id = body.faction_id || 0;
                 await app.sleep(1000);
             }
+
+            // Just to prevent any accidental cross contamination
+            body.type = row.type;
+            body.id = row.id; 
 
             await app.redis.hset('zkilljs:info:' + row.type, row.id, JSON.stringify(body));
             await app.db.information.updateOne(row, {
@@ -193,11 +192,13 @@ async function fetch(app, row) {
                 }
             }
 
-            var searchname = row.name;
-            if (row.type =='character_id' && row.corporation_id == 1000001) searchname = searchname + ' (recycled)';
-            else if ((row.type == 'corporation_id' || row.type == 'alliance_id') && row.membercount == 0) searchname = searchname + ' (closed)';
+            if (row.type != 'war_id') {
+                var searchname = row.name;
+                if (row.type =='character_id' && row.corporation_id == 1000001) searchname = searchname + ' (recycled)';
+                else if ((row.type == 'corporation_id' || row.type == 'alliance_id') && row.membercount == 0) searchname = searchname + ' (closed)';
 
-            await app.mysql.query('replace into autocomplete values (?, ?, ?, ?)', [row.type, row.id, searchname, row.ticker]);
+                await app.mysql.query('replace into autocomplete values (?, ?, ?, ?)', [row.type, row.id, searchname, row.ticker]);
+            }
             return true;
             break;
         case 304: // ETAG match

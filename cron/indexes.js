@@ -12,13 +12,6 @@ async function f(app) {
         let success = false;
         do {
             try {
-
-                let collections = await app.db.listCollections().toArray();
-                for (let i = 0; i < collections.length; i++) {
-                    //console.log('Prepping ' + collections[i].name);
-                    app.db[collections[i].name] = app.db.collection(collections[i].name);
-                }
-
                 await applyIndexes(app);
                 success = true;
             } catch (e) {
@@ -33,6 +26,7 @@ async function f(app) {
 
         let collections = await app.db.listCollections().toArray();
         for (let i = 0; i < collections.length; i++) {
+            console.log('Prepped', collections[i].name);
             app.db[collections[i].name] = await app.db.collection(collections[i].name);
         }
 
@@ -44,6 +38,10 @@ async function f(app) {
 let bg = {background: true};
 
 async function applyIndexes(app) {
+    await create_collection(app, 'scopes');
+    await createIndex(app.db.collection('scopes'), {character_id: 1, scope: 1}, {unique: true});
+    await createIndex(app.db.collection('scopes'), {scope: 1, last_updated: 1}, {sparse: true});
+
     await create_collection(app, 'datacache');
     await createIndex(app.db.datacache, {requrl: 1}, {unique: true});
     await createIndex(app.db.datacache, {epoch: 1});
@@ -51,6 +49,7 @@ async function applyIndexes(app) {
     await create_collection(app, 'killhashes');
     await createIndex(app.db.killhashes, {killmail_id: 1, hash: 1}, {unique: true});
     await createIndex(app.db.killhashes, {status: 1}, {});
+    await createIndex(app.db.killhashes, {status: 1, failure_reason: 1}, {sparse: true});
 
     await create_collection(app, 'statistics');
     await createIndex(app.db.statistics, {type: 1, id: 1}, {unique: true});
@@ -92,6 +91,7 @@ async function applyIndexes(app) {
     await createIndex(app.db.collection('information'), {last_updated: 1}, {});
     await createIndex(app.db.collection('information'), {type: 1, last_updated: 1}, {});
     await createIndex(app.db.collection('information'), {check_wars: 1}, {sparse: true});    
+    await createIndex(app.db.collection('information'), {type: 1, solar_system_id: 1}, {sparse: true});    
 
     await createIndex(app.db.collection('killhashes'), {killmail_id: 1, hash: 1}, {unique: true});
     await createIndex(app.db.collection('killhashes'), {status: 1}, bg);
@@ -146,13 +146,6 @@ async function create_killmail_collection(app, collection) {
     for (let i of ind) {
         var key = 'involved.' + i;
         index = {};
-        index[key] = 1;
-        await createIndex(app.db.collection(collection), index, bg);
-        
-        index = {
-            stats: 1,
-            sequence: 1,
-        };
         index[key] = 1;
         await createIndex(app.db.collection(collection), index, bg);
 

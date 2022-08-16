@@ -31,7 +31,7 @@ async function f(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
     
     if (firstRun) {
-        sw.start(app, app.db.killhashes, match, parse_mail, 10);
+        sw.start(app, app.db.killhashes, match, parse_mail, 25);
         firstRun = false;
     }
 }
@@ -46,15 +46,9 @@ async function parse_mail(app, killhash) {
         // just so we can reuse the sequence number
         var prev_parsed_mail = undefined;
 
-        let remove_alltime = app.db.killmails.removeOne({
-            killmail_id: killhash.killmail_id
-        });
-        let remove_recent = app.db.killmails_90.removeOne({
-            killmail_id: killhash.killmail_id
-        });
-        let remove_week = app.db.killmails_7.removeOne({
-            killmail_id: killhash.killmail_id
-        });
+        const remove_alltime = app.db.killmails.removeOne({killmail_id: killhash.killmail_id});
+        const remove_recent = app.db.killmails_90.removeOne({killmail_id: killhash.killmail_id});
+        const remove_week = app.db.killmails_7.removeOne({killmail_id: killhash.killmail_id});
 
         killmail.killmail_id = killhash.killmail_id;
         killmail.hash = killhash.hash;
@@ -91,20 +85,20 @@ async function parse_mail(app, killhash) {
         promises.push(addInvolved(app, involved, rawmail.victim, true));
         for (let inv of rawmail.attackers) promises.push(addInvolved(app, involved, inv, false));
 
-        let system = universe_cache[rawmail.solar_system_id];
+        let system = universe_cache['system_' + rawmail.solar_system_id];
         if (system == undefined) {
             system = await app.util.entity.info(app, 'solar_system_id', rawmail.solar_system_id, true);
-            universe_cache[rawmail.solar_system_id] = system;
+            universe_cache['system_' + rawmail.solar_system_id] = system;
         }
-        let constellation = universe_cache[system.constellation_id];
+        let constellation = universe_cache['const_' + system.constellation_id];
         if (constellation == undefined) {
             constellation = await app.util.entity.info(app, 'constellation_id', system.constellation_id, true);
-            universe_cache[system.constellation_id] = constellation;
+            universe_cache['const_' + system.constellation_id] = constellation;
         }
-        let region = universe_cache[constellation.region_id];
+        let region = universe_cache['region_' + constellation.region_id];
         if (region == undefined) {
             region = await app.util.entity.info(app, 'region_id', constellation.region_id, true);
-            universe_cache[constellation.region_id] = region;
+            universe_cache['region_' + constellation.region_id] = region;
         }
 
         addTypeId(app, involved, 'solar_system_id', system.id);
@@ -185,7 +179,7 @@ async function parse_mail(app, killhash) {
         if (killmail.epoch > (now - (90 * 86400))) await app.db.killmails_90.insertOne(killmail);
         if (killmail.epoch > (now - (7 * 86400))) await app.db.killmails_7.insertOne(killmail);
         await app.db.killhashes.updateOne(killhash, parsed);
-        app.util.ztop.zincr(app, 'mails_parsed');
+        app.util.ztop.zincr(app, 'killmail_process_parsed');
     } catch (e) {
         //console.log('ERROR', e, killhash);
         await app.db.killhashes.updateOne(killhash, {
@@ -194,56 +188,8 @@ async function parse_mail(app, killhash) {
             }
         });
     } finally {
-        if (killmail.epoch > (now - (7 * 86400))) publishToKillFeed(app, killmail);
+        if (killmail.epoch > (now - (7 * 86400))) await app.redis.rpush('publishkillfeed', killmail.killmail_id);
         killmail = null; // memory leak protection
-    }
-}
-
-async function publishToKillFeed(app, killmail) {
-    try {
-        var sent = [];
-        var msg = JSON.stringify({
-            'action': 'killlistfeed',
-            'killmail_id': killmail.killmail_id
-        });
-        var keys = Object.keys(killmail.involved);
-        var keybase, type, ids, entity_id, key;
-
-        // Iterate each type and id first to make sure we have all information needed
-        // before sending it off to the masses
-        for (var i = 0; i < keys.length; i++) {
-            type = keys[i];
-            keybase = type.replace('_id', '');
-            ids = killmail.involved[type];
-            for (entity_id of ids) {
-                entity_id = Math.abs(entity_id);
-                await app.util.entity.wait(app, type, entity_id);
-            }
-        }
-
-        app.redis.publish('killlistfeed:all', msg);
-        for (var i = 0; i < keys.length; i++) {
-            type = keys[i];
-            keybase = type.replace('_id', '');
-            ids = killmail.involved[type];
-            for (entity_id of ids) {
-                entity_id = Math.abs(entity_id);
-                // Make sure we have information on this entity
-                await app.util.entity.wait(app, type, entity_id);
-
-                key = '/' + keybase + '/' + entity_id;
-                if (sent.indexOf(key) != -1) continue;
-                await app.redis.publish('killlistfeed:' + key, msg);
-                sent.push(key);
-            }
-        }
-        killmail.labels.push('all');
-        for (var label of killmail.labels) {
-            key = '/label/' + label;
-            await app.redis.publish('killlistfeed:' + key, msg);
-        }
-    } catch (e) {
-        // ignore the error
     }
 }
 
@@ -302,11 +248,19 @@ async function isSolo(app, rawmail) {
     if (ship_type_id == undefined) return false;
 
     // Rookie ships, shuttles, and capsules are not considered as solo
-    const item = await app.util.entity.info(app, 'item_id', ship_type_id, true);
+    let item = universe_cache['item_' + ship_type_id];
+    if (item == undefined) {
+        item = await app.util.entity.info(app, 'item_id', ship_type_id, true);
+        universe_cache['item_' + ship_type_id] = item;
+    }
     if (no_solo_ships.indexOf(item.group_id) != -1) return false;
 
     // Only ships can be solo'ed
-    const group = await app.util.entity.info(app, 'group_id', item.group_id);
+    let group = universe_cache['group_' + item.group_id];
+    if (group == undefined) {
+        group = await app.util.entity.info(app, 'group_id', item.group_id);
+        universe_cache['group_' + item.group_id] = item;
+    }
     if (group.category_id != 6) return false;
 
     let numPlayers = 0;
@@ -317,12 +271,19 @@ async function isSolo(app, rawmail) {
         ship_type_id = attacker.ship_type_id;
         if (ship_type_id == undefined) return false;
 
-        let item = await app.util.entity.info(app, 'item_id', ship_type_id);
+        item = universe_cache['item_' + ship_type_id];
+        if (item == undefined) {
+            await app.util.entity.info(app, 'item_id', ship_type_id);
+            universe_cache['item_' + ship_type_id] = item;
+        }
         if (item.group_id == undefined) return false;
 
-        let group = await app.util.entity.info(app, 'group_id', item.group_id);
+        group = universe_cache['group_' + item.group_id];
+        if (group == undefined) {
+            group = await app.util.entity.info(app, 'group_id', item.group_id);
+            universe_cache['group_' + item.group_id] = item;
+        }
         if (group.id == 65) return false;
-
     }
     // Ensure that at least 1 player is on the kill so as not to count losses against NPC's
     return (numPlayers == 1);

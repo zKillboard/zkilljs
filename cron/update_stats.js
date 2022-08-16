@@ -28,15 +28,16 @@ const epochs = {
 };
 const epoch_keys = Object.keys(epochs);
 
-var first_run = true;
+let first_run = true;
 
 async function f(app) {
+    return;
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
     
     if (first_run) {
         for (const type of types) {
             for (const epoch of epoch_keys) {
-                var find = {
+                let find = {
                     type: type
                 };
                 find['update_' + epoch] = true;
@@ -49,17 +50,16 @@ async function f(app) {
 
 async function update_stats(app, collection, epoch, type, find) {
     if (app.bailout) return;
-    var iterated = 0, limit = 10000;
+    let iterated = 0, limit = 10000;
     try {
         if (app.no_stats == true) return;
         if (app.delay_stat) return await app.randomSleep(1000, 3000);
 
-        var iter = await app.db.statistics.find(find).limit(limit);
+        let iter = await app.db.statistics.find(find).limit(limit);
         while (await iter.hasNext()) {
-            if (app.bailout == true || app.no_stats == true) break;
-            if (app.delay_stat) return await app.randomSleep(1000, 3000);
+            if (app.bailout == true || app.no_stats == true) return await app.sleep(1000);
 
-            var record = await iter.next();
+            let record = await iter.next();
 
             if (record.id !== NaN) {
                 await update_record(app, collection, epoch, record);
@@ -70,14 +70,7 @@ async function update_stats(app, collection, epoch, type, find) {
     } catch (e) {
         console.log(e);
     } finally {
-        var base = 120;
-        // spread out the epochs
-        if (epoch == 'alltime') base -= 30;
-        else if (epoch == 'recent') base -= 20;
-        else base -= 10;
-
-        var next_run_at = base - (app.now() - app.now(60));
-        var delay = (iterated >= limit) ? 1 : next_run_at * 1000;
+        let delay = (iterated = 0 ? 1000 : 1);
         setTimeout(update_stats.bind(null, app, collection, epoch, type, find), delay);
     }
 }

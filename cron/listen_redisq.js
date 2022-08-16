@@ -15,15 +15,18 @@ async function f(app) {
     try {
         do {
             if (app.bailout) return;
+
             let res = await app.phin({url: url, timeout: 15000});
+
             if (res.statusCode != 200) return;
 
             var body = JSON.parse(res.body);
             if (body.package !== null) {
                 await app.util.killmails.add(app, body.package.killID, body.package.zkb.hash);
+                app.util.ztop.zincr(app, 'import_redisq');
             }
         } while (body.package !== null);
     } catch (e) {
-        console.trace(e.stack);
+        console.log(e.stack);
     }
 }

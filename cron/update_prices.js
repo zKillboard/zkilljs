@@ -15,7 +15,7 @@ async function f(app) {
     let todays_price_key = app.util.price.get_todays_price_key();
     let now = new Date();
 
-    let prices_cursor = await app.db.prices.find({waiting: true});
+    let prices_cursor = await app.db.prices.find({waiting: true}).limit(10);
 
     let promises = [];
     while (await prices_cursor.hasNext()) {
@@ -25,7 +25,6 @@ async function f(app) {
         if (isNaN(row.item_id)) continue;
         
         promises.push(update_price(app, row, todays_price_key));
-        await app.sleep(1);
         while (app.bailout == false && app.no_api == false && set.size > 5) await app.sleep(1);
     }
     await app.waitfor(promises);
@@ -65,11 +64,8 @@ async function update_price(app, row, todays_price_key) {
             return;
         }
 
-        // console.log('Fetching price for', item_id);
         var url = process.env.esi_url + '/v1/markets/10000002/history/?type_id=' + item_id;
-        await app.util.assist.esi_limiter(app);
         let res = await app.phin(url);
-        await app.util.assist.esi_result_handler(app, res);
 
         if (res.statusCode == 200) {
             let json = JSON.parse(res.body);

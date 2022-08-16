@@ -1,13 +1,11 @@
 'use strict';
 
 var info_cache = {};
-var wait_cache = {};
 
 const set = new Set(); // cache for keeping track of what has been inserted to information
 setInterval(function () {
     set.clear();
     info_cache = {};
-    wait_cache = {};
 }, 36000000);
 
 const entity = {
@@ -18,7 +16,7 @@ const entity = {
         if (typeof id != 'number') throw 'id is not a number: ' + type + ' ' + id;
 
         if (id <= 0) return;
-        const key = type + ':' + id;
+        const key = type + '_' + id;
         if (set.has(key)) return;
 
         let row = await app.db.information.findOne({
@@ -62,41 +60,29 @@ const entity = {
                 await entity.add(app, type, id, false);
             }
 
-            if (app.bailout) {
-                console.stack('bailing');
-                throw 'bailing out!';
-            }
             await app.sleep(1000);
             count++;
-            //if (count > 10) throw 'Taking too long with this wait for ' + type + ' ' + id;
-            //console.log('entity.wait: Waiting on ', type, id);
         }
     },
 
     async info(app, type, id, wait = false) {
-        if (id == undefined) throw 'id cannot be undefined';
+        if (id == undefined) {
+            throw '(id == undefined) is true!)';
+        }
 
         const key = type + '_' + id;
         if (info_cache[key] != undefined) return info_cache[key];
 
-        if (wait) {
-            if (wait_cache[key] == undefined) await entity.wait(app, type, id);
-            wait_cache[key] = true;
-        }
-
-        let row = await app.redis.hget('zkilljs:info:' + type, id);
-        if (row != null) {
-            row = JSON.parse(row);
-        } 
-
-        if ((row == undefined || row == null) || row.type == undefined || row.id == undefined) {
-            row = await app.db.information.findOne({
-                type: type,
-                id: id
-            });
-        }
-        info_cache[key] = row;
-        return row;
+        do {
+            const row = await app.db.information.findOne({type: type, id: id});
+            if ((row.last_updated || 0) > 0) {
+                info_cache[key] = row;
+                set.add(key);
+                return row;
+            }
+            if (wait == false) throw type + ' ' + id + ' not updated, yet wait is false';
+            await app.sleep(100);
+        } while (true); // wait for it to be updated... 
     },
 
     async info_field(app, type, id, field) {

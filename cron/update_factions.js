@@ -13,10 +13,10 @@ async function f(app) {
     if (factionCount == 0) return;
     
     console.log('Updating factions');
-    await app.util.assist.esi_limiter(app);
+
     let res = await app.phin(process.env.esi_url + '/latest/universe/factions/');
+
     if (res.statusCode == 200) {
-        app.util.ztop.zincr(app, 'esi_fetched');
         let json = JSON.parse(res.body);
         for (let row of json) {
             let infoRow = await app.db.information.findOne({

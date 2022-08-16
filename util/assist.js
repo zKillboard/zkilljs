@@ -1,5 +1,14 @@
 'use strict';
 
+const limit_object = {};
+function clean_limit_object() {
+	const now = Math.floor(Date.now() / 1000);
+	for (const key of Object.keys(limit_object)) {
+		if (key < now) delete limit_object[key];
+	}
+}
+setInterval(clean_limit_object, 5000);
+
 const assist = {
 	esi_result_handler: async function (app, res) {
 		// TODO check headers for versioning header
@@ -28,7 +37,7 @@ const assist = {
 	            }
 	            break;
 	        case 500:
-	            console.log(row.type, row.id, '500 received');
+	            console.log('500 received');
 	            break;
 	        case 404:
 	        case 502:
@@ -39,22 +48,21 @@ const assist = {
 	},
 
 	esi_limiter : async function (app) {
-		return await app.util.assist.limit_per_second(app, 25);
+		return await app.util.assist.limit_per_second(app, (process.env.esi_limit_per_second || 10));
 	},
 
-	limit_per_second : async function (app, limit) {
-		var count;
+	limit_per_second : async function (app, limit = 1) {
+		let count, wait, second;
 		do {
-			if (app.bailout || app.no_api) return;
-			let key = 'limiter:' + app.now();
-			count = parseInt(await app.redis.get(key) || 0);
-			if (count <= limit) {
-				await app.redis.incrby(key, 1);
-				await app.redis.expire(key, 5);
-			} else {
-				await app.sleep(100);
-			}
+			const now = Date.now();
+			second = Math.floor(now / 1000);
+			const remaining_ms = 1000 - (now % 1000) + 1;
+
+			count = (limit_object[second] || 0);
+			if (count >= limit) await app.sleep(remaining_ms);
+
 		} while (count >= limit);
+		limit_object[second] = (limit_object[second] || 0) + 1;
 	},
 
 	publish_key: async function (app, action, rediskey) {

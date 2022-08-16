@@ -5,9 +5,13 @@ module.exports = {
     span: 15
 }
 
+let first_run = true;
+
 async function f(app) {
-    while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
-    if (app.no_fetch_dailies) return;
+    while (app.zinitialized != true) await app.sleep(100);
+    if (app.bailout == true) return;
+    if (app.fetch_dailies !== true) return;
+    console.log('fetch_dailies', app.fetch_dailies);
 
     if (process.env.fetch_dailies != 'true') return;
 
@@ -49,7 +53,9 @@ async function f(app) {
             try {
                 for (const [id, hash] of Object.entries(JSON.parse(res.body))) {
                     if (app.bailout) return;
-                    added += await app.util.killmails.add(app, parseInt(id), hash);
+                    let is_new = await app.util.killmails.add(app, parseInt(id), hash);
+                    added += is_new;
+                    if (is_new > 0) await app.sleep(1);
                 }
             } catch (e) {
                 console.log('https://zkillboard.com/api/history/' + key + '.json', e.message);
@@ -59,7 +65,7 @@ async function f(app) {
         }
         await app.redis.hset("zkb:dailies_lastcount", key, currentCount);
         await app.redis.srem("zkb:dailies", key);
-        if (process.env.balance_resources == 'true') break; // Finish processing, come back later
+        if (process.env.balance_resources == 'true' && added > 100000) break; // Finish processing, come back later
     }
     if (added > 0) console.log('fetch_dailies added ' + added + ' killmails');
 }

@@ -12,13 +12,14 @@ module.exports = {
         if (await app.db.killhashes.countDocuments(key) > 0) return 0;
         key['status'] = 'pending';
         try {
-            await app.db.killhashes.insertOne(key);
-	    return 1;
+           await app.db.killhashes.insertOne(key);
+	       return 1;
         } catch (e) {
-            if (e.code != 11000) { // Ignore duplicate entry error
-                console.log(e);
-            }
-	    return 0;
+            console.log('failed insert')
+           if (e.code != 11000) { // Ignore duplicate entry error
+            console.log(e);
+           }
+	       return 0;
         }
     },
 
