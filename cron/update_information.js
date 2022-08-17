@@ -77,10 +77,8 @@ async function populateSet(app, typeValue) {
             if (app.bailout == true || app.no_api == true) break;
             const row = await rows.next();
 
-            let sleep_time = 1000;
-            if (row.last_updated == 0 || typeValue == 'character_id' || typeValue == 'corporation_id' || typeValue == 'alliance_id') sleep_time = 100;
-            if (row.type == 'war_id') sleep_time = 1000;
-            
+            let sleep_time = 100;
+            if (row.type == 'war_id') sleep_time = 1000;            
             await app.sleep(sleep_time);
 
             var p = fetch(app, row);

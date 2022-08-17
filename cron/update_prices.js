@@ -5,7 +5,7 @@ module.exports = {
     span: 1
 }
 
-const set = new Set();
+let concurrent = 0;
 
 async function f(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
@@ -15,24 +15,24 @@ async function f(app) {
     let todays_price_key = app.util.price.get_todays_price_key();
     let now = new Date();
 
-    let prices_cursor = await app.db.prices.find({waiting: true}).limit(10);
+    let prices_cursor = await app.db.prices.find({waiting: true});
 
-    let promises = [];
+    while (concurrent > 0) await app.sleep(1000);
     while (await prices_cursor.hasNext()) {
         if (app.bailout == true || app.no_api == true) break;
 
         let row = await prices_cursor.next();
         if (isNaN(row.item_id)) continue;
-        
-        promises.push(update_price(app, row, todays_price_key));
-        while (set.size > 0) await app.sleep(10);
+    
+        while (concurrent > 25) await app.sleep(1000);    
+        concurrent++;
+        update_price(app, row, todays_price_key);
+
     }
-    await app.waitfor(promises);
+    while (concurrent > 0) await app.sleep(1000);
 }
 
 async function update_price(app, row, todays_price_key) {
-    let s = Symbol(); 
-    set.add(s);
     try {
         const item_id = row.item_id;
         let updates = {};
@@ -65,6 +65,7 @@ async function update_price(app, row, todays_price_key) {
         }
 
         var url = process.env.esi_url + '/v1/markets/10000002/history/?type_id=' + item_id;
+        //console.log('Fetching prices for', item_id); 
         let res = await app.phin(url);
 
         if (res.statusCode == 200) {
@@ -87,7 +88,9 @@ async function update_price(app, row, todays_price_key) {
             app.util.ztop.zincr(app, 'price_fetch_error');
             await app.sleep(1000);
         }
+    } catch(e) {
+        console.log(e);
     } finally {
-        set.delete(s);
+        concurrent--;
     }
 }

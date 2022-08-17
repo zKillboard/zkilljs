@@ -15,7 +15,7 @@ module.exports = {
            await app.db.killhashes.insertOne(key);
 	       return 1;
         } catch (e) {
-            console.log('failed insert')
+            // console.log('failed insert')
            if (e.code != 11000) { // Ignore duplicate entry error
             console.log(e);
            }

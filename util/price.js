@@ -27,7 +27,7 @@ const price = {
         if (fixed_price != undefined) return this.cacheIt(app, rkey, fixed_price);
 
         let info = await app.util.entity.info(app, 'item_id', item_id, true);
-        let group = (info != undefined ? await app.util.entity.info(app, 'group_id', info.group_id, true) : {});
+        let group = (info != undefined && (info.group_id || 0) > 0 ? await app.util.entity.info(app, 'group_id', info.group_id, true) : {});
         if (group.category_id == 65 || group.category_id == 66) { // citadels... , or their modules
             const build_price = await get_build_price(app, item_id, date);
             if (build_price != undefined && build_price > 0.01) return this.cacheIt(app, rkey, build_price);
@@ -187,8 +187,6 @@ async function fetch(app, item_id, date, skip_fetch) {
         }
         if (marketHistory.last_fetched != todays_key && skip_fetch != true) {
             iterations++;
-            //if (iterations > 30) throw 'too many price check waits';
-            //console.log(iterations + " Price check waiting", item_id, date, marketHistory.last_fetched);
             await app.sleep(1000);
         }
     } while (marketHistory.last_fetched != todays_key && skip_fetch != true);

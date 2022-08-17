@@ -62,11 +62,13 @@ const entity = {
 
             await app.sleep(1000);
             count++;
+            if (count > 10) console.log('Waiting on', type, id);
         }
     },
 
     async info(app, type, id, wait = false) {
         if (id == undefined) {
+            console.log(new Error().stack);
             throw '(id == undefined) is true!)';
         }
 
@@ -75,6 +77,10 @@ const entity = {
 
         do {
             const row = await app.db.information.findOne({type: type, id: id});
+            if (row == null) {
+                console.log(new Error().stack);
+                throw 'no such item_id ' + type + ' ' + id;
+            }
             if ((row.last_updated || 0) > 0) {
                 info_cache[key] = row;
                 set.add(key);

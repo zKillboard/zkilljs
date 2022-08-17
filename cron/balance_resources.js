@@ -38,6 +38,8 @@ async function f(app) {
         app.dbstats[key] = count;
         total += count;
     }
+    app.dbstats.prices = await app.db.prices.countDocuments({waiting: true});
+    total += app.dbstats.prices;
     app.dbstats['total'] = total;
 
     app.zinitialized = true;

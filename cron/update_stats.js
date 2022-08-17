@@ -58,6 +58,7 @@ async function update_stats(app, collection, epoch, type, find) {
         let iter = await app.db.statistics.find(find).limit(limit);
         while (await iter.hasNext()) {
             if (app.bailout == true) return await app.sleep(1000);
+            if (app.dbstats.total > 100) break;
 
             let record = await iter.next();
 
