@@ -40,6 +40,9 @@ div.row.m-0.p-0.killrow(victims=victims labels=rawmail.labels epoch=rawmail.epoc
 				+type_id_link('span', 'item', rawmail.victim.ship_type_id, rawmail.victim.ship_type_name)
 			+corp_id_link('li', rawmail.victim.corporation_id, rawmail.victim.corporation_name)
 			+alli_id_link('li', rawmail.victim.alliance_id, rawmail.victim.alliance_name)
+			if ((rawmail.victim.alliance_id || 0) == 0)
+				br
+			+show_link('li', 'faction', rawmail.victim.faction_id, rawmail.victim.faction_name)
 	div.killrowblock.col-12.col-md-4.m-0.p-0
 		ul.image
 			if rawmail.final_blow.alliance_id > 0
@@ -58,6 +61,9 @@ div.row.m-0.p-0.killrow(victims=victims labels=rawmail.labels epoch=rawmail.epoc
 			+char_id_link('li', rawmail.final_blow.character_id, rawmail.final_blow.character_name + ' ', tag)
 			+corp_id_link('li', rawmail.final_blow.corporation_id, rawmail.final_blow.corporation_name)
 			+alli_id_link('li', rawmail.final_blow.alliance_id, rawmail.final_blow.alliance_name)
+			if ((rawmail.final_blow.alliance_id || 0) == 0)
+				br
+			+show_link('li', 'faction', rawmail.final_blow.faction_id, rawmail.final_blow.faction_name)
 			if (!(rawmail.final_blow.character_id > 0 || rawmail.final_blow.corporation_id > 0 || rawmail.final_blow.alliance_id > 0)) 
 				+type_id_link('li', 'type', rawmail.final_blow.ship_type_id, rawmail.final_blow.ship_type_name)
 	div.clearfix
