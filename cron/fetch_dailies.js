@@ -37,9 +37,11 @@ async function f(app) {
 
     let members = await app.redis.smembers("zkb:dailies");
     members.sort();
+    let total = 0;
+    const dailies_limit = (process.env.dailies_limit || 25000);
 
     while (await app.redis.scard("zkb:dailies") > 0) {
-        if (app.bailout || app.dbstats.total > 25000) break;
+        if (app.bailout || (app.dbstats.total + total) > dailies_limit) break;
 
         let key = members.pop();
 
@@ -52,7 +54,7 @@ async function f(app) {
         while (app.bailout != true && concurrent >= max_concurrent) await app.sleep(1000);
 
         concurrent++;
-        doImport(app, key);
+        total += await doImport(app, key);
     }
 }
 
@@ -70,9 +72,7 @@ async function doImport(app, key) {
                 let entries = Object.entries(JSON.parse(res.body));
                 for (let [id, hash] of entries) {
                     id = parseInt(id);
-                    if (await app.db.killhashes.countDocuments({killmail_id: id, hash: hash}) == 0) {
                         inserts.push({killmail_id: parseInt(id), hash: hash, status: 'pending'});
-                    }
                 }
 
                 if (inserts.length > 0) {
