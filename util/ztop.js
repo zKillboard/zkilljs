@@ -2,16 +2,10 @@
 
 let ztops = {};
 
-/*function showztops() {
-    console.log(ztops);
-    ztops = {};
-}
-setInterval(showztops, 5000);*/
-
 const ztop = {
-	zincr: function (app, key) {
-        if (ztops[key] == undefined) ztops[key] = 1;
-        else ztops[key] = ztops[key] + 1;
+	zincr: function (app, key, incr = 1) {
+        if (ztops[key] == undefined) ztops[key] = incr;
+        else ztops[key] = ztops[key] + incr;
     },
 
     get_ztops: function() {
