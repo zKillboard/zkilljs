@@ -85,6 +85,22 @@ const assist = {
 	            }));
 	        }
 	    }
+	},
+
+	hasMinimum: async function(collection, query, min) {
+	    var cursor = await collection.find(query).limit((min + 3));
+	    try {
+	        var count = 0;
+	        while (await cursor.hasNext()) {
+	            await cursor.next(); // throw it away
+	            count++;
+	            if (count >= min) return true;
+	        }
+	    }  finally {
+	        collection = null;
+	        cursor = null;
+	    }
+	    return false;
 	}
 }
 

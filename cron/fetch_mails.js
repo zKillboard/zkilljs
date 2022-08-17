@@ -18,7 +18,7 @@ async function f(app) {
         
         resetBadMails(app);
 
-        sw.start(app, app.db.killhashes, {status: 'pending'}, fetch, 1000);
+        sw.start(app, app.db.killhashes, {status: 'pending'}, fetch, 50);
         firstRun = false;
     }
 }
@@ -39,22 +39,9 @@ async function fetch(app, mail) {
     try {
         if (await app.db.rawmails.countDocuments({killmail_id: mail.killmail_id}) > 0) {
             await app.db.killhashes.updateOne(mail, { $set: {status: 'fetched', success: true}});
+            app.util.ztop.zincr(app, 'killmail_imported_preexisting');
             return;
-        }
-
-        if (await app.db.esimails.countDocuments({killmail_id: mail.killmail_id}) > 0) {
-            const esimail = await app.db.esimails.findOne({killmail_id: mail.killmail_id});
-            await app.db.rawmails.insertOne(esimail);
-            await app.db.esimails.deleteOne({killmail_id: mail.killmail_id}); 
-            await app.db.killhashes.updateOne(mail, {
-                $set: {
-                    status: 'fetched',
-                    success: true
-                }
-            });
-            app.util.ztop.zincr(app, 'killmail_imported_cached');
-            return;
-        }
+        } 
 
         let url = process.env.esi_url + '/v1/killmails/' + mail.killmail_id + '/' + mail.hash + '/';
         let res = await app.phin({url: url, timeout: 5000});

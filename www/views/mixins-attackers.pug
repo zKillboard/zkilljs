@@ -22,9 +22,12 @@ mixin display_attackers(attackers_array)
 					+type_id_link('li', 'item', attacker.ship_type_id, attacker.ship_type_name)
 				+corp_id_link('li', attacker.corporation_id, attacker.corporation_name)
 				+alli_id_link('li', attacker.alliance_id, attacker.alliance_name)
+				if (!(attacker.alliance_id > 0))
+					br
 				+type_id_link('li', 'faction', attacker.faction_id, attacker.faction_name)
 			ul#attacker4
 				li.integer= attacker.damage_done
 				if attacker.damage_done && victim.damage_taken > 0
 					li.percentage= (attacker.damage_done / victim.damage_taken)
 			div.clearfix
+			hr.thin

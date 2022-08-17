@@ -30,6 +30,8 @@ var sequential = 0;
 
 async function f(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
+
+    if (app.dbstats.total > 1000) return await app.sleep(1000);
     
     var epochs = Object.keys(collections);
     for (var i = 0; i < epochs.length; i++) {
@@ -38,17 +40,18 @@ async function f(app) {
 }
 
 async function do_epoch(app, epoch) {
-    var result = await app.db.statistics.find({[epoch + '.update_top']: true}).limit(1000);
+    var result = await app.db.statistics.find({[epoch + '.update_top']: true}).limit(10000);
     while (await result.hasNext()) {
-        if (app.bailout || app.no_stats || app.delay_stat) return await app.sleep(1000);
+        if (app.bailout) return await app.sleep(1000);
 
         await do_update(app, epoch, await result.next());
-        app.util.ztop.zincr(app, 'stats_toplist_' + epoch);
     }
 }
 
 async function do_update(app, epoch, record) {
     try {
+        if (app.dbstats.total > 100) return await app.sleep(1000);
+
         sequential++;
         var last_sequence = record.last_sequence;
         var oldhash = (record.week == undefined ? '' : record.week.hash_killed_top);
@@ -87,6 +90,7 @@ async function do_update(app, epoch, record) {
             id: record.id
         });
         await app.redis.sadd('zkilljs:toplists:publish', redis_base);
+        app.util.ztop.zincr(app, 'stats_toplist_' + epoch);
     } finally {
         sequential--;
     }

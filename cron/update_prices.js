@@ -10,7 +10,7 @@ const set = new Set();
 async function f(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
     
-    if (app.no_parsing || app.no_api) return;
+    if (app.no_api) return;
 
     let todays_price_key = app.util.price.get_todays_price_key();
     let now = new Date();
@@ -25,7 +25,7 @@ async function f(app) {
         if (isNaN(row.item_id)) continue;
         
         promises.push(update_price(app, row, todays_price_key));
-        while (app.bailout == false && app.no_api == false && set.size > 5) await app.sleep(1);
+        while (set.size > 0) await app.sleep(10);
     }
     await app.waitfor(promises);
 }

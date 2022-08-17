@@ -62,14 +62,14 @@ async function f(app) {
     }
 
     await app.sleep(1000);
-    while (app.no_api && set.size > 0) await app.sleep(1000);
+    while (set.size > 0) await app.sleep(1000);
 }
 
 async function populateSet(app, typeValue) {
     let fetched = 0;
     try {
-        const fullStop = app.no_api || app.no_parsing || app.no_stats || app.bailout;
-        const dayAgo = (fullStop ? 1 : (Math.floor(Date.now() / 1000) - 86400));
+        if (app.bailout == true || app.no_api == true) return;
+        const dayAgo = app.now() - 86400;
 
         let rows = await app.db.information.find({type: typeValue, last_updated: {$lt: dayAgo}}).sort({last_updated: 1}).limit(10);
 
@@ -95,9 +95,7 @@ async function populateSet(app, typeValue) {
         }
 
         // Wait for all calls to finish and return
-        while (set.size > 0) {
-            await app.sleep(100);
-        }
+        while (set.size > 0) await app.sleep(100);
     } catch (e) {
         console.log(e, 'dropped on ' + typeValue);
     } finally {

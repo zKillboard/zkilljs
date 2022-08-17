@@ -31,14 +31,12 @@ async function f(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
     
     if (firstRun) {
-        sw.start(app, app.db.killhashes, match, parse_mail, 25);
+        sw.start(app, app.db.killhashes, match, parse_mail, 50);
         firstRun = false;
     }
 }
 
 async function parse_mail(app, killhash) {
-    if (app.delay_parse) return app.randomSleep(100, 200);
-
     var killmail = {};
     const now = Math.floor(Date.now() / 1000);
 

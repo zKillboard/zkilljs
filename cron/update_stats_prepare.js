@@ -22,15 +22,14 @@ async function populateSet(app) {
     
     let prepped = false;
     try {
-        if (app.no_stats || app.delay_stats) return;
-
         let killhashes = await app.db.killhashes.find({status: 'parsed'}).sort({_id: -1}).limit(10000);
 
         while (await killhashes.hasNext()) {
-            if (app.bailout || app.no_stats || app.delay_prep) break;
+            if (app.bailout) break;
 
-            while (concurrent >= 5) await app.sleep(10);
+            while (concurrent >= 25) await app.sleep(10);
 
+            concurrent++;
             prepStats(app, await killhashes.next());
 
             prepped = true;
@@ -47,8 +46,6 @@ async function populateSet(app) {
 
 async function prepStats(app, killhash) {
     try {
-        concurrent++;
-
         let killmail = await app.db.killmails.findOne({killmail_id: killhash.killmail_id});
         if (killmail.involved == undefined) {
             console.log(killhash.killmail_id + ' has no involved');

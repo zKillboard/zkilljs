@@ -23,7 +23,7 @@ async function f(app) {
             var body = JSON.parse(res.body);
             if (body.package !== null) {
                 await app.util.killmails.add(app, body.package.killID, body.package.zkb.hash);
-                app.util.ztop.zincr(app, 'import_redisq');
+                app.util.ztop.zincr(app, 'killmail_add_redisq');
             }
         } while (body.package !== null);
     } catch (e) {

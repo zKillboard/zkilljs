@@ -355,6 +355,10 @@ hr {
     margin-bottom: 2px;
 }
 
+hr.thin {
+    height:  0.05em;
+}
+
 .page_title {
     display: none;
 }

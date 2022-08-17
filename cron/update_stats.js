@@ -31,8 +31,9 @@ const epoch_keys = Object.keys(epochs);
 let first_run = true;
 
 async function f(app) {
-    return;
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
+
+    if (app.dbstats.total > 1000) return;
     
     if (first_run) {
         for (const type of types) {
@@ -49,15 +50,14 @@ async function f(app) {
 }
 
 async function update_stats(app, collection, epoch, type, find) {
-    if (app.bailout) return;
     let iterated = 0, limit = 10000;
     try {
-        if (app.no_stats == true) return;
-        if (app.delay_stat) return await app.randomSleep(1000, 3000);
+        if (app.bailout) return;
+        if (app.dbstats.total > 100) return;
 
         let iter = await app.db.statistics.find(find).limit(limit);
         while (await iter.hasNext()) {
-            if (app.bailout == true || app.no_stats == true) return await app.sleep(1000);
+            if (app.bailout == true) return await app.sleep(1000);
 
             let record = await iter.next();
 
@@ -70,7 +70,7 @@ async function update_stats(app, collection, epoch, type, find) {
     } catch (e) {
         console.log(e);
     } finally {
-        let delay = (iterated = 0 ? 1000 : 1);
+        let delay = (iterated == 0 ? 1000 : 1);
         setTimeout(update_stats.bind(null, app, collection, epoch, type, find), delay);
     }
 }
