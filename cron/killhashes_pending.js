@@ -11,16 +11,14 @@ const sw = require('../util/StreamWatcher.js');
 
 async function f(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
-    
-    if (firstRun) {
-        // clear failure reasons on mails that are successful
-        await app.db.killhashes.updateMany({status: 'done', failure_reason : {$exists: true}}, {$unset: {failure_reason : 1}}, {multi: true});
-        
-        resetBadMails(app);
 
-        sw.start(app, app.db.killhashes, {status: 'pending'}, fetch, 50);
-        firstRun = false;
-    }
+    // await app.db.killhashes.updateMany({status: 'done', failure_reason : {$exists: true}}, {$unset: {failure_reason : 1}}, {multi: true});
+
+    await app.util.simul.go(app, 'killhashes_pending', app.db.killhashes, {status: 'pending'}, fetch, app.util.assist.continue_simul_go, 100);
+}
+
+function bailout() {
+    return app.bailout != false;
 }
 
 const http_codes_reattempt = [401, 420, 502, 503, 504];
@@ -35,21 +33,25 @@ async function resetBadMails(app) {
 }
 
 async function fetch(app, mail) {
-    if (app.no_api) return await app.sleep(1000);
     try {
         if (await app.db.rawmails.countDocuments({killmail_id: mail.killmail_id}) > 0) {
             await app.db.killhashes.updateOne(mail, { $set: {status: 'fetched', success: true}});
             app.util.ztop.zincr(app, 'killmail_imported_preexisting');
             return;
-        } 
+        }
 
-        let url = process.env.esi_url + '/v1/killmails/' + mail.killmail_id + '/' + mail.hash + '/';
-        let res = await app.phin({url: url, timeout: 5000});
+        let url = 'https://zkillboard.com/zkilljs/raw/' + mail.killmail_id + '/';
+        let res = await app.phin(url);
+
+        if (res.statusCode == 200) app.util.ztop.zincr(app, 'killmail_imported_zkill');
+        else {
+            url = process.env.esi_url + '/v1/killmails/' + mail.killmail_id + '/' + mail.hash + '/';
+            res = await app.phin({url: url, timeout: 5000});
+            if (res.statusCode == 200) app.util.ztop.zincr(app, 'killmail_imported_esi');
+        }
 
         if (res.statusCode == 200) {
-            app.util.ztop.zincr(app, 'killmail_imported_esi');
-
-            var body = JSON.parse(res.body);
+            let body = JSON.parse(res.body);
 
             await app.db.rawmails.deleteOne({
                 killmail_id: body.killmail_id
@@ -67,7 +69,6 @@ async function fetch(app, mail) {
                     success: true
                 }
             });
-            app.util.ztop.zincr(app, 'killmail_imported_esi');
             return true;
         } else {
             await app.db.killhashes.updateOne(mail, {

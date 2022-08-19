@@ -5,43 +5,10 @@ module.exports = {
     span: 1
 }
 
-var concurrent = 0;
-var firstRun = true;
-
 async function f(app) {
-    if (firstRun) {
-        firstRun = false;
-        populateSet(app);
-    }
-
-    while (concurrent > 0) await app.sleep(1000);
-}
-
-async function populateSet(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
     
-    let prepped = false;
-    try {
-        let killhashes = await app.db.killhashes.find({status: 'parsed'}).sort({_id: -1}).limit(10000);
-
-        while (await killhashes.hasNext()) {
-            if (app.bailout) break;
-
-            while (concurrent >= 25) await app.sleep(10);
-
-            concurrent++;
-            prepStats(app, await killhashes.next());
-
-            prepped = true;
-            app.util.ztop.zincr(app, 'killmail_process_stats');
-        }
-        while (concurrent > 0) await app.sleep(10);
-    } catch (e) {
-        console.log(e);
-    } finally {
-        if (prepped == false) await app.sleep(1000);
-        populateSet(app);
-    }
+    await app.util.simul.go(app, 'killhashes_parsed', app.db.killhashes, {status: 'parsed'}, prepStats, app.util.assist.continue_simul_go, 100); 
 }
 
 async function prepStats(app, killhash) {
@@ -68,10 +35,9 @@ async function prepStats(app, killhash) {
         }
 
         await app.db.killhashes.updateOne({_id: killhash._id}, {$set: {status: 'done'} });
+        app.util.ztop.zincr(app, 'killmail_process_stats');
     } catch (e) {
         console.log(e);
-    } finally {
-        concurrent--;
     }
 }
 

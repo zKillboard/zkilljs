@@ -18,16 +18,22 @@ async function f(app) {
             if (typeof options == 'string') options = {url: options};
 
             const esi_url = (options.url.indexOf(process.env.esi_url) > -1);
+            const esi_url_status_check = (options.url == (process.env.esi_url + '/latest/status/'));
+            if (esi_url && !esi_url_status_check) {
+                while (app.no_api == true) await app.sleep(1000);
+            }
 
             if (esi_url) await app.util.assist.esi_limiter(app);
             let res = await orig_phin(options);
-            if (esi_url) await app.util.assist.esi_result_handler(app, res);
+            if (esi_url) await app.util.assist.esi_result_handler(app, res, options.url);
 
             return res;
         }
 
         console.log('zkilljs cron initialization complete');
         app.dbstats = [];
+        app.no_api = true; // don't hit the API until we've checked TQ's status
+        app.bailout = false;
         first_run = false;
     }
 

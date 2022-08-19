@@ -31,7 +31,7 @@ var sequential = 0;
 async function f(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
 
-    if (app.dbstats.total > 1000) return await app.sleep(1000);
+    if (!app.no_api && app.dbstats.total > 1000) return await app.sleep(1000);
     
     var epochs = Object.keys(collections);
     for (var i = 0; i < epochs.length; i++) {

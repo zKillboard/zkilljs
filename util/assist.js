@@ -9,8 +9,17 @@ function clean_limit_object() {
 }
 setInterval(clean_limit_object, 5000);
 
+// Per CCP Explorer, respect these rate limits
+const esi_rate_intervals = {
+	0 	 : 20, 	// 00:00am UTC
+	800  : 10, 	// 08:00am UTC
+	1030 : 0, 	// 10:30am UTC
+	1130 : 10, 	// 11:30am UTC
+	1800 : 5 	// 06:00pm UTC
+}
+
 const assist = {
-	esi_result_handler: async function (app, res) {
+	esi_result_handler: async function (app, res, url) {
 		// TODO check headers for versioning header
 
 		if (res.statusCode == 200 || res.statusCode == 304) {
@@ -19,21 +28,21 @@ const assist = {
 		}
 
 		app.util.ztop.zincr(app, 'esi_error');
+		console.log('ESI ERROR', res.statusCode, url);
 
 		await app.sleep(1000); // pause on any and all errors
 		switch (res.statusCode) {
 	        case 401:
 	            if (app.no_api == false) {
 	                app.no_api = true;
-	                //setTimeout(function() { clear_no_api(app); }, 300000 + (Date.now() % 60000));
 	                console.log("http code 401 received, we've been banned?");
 	            }            
 	            break;
 	        case 420:
 	            if (app.no_api == false) {
 	                app.no_api = true;
-	                setTimeout(function() {clear_no_api(app);}, 1000 + (Date.now() % 60000));
-	                console.log("420'ed in information: " + row.type + " " + row.id);
+	                setTimeout(function() { app.util.assist.clear_no_api(app);}, 61000);
+	                console.log("420'ed");
 	            }
 	            break;
 	        case 500:
@@ -47,8 +56,19 @@ const assist = {
 		}
 	},
 
+	clear_no_api: async function(app) {
+		app.no_api = false;
+	},
+
 	esi_limiter : async function (app) {
-		return await app.util.assist.limit_per_second(app, (process.env.esi_limit_per_second || 10));
+		let d = new Date();
+		let now = d.getHours() * 100 + d.getMinutes();
+		let rate_limit = 1;
+		for (const [time, timed_rate_limit] of Object.entries(esi_rate_intervals)) {
+			if (now <= time) rate_limit = timed_rate_limit;
+		}
+
+		return await app.util.assist.limit_per_second(app, rate_limit);
 	},
 
 	limit_per_second : async function (app, limit = 1) {
@@ -101,6 +121,10 @@ const assist = {
 	        cursor = null;
 	    }
 	    return false;
+	},
+
+	continue_simul_go: function(app) { 
+    	return app.bailout !== true;
 	}
 }
 

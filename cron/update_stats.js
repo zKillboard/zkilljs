@@ -28,13 +28,12 @@ const epochs = {
 };
 const epoch_keys = Object.keys(epochs);
 
+let concurrent = 0;
 let first_run = true;
 
 async function f(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
 
-    if (app.dbstats.total > 1000) return;
-    
     if (first_run) {
         for (const type of types) {
             for (const epoch of epoch_keys) {
@@ -50,29 +49,29 @@ async function f(app) {
 }
 
 async function update_stats(app, collection, epoch, type, find) {
-    let iterated = 0, limit = 10000;
+    let promises = [];
     try {
-        if (app.bailout) return;
-        if (app.dbstats.total > 100) return;
-
-        let iter = await app.db.statistics.find(find).limit(limit);
+        if (app.bailout || app.dbstats.total > 100) return;
+    
+        let iter = await app.db.statistics.find(find);
         while (await iter.hasNext()) {
-            if (app.bailout == true) return await app.sleep(1000);
-            if (app.dbstats.total > 100) break;
+            if (app.bailout || app.dbstats.total > 100) return;
 
             let record = await iter.next();
 
             if (record.id !== NaN) {
-                await update_record(app, collection, epoch, record);
-                iterated++;
-                app.util.ztop.zincr(app, 'stats_calced_' + epoch);
+                while (!app.bailout && concurrent >= 500) await app.sleep(10);
+                if (app.bailout) return;
+
+                concurrent++;
+                promises.push(update_record(app, collection, epoch, record));
             }
         }
     } catch (e) {
         console.log(e);
     } finally {
-        let delay = (iterated == 0 ? 1000 : 1);
-        setTimeout(update_stats.bind(null, app, collection, epoch, type, find), delay);
+        await app.waitfor(promises);
+        setTimeout(update_stats.bind(null, app, collection, epoch, type, find), (promises.length == 0 ? 1000 : 1));
     }
 }
 
@@ -168,9 +167,11 @@ async function update_record(app, collection, epoch, record) {
         // announce that the stats have been updated
         await app.redis.sadd('zkilljs:stats:publish', redis_base);
         await app.redis.sadd('zkilljs:toplists:publish', redis_base);
+        app.util.ztop.zincr(app, 'stats_calced_' + epoch);
     } finally {
         record = null; // memory leak prevention
         result = null; // memory leak prevention
         set = null;
+        concurrent--;
     }
 }

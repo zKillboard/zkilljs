@@ -78,7 +78,7 @@ async function populateSet(app, typeValue) {
             const row = await rows.next();
 
             let sleep_time = 100;
-            if (row.type == 'war_id') sleep_time = 1000;            
+            if (row.type == 'war_id') sleep_time = 15000;            
             await app.sleep(sleep_time);
 
             var p = fetch(app, row);
@@ -108,6 +108,11 @@ async function fetch(app, row) {
         set.add(row);
 
         let now = Math.floor(Date.now() / 1000);
+
+        if (row.no_fetch === true) {
+            await app.db.information.updateOne(row, {$set: {last_updated: now}});
+            return;
+        }
 
         if (row.last_updated > 0 && (row.type == 'character_id' || row.type == 'corporation_id' || row.type == 'alliance_id')) {
             // Do they have a recent killmail?
@@ -206,6 +211,7 @@ async function fetch(app, row) {
         case 404:
             await app.db.information.updateOne(row, {
                 $set: {
+                    'no_fetch': true,
                     last_updated: now
                 }
             });

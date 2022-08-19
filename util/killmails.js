@@ -73,6 +73,7 @@ module.exports = {
         var purging = await app.db[collection].find({epoch : {$lt : remove}});
 
         while (await purging.hasNext()) {
+            if (app.bailout) return;
             var killmail = await purging.next();
             await app.util.killmails.remove_killmail(app, collection, killmail, epoch);
         }

@@ -29,11 +29,8 @@ const match = {
 
 async function f(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
-    
-    if (firstRun) {
-        sw.start(app, app.db.killhashes, match, parse_mail, 50);
-        firstRun = false;
-    }
+
+    await app.util.simul.go(app, 'killhashes_fetched', app.db.killhashes, {status: 'fetched'}, parse_mail,  app.util.assist.continue_simul_go, 25);
 }
 
 async function parse_mail(app, killhash) {
@@ -98,7 +95,7 @@ async function parse_mail(app, killhash) {
             region = await app.util.entity.info(app, 'region_id', constellation.region_id, true);
             universe_cache['region_' + constellation.region_id] = region;
         }
-
+        
         addTypeId(app, involved, 'solar_system_id', system.id);
         addTypeId(app, involved, 'constellation_id', constellation.id);
         addTypeId(app, involved, 'region_id', region.id);
@@ -137,7 +134,10 @@ async function parse_mail(app, killhash) {
         if (region.id >= 12000000 && region.id < 13000000) labels.push('abyssal');
         if (region.id >= 12000000 && region.id < 13000000 && !npc) labels.push('abyssal-pvp');
 
-        killmail.total_value = Math.round(parseFloat(await ship_price) + parseFloat(await item_prices));
+        let item_prices_total = await item_prices;
+        let ship_price_total = await ship_price;
+
+        killmail.total_value = Math.round(parseFloat(ship_price_total) + parseFloat(item_prices_total));
         if (isNaN(killmail.total_value)) {
             console.log('isNaN on killmail ' + killhash.killmail_id);
             return await app.sleep(1000);
@@ -295,7 +295,7 @@ async function get_item_prices(app, items, date, in_container = false) {
         promises.push(get_item_price(app, item, date, in_container));
     }
     for (let p of promises) total += await p;
-
+    
     return total;
 }
 

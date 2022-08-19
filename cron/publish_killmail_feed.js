@@ -8,15 +8,18 @@ module.exports = {
 async function f(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
     
-    let raw = await app.redis.blpop('publishkillfeed', 1);
-    if (raw != null && raw.length > 0) {
-        let killmail_id = parseInt(raw[1] || 0);
+    let raw;
+    do {
+        raw = await app.redis.blpop('publishkillfeed', 1);
+        if (raw != null && raw.length > 0) {
+            let killmail_id = parseInt(raw[1] || 0);
 
-        if (killmail_id > 0) {
-            const killmail = await app.db.killmails.findOne({killmail_id: killmail_id});
-            await publishToKillFeed(app, killmail);
+            if (killmail_id > 0) {
+                const killmail = await app.db.killmails.findOne({killmail_id: killmail_id});
+                await publishToKillFeed(app, killmail);
+            }
         }
-    }
+    } while (raw != null);
 }
 
 async function publishToKillFeed(app, killmail) {

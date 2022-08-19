@@ -12,15 +12,18 @@ async function f(app) {
 		var url = process.env.esi_url + '/latest/status/';
 		let res = await app.phin({url: url, timeout: 5000});
 
-		var status = JSON.parse(res.body);
-		var keys = Object.keys(status);
-		for (let key of keys) {
-			await app.redis.setex('tq:status:' + key, 3600, status[key]);
+		if (res.statusCode == 200) {
+			var status = JSON.parse(res.body);
+			var keys = Object.keys(status);
+			for (let key of keys) {
+				await app.redis.setex('tq:status:' + key, 3600, status[key]);
+			}
+			app.no_api = false;
+		} else {
+			app.no_api = true;
 		}
-
-		app.no_api = (res.statusCode == 420 || res.statusCode == 401);
-		if (app.no_api) console.log("No API at this time.");
 	} catch (e) {
+		console.log(e);
 		console.log('API offline?');
 		app.no_api = true;
 	}

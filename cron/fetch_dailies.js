@@ -5,17 +5,18 @@ module.exports = {
     span: 1
 }
 
-let first_run = true;
-let concurrent = 0;
-let max_concurrent = 3;
-
 async function f(app) {
-    while (app.zinitialized != true) await app.sleep(100);
-    if (app.bailout == true) return;
-
     if (process.env.fetch_dailies != 'true') return;
+    while (app.zinitialized != true) await app.sleep(100);
 
-    let now = Math.floor(Date.now() / 1000);
+    if (await app.db.statistics.countDocuments({update_alltime: true}) > 250000) {
+        // let's get caught up here... 
+        while (app.bailout !== true && await app.db.statistics.countDocuments({update_alltime: true}) > 0) await app.sleep(1000);
+    }
+
+    if (app.bailout) return;
+
+    let now = app.now();
     let today = now - (now % 86400);
     let todaysKey = "zkb:daily_fetched:" + today;
 
@@ -51,9 +52,6 @@ async function f(app) {
             continue;
         }
 
-        while (app.bailout != true && concurrent >= max_concurrent) await app.sleep(1000);
-
-        concurrent++;
         total += await doImport(app, key);
     }
 }
@@ -63,13 +61,15 @@ async function doImport(app, key) {
         if (app.bailout) return;
 
         let res = await app.phin('https://zkillboard.com/api/history/' + key + '.json');
+        let json, entries, size = 0;
         if (res.statusCode == 200) {
+            json = JSON.parse(res.body);
+            entries = Object.entries(JSON.parse(res.body));
+            size = entries.length;
             try {
                 let inserts = [];
                 let added = 0;
-                let json = JSON.parse(res.body);
 
-                let entries = Object.entries(JSON.parse(res.body));
                 for (let [id, hash] of entries) {
                     id = parseInt(id);
                         inserts.push({killmail_id: parseInt(id), hash: hash, status: 'pending'});
@@ -82,13 +82,18 @@ async function doImport(app, key) {
                     app.util.ztop.zincr(app, 'killmail_add_dailies', added);
                 }
 
-                await app.redis.hset("zkb:dailies_lastcount", key, entries.length);
+                await app.redis.hset("zkb:dailies_lastcount", key, size);
                 await app.redis.srem("zkb:dailies", key);
 
                 if (added > 0) console.log('fetch_dailies', key, 'added', added, 'killmails');
                 return added;
             } catch (e) {
-                console.log('https://zkillboard.com/api/history/' + key + '.json', e.message);
+                if (e.code == 11000) { // duplicate key error, we can ignore it and move on
+                    await app.redis.hset("zkb:dailies_lastcount", key, size);
+                    await app.redis.srem("zkb:dailies", key);
+                    return size;
+                }
+                console.log('https://zkillboard.com/api/history/' + key + '.json', e.message, e.code);
                 console.log(e);
                 await app.sleep(10000);
                 return 0;
@@ -96,7 +101,5 @@ async function doImport(app, key) {
         }
     } catch (e) {
         console.log(e);
-    } finally {
-        concurrent--;
     }
 }
