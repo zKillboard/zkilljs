@@ -51,16 +51,16 @@ async function f(app) {
 async function update_stats(app, collection, epoch, type, find) {
     let promises = [];
     try {
-        if (app.bailout || app.dbstats.total > 100) return;
+        if (app.bailout) return;
     
         let iter = await app.db.statistics.find(find);
         while (await iter.hasNext()) {
-            if (app.bailout || app.dbstats.total > 100) return;
+            if (app.bailout) return;
 
             let record = await iter.next();
 
             if (record.id !== NaN) {
-                while (!app.bailout && concurrent >= 500) await app.sleep(10);
+                while (!app.bailout && concurrent >= (app.dbstats.total > 100 ? 10 : 500)) await app.sleep(10);
                 if (app.bailout) return;
 
                 concurrent++;
