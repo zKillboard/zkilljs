@@ -99,13 +99,16 @@ function toggleTooltips() {
     }
 }
 
-var stats_subbed = false;
+let load_ztop = false;
+let ztop_timeout = -1;
 function toggleZTop() {
-    stats_subbed = !stats_subbed;
-    if (stats_subbed == true) {
+    load_ztop = !load_ztop;
+    if (load_ztop == true) {
         console.log('loading ztop');
+        $("#ztop").html('Loading ztop...');
         loadZTop();
     } else {
+        clearTimeout(ztop_timeout);
         console.log('clearing ztop');
         $("#ztop").html("");
     }
@@ -113,14 +116,21 @@ function toggleZTop() {
 }
 
 function loadZTop() {
-    if (stats_subbed) {
+    if (load_ztop) {
         apply("ztop", "/site/ztop.txt", null, true);
-        setTimeout(loadZTop, 5000);
+        clearTimeout(ztop_timeout);
+        ztop_timeout = setTimeout(loadZTop, 5000);
     }
 }
 
 function loadPage(url) {
     var path = url == undefined ? window.location.pathname : url;
+    if (path == '/server/ztop') {
+        load_ztop = false; // will toggle to true on the next call
+        showSection('other');
+        toggleZTop();
+        return;
+    }
     var fetch;
 
     // Clear caches

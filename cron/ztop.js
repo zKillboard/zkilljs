@@ -12,17 +12,21 @@ const epochs = {
     moment: 5,
     minute: 60,
     five: 300,
-    //hour: 3600,
+    hour: 3600,
     //day: 86400,
 }
 
 let last_second_exec = 0;
+let first_run = true;
 
 async function f(app) {
     while (app.zinitialized != true) await app.sleep(100);
 
-    if (last_second_exec == 0) last_second_exec = app.now();
-    await ztop(app);
+    if (first_run) {
+        if (last_second_exec == 0) last_second_exec = app.now();
+        first_run = false;
+        ztop(app);
+    }
 }
 
 async function cleanup(app) {
@@ -62,20 +66,10 @@ async function ztop(app) {
     out.push(t);
     out.push([]);
 
-    /*let ztops = app.util.ztop.get_ztops();
-    for (const [key, value] of Object.entries(ztops)) {
-        out.push(padLeftSlice(value.toLocaleString(), -12) + ' ' + key);
-    }
-
-    let output = out.join('\n');
-    await app.redis.setex("server-information", 60, output);
-    await fs.writeFileSync('/tmp/ztop.txt', output, 'utf-8');
-    return;*/
-
     let str = '';
     for (let epoch in epochs) {
         str += (('           ' + (epochs[epoch])).toLocaleString()).slice(-12);
-        if (epoch == 'five') str += '         #/s';
+        if (epoch == 'hour') str += '         #/s';
     }
     out.push(str + '    seconds');
 
@@ -104,7 +98,7 @@ async function ztop(app) {
         for (let epoch in epochs) {
             const total = (epoch == 'moment' ? ztops[key] || 0 : await get_total(app, 'ztop:' + key + ':' + epoch));
             str += ('           ' + total.toLocaleString()).slice(-12);
-            if (epoch == 'five') {
+            if (epoch == 'hour') {
                 str += ('           ' + Math.floor(total / epochs[epoch]).toLocaleString()).slice(-12);
                 await app.redis.setex('www:status:' + key, 3600, total);
             }
@@ -115,6 +109,7 @@ async function ztop(app) {
     let output = out.join('\n');
     await app.redis.setex("server-information", 60, output);
     await fs.writeFileSync('/tmp/ztop.txt', output, 'utf-8');
+    setTimeout(function() { ztop(app); }, 1000);
 }
 
 async function get_total(app, redis_base) {
