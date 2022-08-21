@@ -2,7 +2,7 @@
 
 module.exports = {
     exec: f,
-    span: 5
+    span: 1
 }
 
 const fs = require('fs');
@@ -17,16 +17,12 @@ const epochs = {
 }
 
 let last_second_exec = 0;
-let first_run = true;
 
 async function f(app) {
     while (app.zinitialized != true) await app.sleep(100);
 
-    if (first_run) {
-        if (last_second_exec == 0) last_second_exec = app.now();
-        first_run = false;
-        ztop(app);
-    }
+    if (last_second_exec == 0) last_second_exec = app.now();
+    ztop(app);
 }
 
 async function cleanup(app) {
@@ -116,8 +112,6 @@ async function ztop(app) {
     let output = out.join('\n');
     await app.redis.setex("server-information", 60, output);
     await fs.writeFileSync('/tmp/ztop.txt', output, 'utf-8');
-    setTimeout(ztop.bind(null, app), 1000);
-    //setTimeout(function() { ztop(app); }, 1000);
 }
 
 async function get_total(app, redis_base) {
