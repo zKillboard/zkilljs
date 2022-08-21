@@ -12,7 +12,11 @@ const sw = require('../util/StreamWatcher.js');
 async function f(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
 
-    // await app.db.killhashes.updateMany({status: 'done', failure_reason : {$exists: true}}, {$unset: {failure_reason : 1}}, {multi: true});
+    if (firstRun) {
+        firstRun = false;
+        app.db.killhashes.updateMany({status: 'done', failure_reason : {$exists: true}}, {$unset: {failure_reason : 1}}, {multi: true});
+        resetBadMails(app);
+    }
 
     await app.util.simul.go(app, 'killhashes_pending', app.db.killhashes, {status: 'pending'}, fetch, app.util.assist.continue_simul_go, 100);
 }
