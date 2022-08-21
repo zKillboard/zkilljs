@@ -35,6 +35,7 @@ async function f(app) {
 
 async function parse_mail(app, killhash) {
     var killmail = {};
+    let success = false;
     const now = Math.floor(Date.now() / 1000);
 
     try {
@@ -178,15 +179,12 @@ async function parse_mail(app, killhash) {
         if (killmail.epoch > (now - (7 * 86400))) await app.db.killmails_7.insertOne(killmail);
         await app.db.killhashes.updateOne(killhash, parsed);
         app.util.ztop.zincr(app, 'killmail_process_parsed');
+        success = true;
     } catch (e) {
-        //console.log('ERROR', e, killhash);
-        await app.db.killhashes.updateOne(killhash, {
-            $set: {
-                status: 'parse-error'
-            }
-        });
+        console.log('ERROR', killhash, '\n', e);
+        await app.db.killhashes.updateOne(killhash, {$set: {status: 'parse-error'}});
     } finally {
-        if (killmail.epoch > (now - (7 * 86400))) await app.redis.rpush('publishkillfeed', killmail.killmail_id);
+        if (killmail.epoch > (now - (7 * 86400)) && success) await app.redis.rpush('publishkillfeed', killmail.killmail_id);
         killmail = null; // memory leak protection
     }
 }
@@ -270,8 +268,8 @@ async function isSolo(app, rawmail) {
         if (ship_type_id == undefined) return false;
 
         item = universe_cache['item_' + ship_type_id];
-        if (item == undefined) {
-            await app.util.entity.info(app, 'item_id', ship_type_id);
+        if (item == undefined || item == null) {
+            item = await app.util.entity.info(app, 'item_id', ship_type_id, true);
             universe_cache['item_' + ship_type_id] = item;
         }
         if (item.group_id == undefined) return false;

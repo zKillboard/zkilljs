@@ -53,7 +53,8 @@ async function ztop(app) {
 
     let t = padLeftSlice(memUsage(app) + ' (cron)', -16) + padLeftSlice(await app.redis.get('zkilljs:www:memusage') + ' (www)', -16);
     t += '   (' + (app.now() - last_second_exec) + ' seconds)';
-    t += '     rate limit: ' + await app.util.assist.get_rate_limit(app);
+    app.rate_limit = await app.util.assist.get_rate_limit();
+    t += '     rate limit: ' + app.rate_limit;
     last_second_exec = app.now();
     out.push(t);
     out.push([]);

@@ -5,8 +5,25 @@ module.exports = {
     span: 1
 }
 
-var adds = ['character_id', 'corporation_id', 'alliance_id', 'group_id', 'category_id', 'constellation_id', 'region_id', 'creator_corporation_id', 'executor_corporation_id', 'creator_id', 'ceo_id', 'types', 'groups', 'systems', 'constellations', 'star_id'];
-var maps = {
+const adds = [
+    'character_id', 
+    'corporation_id', 
+    'alliance_id', 
+    'group_id', 
+    'category_id', 
+    'constellation_id', 
+    'region_id', 
+    'creator_corporation_id', 
+    'executor_corporation_id', 
+    'creator_id', 'ceo_id', 
+    'types', 
+    'groups', 
+    'systems', 
+    'constellations', 
+    'star_id'
+];
+
+const maps = {
     'creator_corporation_id': 'corporation_id',
     'executor_corporation_id': 'corporation_id',
     'creator_id': 'character_id',
@@ -18,7 +35,7 @@ var maps = {
 };
 
 
-var urls = {
+const urls = {
     'item_id': '/v3/universe/types/:id/',
     'group_id': '/v1/universe/groups/:id/',
     'character_id': '/v5/characters/:id/',
@@ -31,7 +48,9 @@ var urls = {
     'star_id': '/v1/universe/stars/:id/',
     'war_id': '/v1/wars/:id/'
 };
-var types = Object.keys(urls);
+const types = Object.keys(urls);
+
+const types_dependant_on_server_version = ['item_id', 'group_id', 'category_id', 'solar_system_id', 'constellation_id', 'region_id'];
 
 /*
  Meta 1-4 is tech 1, meta 5 is tech 2, meta 6-7 is storyline, meta 8 is faction, meta 10 is abyss, meta 11 to 14 is officer
@@ -47,69 +66,59 @@ Squizz Caphinator — Today at 4:41 PM
 hrm, so maybe use 1692 if present, and otherwise 633
 */
 
-
-const set = new Set();
-var firstRun = true;
-
-let esi_error = 0;
+let concurrent = 0;
+let firstRun = true;
 
 async function f(app) {
-    while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
+    while (app.zinitialized != true) await app.sleep(100);
     
     if (firstRun) {
         firstRun = false;
         for (const typeValue of types) populateSet(app, typeValue);
     }
-
-    await app.sleep(1000);
-    while (set.size > 0) await app.sleep(1000);
 }
 
 async function populateSet(app, typeValue) {
     let fetched = 0;
+    let promises = [];
     try {
         if (app.bailout == true || app.no_api == true) return;
         const dayAgo = app.now() - 86400;
 
-        let rows = await app.db.information.find({type: typeValue, last_updated: {$lt: dayAgo}}).sort({last_updated: 1}).limit(10);
+        let iterator = await app.db.information.find({type: typeValue, last_updated: {$lt: dayAgo}}).sort({last_updated: 1}).limit(100);
 
-        while (await rows.hasNext()) {
+        while (await iterator.hasNext()) {
             if (app.bailout == true || app.no_api == true) break;
-            const row = await rows.next();
+            const row = await iterator.next();
 
-            let sleep_time = 100;
-            if (row.type == 'war_id') sleep_time = 15000;            
-            await app.sleep(sleep_time);
+            while (concurrent >= app.rate_limit) await app.sleep(10);
 
-            var p = fetch(app, row);
-            let wait = 20;
-            while (set.size > 100) {
-                wait--;
-                await app.sleep(1);
-            }
-            await app.sleep(wait);
-            if (esi_error > 0) await app.sleep(1000);
-            fetched++;
+            concurrent++;
+            promises.push(fetch(app, row));
         }
 
         // Wait for all calls to finish and return
-        while (set.size > 0) await app.sleep(100);
+        await app.waitfor(promises);
     } catch (e) {
         console.log(e, 'dropped on ' + typeValue);
     } finally {
-        if (fetched == 0) await app.sleep(1000);
+        if (promises.length == 0) await app.sleep(1000);
         populateSet(app, typeValue);
     }
 }
-
+ 
 async function fetch(app, row) {
     try {
         const orow = row;
-        set.add(row);
-
         let now = Math.floor(Date.now() / 1000);
 
         if (row.no_fetch === true) {
+            await app.db.information.updateOne(row, {$set: {last_updated: now}});
+            return;
+        }
+
+        let dependant_on_server_version = (types_dependant_on_server_version.indexOf(row.type) >= 0);        
+        if (row.last_updated == 0 && dependant_on_server_version && row.server_version == app.server_version) {
             await app.db.information.updateOne(row, {$set: {last_updated: now}});
             return;
         }
@@ -124,31 +133,28 @@ async function fetch(app, row) {
                 recent_count = await app.db.killmails_90.countDocuments(recent_match);
             }
             if (recent_count == 0) {
-                await app.db.information.updateOne(row, {$set : { last_updated: now, inactive: true }});
+                await app.db.information.updateOne(row, {$set : { last_updated: now, inactive: true, corporation_id: 0, alliance_id: 0, faction_id: 0}});
                 return;  // nothing to update, move on
             }
         }
 
-        await app.redis.hset('zkilljs:info:' + row.type, row.id, JSON.stringify(row));
-
         let url = process.env.esi_url + urls[row.type].replace(':id', row.id);
 
+        if (row.type == 'war_id') await app.sleep(15000);
+        else await app.sleep(100);
         let res = await app.phin({url: url, timeout: 15000});
-
-        if (res.statusCode != 200 && res.statusCode != 304) {
-            esi_err_log(app);
-        }
 
         switch (res.statusCode) {
         case 200:
-            var body = JSON.parse(res.body);
+            let body = JSON.parse(res.body);
             body.inactive = false;
             body.last_updated = now;
             body.etag = res.headers.etag;
+            body.server_version = app.server_version;
 
             if (row.type == 'war_id') {
                 // Special case for wars, something with this war changed
-                var total_kills = body.aggressor.ships_killed + body.defender.ships_killed;
+                let total_kills = (body.aggressor.ships_killed || 0) + (body.defender.ships_killed || 0);
                 if ((row.total_kills || 0) != total_kills) {
                     body.total_kills = total_kills;
                     body.check_wars = true;
@@ -159,18 +165,13 @@ async function fetch(app, row) {
             if (row.type == 'character_id' || row.type == 'corporation_id' || row.type == 'alliance_id') {
                 body.alliance_id = body.alliance_id || 0;
                 body.faction_id = body.faction_id || 0;
-                await app.sleep(1000);
             }
 
             // Just to prevent any accidental cross contamination
             body.type = row.type;
             body.id = row.id; 
 
-            await app.redis.hset('zkilljs:info:' + row.type, row.id, JSON.stringify(body));
-            await app.db.information.updateOne(row, {
-                $set: body
-            });
-
+            await app.db.information.updateOne(row, {$set: body});
             app.util.ztop.zincr(app, 'info_' + row.type);
 
             let keys = Object.keys(body);
@@ -193,75 +194,51 @@ async function fetch(app, row) {
                 }
             }
 
-            if (row.type != 'war_id') {
-                var searchname = row.name;
-                if (row.type =='character_id' && row.corporation_id == 1000001) searchname = searchname + ' (recycled)';
-                else if ((row.type == 'corporation_id' || row.type == 'alliance_id') && row.membercount == 0) searchname = searchname + ' (closed)';
+            if (row.type != 'war_id') await updateName(app, row);
 
-                await app.mysql.query('replace into autocomplete values (?, ?, ?, ?)', [row.type, row.id, searchname, row.ticker]);
-            }
-            return true;
             break;
         case 304: // ETAG match
-            await app.db.information.updateOne(row, {                $set: {
-                    last_updated: now
-                }
-            });
+            await app.db.information.updateOne(row, {$set: {last_updated: now}});
             break;
         case 404:
-            await app.db.information.updateOne(row, {
-                $set: {
-                    'no_fetch': true,
-                    last_updated: now
-                }
-            });
-            break;
-        case 401:
-            if (app.no_api == false) {
-                app.no_api = true;
-                //setTimeout(function() { clear_no_api(app); }, 300000 + (Date.now() % 60000));
-                console.log("http code 401 received, we've been banned?");
-            }            
-            break;
-        case 420:
-            if (app.no_api == false) {
-                app.no_api = true;
-                setTimeout(function() {clear_no_api(app);}, 1000 + (Date.now() % 60000));
-                console.log("420'ed in information: " + row.type + " " + row.id);
+            if (row.type == 'character_id') {
+                await doomheimCharacter(app, row);
+                await updateName(app, row);
+            } else {
+                await app.db.information.updateOne(row, {$set: {'no_fetch': true, last_updated: now}});
             }
             break;
+        // all of these codes are handled with a wait in the esi error handler
+        case 401:
+        case 420:
         case 500:
-            console.log(row.type, row.id, '500 received');
-            break;
         case 502:
         case 503:
         case 504:
-            await app.sleep(1000);
-            break; // Try again later
+            await app.db.information.updateOne(row, {$set: {last_updated: (app.now() - 86100)}}); // Try again later
+            break;
         default:
             console.log(row, 'Unhandled error code ' + res.statusCode);
         }
-
-        return false;
     } catch (e) {
+        await app.db.information.updateOne(row, {$set: {last_updated: (app.now() - 86100)}});
         console.log(e);
-        await app.db.information.updateOne(row, {
-            $set: {
-                last_updated: (Math.floor(Date.now() / 1000) - 86100)
-            }
-        });
     } finally {
-        set.delete(row);
+        concurrent--;
     }
 }
 
-function clear_no_api(app) {
-    app.no_api = false;
+async function doomheimCharacter(app, row) {
+    if (row.type != 'character_id') return;
+    await app.db.information.updateOne(row, {$set: {'no_fetch': true, last_updated: app.now(), corporation_id: 1000001, alliance_id: 0, faction_id: 0}});
 }
 
-function esi_err_log(app) {
-    esi_error++;
-    setTimeout(function () {
-        esi_error--;
-    }, 1000);
+async function updateName(app, row) {
+    if (row.type == 'war_id') return;
+
+    let searchname = row.name;
+    if (row.type =='character_id' && row.corporation_id == 1000001) searchname = searchname + ' (recycled)';
+    else if ((row.type == 'corporation_id' || row.type == 'alliance_id') && row.membercount === 0) searchname = searchname + ' (closed)';
+
+    await app.mysql.query('replace into autocomplete values (?, ?, ?, ?)', [row.type, row.id, searchname, row.ticker]);
 }

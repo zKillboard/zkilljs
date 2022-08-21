@@ -44,6 +44,7 @@ const price = {
     },
 
     cacheIt(app, rkey, price) {
+        if (isNaN(price)) console.log(new Error().stack);
         price = this.getFloat(rkey, price);
         price_cache[rkey] = price;
 
@@ -158,7 +159,7 @@ async function fetch(app, item_id, date, skip_fetch) {
     date = price.format_date(d);
 
     let key = date + ':' + item_id;
-    if (cache[key] != undefined) return cache[key];
+    if (cache[key] != undefined && !isNaN(cache[key])) return cache[key];
 
     let marketHistory;
     let todays_key = app.util.price.get_todays_price_key();
@@ -198,13 +199,14 @@ async function fetch(app, item_id, date, skip_fetch) {
     let marketlength = Object.keys(marketHistory).length;
     do {
         const useDate = price.format_date(useTime);
-        if (marketHistory[useDate] != undefined) {
+        if (marketHistory[useDate] != undefined && !isNaN(marketHistory[useDate])) {
             priceList.push(marketHistory[useDate]);
         }
         useTime.setDate(useTime.getDate() - 1);
     } while (priceList.length < maxSize && iterations++ < marketlength);
 
     priceList.sort(numeric_sort);
+
     if (priceList.length == maxSize) {
         // remove 2 endpoints from each end, helps fight against wild prices from market speculation and scams
         priceList.splice(0, 2); // Remove two lowest prices
@@ -217,7 +219,7 @@ async function fetch(app, item_id, date, skip_fetch) {
 
     let total = 0;
     for (let i = 0; i < priceList.length; i++) {
-        total += priceList[i];
+        total += parseFloat(priceList[i]);
     }
     let avgPrice = Math.round(((total / priceList.length) + Number.EPSILON) * 100) / 100;
 
@@ -230,6 +232,7 @@ async function fetch(app, item_id, date, skip_fetch) {
     if (datePrice > 0.01 && datePrice < avgPrice) avgPrice = datePrice;
 
     cache[key] = avgPrice; // TODO fix this caching
+
     return cache[key];
 }
 

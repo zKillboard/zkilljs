@@ -71,14 +71,13 @@ const assist = {
 		app.no_api = false;
 	},
 
-	get_rate_limit: async function(app) {
-		app.rate_limit = rate_limit;
+	get_rate_limit: function() {
 		return rate_limit;
 	},
 
 	esi_limiter : async function (app) {
 		app.rate_limit = rate_limit;
-		return await app.util.assist.limit_per_second(app, app.rate_limit);
+		return await app.util.assist.limit_per_second(app, this.get_rate_limit);
 	},
 
 	limit_per_second : async function (app, limit = 1) {
@@ -89,9 +88,9 @@ const assist = {
 			const remaining_ms = 1000 - (now % 1000) + 1;
 
 			count = (limit_object[second] || 0);
-			if (count >= limit) await app.sleep(remaining_ms);
+			if (count >= (await limit)) await app.sleep(remaining_ms);
 
-		} while (count >= limit);
+		} while (count >= (await limit));
 		limit_object[second] = (limit_object[second] || 0) + 1;
 	},
 

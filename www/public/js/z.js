@@ -689,12 +689,30 @@ function load_killmail_rows(killmail_ids) {
         killmail_ids.sort();
         for (var i = 0; i < killmail_ids.length; i++) {
             var killmail_id = killmail_ids[i];
+
             // Don't load the same kill twice
             if ($(".kill-" + killmail_id).length > 0) return;
 
             var url = '/cache/1hour/killmail/row/' + killmail_id + '.html';
-            var divraw = '<div fetch="' + url + '" unfetched="true" id="kill-' + killmail_id + '"></div>';
-            $("#killlist").prepend(divraw);
+            var divraw = '<div fetch="' + url + '" unfetched="true" id="kill-' + killmail_id + '" class="killlist-killmail"></div>';
+            let killlist_killmails = $(".killlist-killmail");
+            if (killlist_killmails.length == 0 || killmail_ids.length > 1) $("#killlist").prepend(divraw); // add it in
+            else {
+                let inserted = false;
+                killlist_killmails.each(function(i, row) {
+                    if (inserted) return;
+                    try {
+                        row = $(row);
+                        let that_kill_id = parseInt(row.attr('id').replace('kill-', ''));
+                        if (killmail_id > that_kill_id) {
+                            row.before(divraw);
+                            inserted = true;
+                            return;
+                        }
+                    } catch (e) { console.log(e);}
+                });
+            }
+            
         }
         loadUnfetched(document);
     } catch (e) {
