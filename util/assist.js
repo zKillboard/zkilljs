@@ -2,7 +2,6 @@
 
 const limit_object = {};
 function clean_limit_object() {
-	console.log(limit_object);
 	const now = Math.floor(Date.now() / 1000);
 	for (const key of Object.keys(limit_object)) {
 		if (key < now) delete limit_object[key];
