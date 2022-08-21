@@ -150,7 +150,7 @@ function loadPage(url) {
         clearTimeout(timeouts.shift());
     }
 
-    $("#page-title").html("&nbsp;");
+    $("#page-title").remove();
     $(".clearbeforeload").hide();
     $(".hidebeforeload").hide();
     reset_filters();

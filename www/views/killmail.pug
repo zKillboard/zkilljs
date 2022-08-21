@@ -1,11 +1,14 @@
 include mixins.pug
 include mixins-attackers.pug
 
-- var rawmail = rawmail;
-- var killmail = killmail;
-- var victim = rawmail.victim;
-- var time = rawmail.killmail_time.replace('T', ' ').replace('Z', '');
+- let victim = rawmail.victim;
+- let time = rawmail.killmail_time.replace('T', ' ').replace('Z', '');
 
+- let title = ( victim.character_id > 0 ? victim.character_name : victim.corporation_name)
+- title += (title.slice(-1) == 's' ? "'" : "'s")
+- title += ' ' + victim.ship_type_name
+
+h1.d-none#page-title= title
 div.row.m-0.p-0
 	div#killleftside.col-12.col-xl-8.row.m-0.p-0
 		div#killmail-fitting-col.col-12.col-md-7
