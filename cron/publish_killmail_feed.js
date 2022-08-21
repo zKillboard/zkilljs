@@ -22,6 +22,11 @@ async function f(app) {
     } while (raw != null);
 }
 
+async function requeuePublish(app, killmail_id) {
+    await app.redis.rpush('publishkillfeed', killmail_id);
+}
+
+const has_infos = {};
 async function publishToKillFeed(app, killmail) {
     try {
         var sent = [];
@@ -40,11 +45,12 @@ async function publishToKillFeed(app, killmail) {
             ids = killmail.involved[type];
             for (entity_id of ids) {
                 entity_id = Math.abs(entity_id);
+                key = type + '_' + entity_id;
+                if (has_infos[key] === true) continue;
+
                 let info = await app.db.information.findOne({type: type, id: entity_id});
-                if (info == null || info.last_updated == 0) {
-                    await app.redis.push('publishkillfeed', killmail.killmail_id);
-                    return;
-                }
+                if (info == null || info.last_updated == 0) return setTimeout(requeuePublish.bind(null, app, killmail.killmail_id), 15000);
+                has_infos[key] = true;
             }
         }
 

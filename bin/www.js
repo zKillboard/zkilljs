@@ -8,5 +8,5 @@ f(app);
 
 async function memUsage(app) {
     let usage = Math.floor(process.memoryUsage().heapUsed / 1024 / 1024).toString() + 'MB';
-    await app.redis.setex('zkb:www:memusage', 300, usage);
+    await app.redis.setex('zkilljs:www:memusage', 300, usage);
 };

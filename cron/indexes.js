@@ -43,16 +43,17 @@ async function applyIndexes(app) {
     await createIndex(app.db.collection('scopes'), {scope: 1, last_updated: 1}, {sparse: true});
 
     await create_collection(app, 'datacache');
-    await createIndex(app.db.datacache, {requrl: 1}, {unique: true});
-    await createIndex(app.db.datacache, {epoch: 1});
+    await createIndex(app.db.collection('datacache'), {requrl: 1}, {unique: true});
+    await createIndex(app.db.collection('datacache'), {epoch: 1});
 
     await create_collection(app, 'killhashes');
-    await createIndex(app.db.killhashes, {killmail_id: 1, hash: 1}, {unique: true});
-    await createIndex(app.db.killhashes, {status: 1}, {});
-    await createIndex(app.db.killhashes, {status: 1, failure_reason: 1}, {sparse: true});
+    await createIndex(app.db.collection('killhashes'), {killmail_id: 1, hash: 1}, {unique: true});
+    await createIndex(app.db.collection('killhashes'), {status: 1}, {});
+    await createIndex(app.db.collection('killhashes'), {status: 1, failure_reason: 1}, {sparse: true});
 
     await create_collection(app, 'statistics');
-    await createIndex(app.db.statistics, {type: 1, id: 1}, {unique: true});
+    await createIndex(app.db.collection('statistics'), {id: 1}, {});
+    await createIndex(app.db.collection('statistics'), {type: 1, id: 1}, {unique: true});
     await createIndex(app.db.collection('statistics'), {type: 1, update_alltime: 1}, {});
     await createIndex(app.db.collection('statistics'), {type: 1, update_recent: 1}, {});
     await createIndex(app.db.collection('statistics'), {type: 1, update_week: 1}, {});
@@ -67,20 +68,21 @@ async function applyIndexes(app) {
     await createIndex(app.db.collection('statistics'), {'week.update_top': 1}, {sparse: true});
 
     await create_collection(app, 'prices');
-    await createIndex(app.db.prices, {item_id: 1}, {unique: true});
-    await createIndex(app.db.prices, {waiting: 1}, {});
-    await createIndex(app.db.prices, {last_fetched: 1}, {});
+    await createIndex(app.db.collection('prices'), {item_id: 1}, {unique: true});
+    await createIndex(app.db.collection('prices'), {waiting: 1}, {});
+    await createIndex(app.db.collection('prices'), {last_fetched: 1}, {});
 
     await create_collection(app, 'information');
-    await createIndex(app.db.information, {type: 1});
-    await createIndex(app.db.information, {id: 1}); 
-    await createIndex(app.db.information, {type: 1, id: 1}, {unique: true});
-    await createIndex(app.db.information, {type: 1, last_updated: 1}, {});
-    await createIndex(app.db.information, {last_updated: 1}, {});
-    await createIndex(app.db.information, {type: 1, alliance_id: 1}, {sparse: true}); // For determining alliance member counts
+    await createIndex(app.db.collection('information'), {type: 1});
+    await createIndex(app.db.collection('information'), {id: 1}); 
+    await createIndex(app.db.collection('information'), {type: 1, id: 1}, {unique: true});
+    await createIndex(app.db.collection('information'), {type: 1, last_updated: 1}, {});
+    await createIndex(app.db.collection('information'), {last_updated: 1}, {});
+    await createIndex(app.db.collection('information'), {type: 1, alliance_id: 1}, {sparse: true}); // For determining alliance member counts
 
     await create_killmail_collection(app, 'killmails');
     await createIndex(app.db.collection('killmails'), {status: 1}, {sparse: true});
+    
     await create_killmail_collection(app, 'killmails_7');
     await createIndex(app.db.collection('killmails_7'), {epoch: 1}, {});
 

@@ -13,7 +13,7 @@ async function f(app) {
 
     if (first_run == true) {
         // override default phin behavior
-        orig_phin = app.phin;
+        app.orig_phin = app.phin;
         app.phin = async function(options) {
             if (typeof options == 'string') options = {url: options};
 
@@ -24,7 +24,7 @@ async function f(app) {
             }
 
             if (esi_url) await app.util.assist.esi_limiter(app);
-            let res = await orig_phin(options);
+            let res = await app.orig_phin(options);
             if (esi_url) await app.util.assist.esi_result_handler(app, res, options.url);
 
             return res;
@@ -34,7 +34,9 @@ async function f(app) {
         app.dbstats = [];
         app.no_api = true; // don't hit the API until we've checked TQ's status
         app.bailout = false;
+        app.rate_limit = 0;
         first_run = false;
+        await app.util.assist.fetch_tq_status(app);
     }
 
     let keys = ['pending', 'fetched', 'parsed'];

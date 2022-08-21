@@ -30,8 +30,7 @@ async function f(app) {
 }
 
 async function cleanup(app) {
-    await clear_keys(app, await app.redis.keys('zkb:ztop:*'));
-    await clear_keys(app, await app.redis.keys('ztop:*'));
+    await clear_keys(app, await app.redis.keys('zkilljs:ztop:*'));
 }
 
 async function clear_keys(app, keys) {
@@ -52,8 +51,9 @@ async function ztop(app) {
 
     out.push([new Date()]);
 
-    let t = padLeftSlice(memUsage(app) + ' (cron)', -16) + padLeftSlice(await app.redis.get('zkb:www:memusage') + ' (www)', -16);
+    let t = padLeftSlice(memUsage(app) + ' (cron)', -16) + padLeftSlice(await app.redis.get('zkilljs:www:memusage') + ' (www)', -16);
     t += '   (' + (app.now() - last_second_exec) + ' seconds)';
+    t += '     rate limit: ' + await app.util.assist.get_rate_limit(app);
     last_second_exec = app.now();
     out.push(t);
     out.push([]);
@@ -66,10 +66,13 @@ async function ztop(app) {
     out.push(t);
     out.push([]);
 
+    let epoch_keys = Object.keys(epochs);
+    let last_epoch = epoch_keys[epoch_keys.length - 1];
+
     let str = '';
     for (let epoch in epochs) {
         str += (('           ' + (epochs[epoch])).toLocaleString()).slice(-12);
-        if (epoch == 'hour') str += '         #/s';
+        if (epoch == last_epoch) str += '         #/s';
     }
     out.push(str + '    seconds');
 
@@ -80,27 +83,30 @@ async function ztop(app) {
     second = second - (second % 60);
 
     for (let key of keys) {
-        await app.redis.setex('ztop:base:' + key, 3600, 'true');
+        await app.redis.setex('zkilljs:ztop:base:' + key, 3600, 'true');
         for (let epoch in epochs) {
             if (epoch == 'moment') continue;
-            let rkey = 'ztop:' + key + ':' + epoch + ':' + second;
+            let rkey = 'zkilljs:ztop:' + key + ':' + epoch + ':' + second;
             await app.redis.incrby(rkey, ztops[key]);
             await app.redis.expire(rkey, epochs[epoch] - 1);
         }
     }
 
-    let base_keys = await app.redis.keys('ztop:base:*');
+    let base_keys = await app.redis.keys('zkilljs:ztop:base:*');
     base_keys.sort();
     for (let key of base_keys) {
         str = '';
-        key = key.replace('ztop:base:', '');
+        key = key.replace('zkilljs:ztop:base:', '');
 
         for (let epoch in epochs) {
-            const total = (epoch == 'moment' ? ztops[key] || 0 : await get_total(app, 'ztop:' + key + ':' + epoch));
+            const total = (epoch == 'moment' ? ztops[key] || 0 : await get_total(app, 'zkilljs:ztop:' + key + ':' + epoch));
             str += ('           ' + total.toLocaleString()).slice(-12);
-            if (epoch == 'hour') {
+            if (epoch == last_epoch) {
                 str += ('           ' + Math.floor(total / epochs[epoch]).toLocaleString()).slice(-12);
                 await app.redis.setex('www:status:' + key, 3600, total);
+            }
+            if (epoch == 'hour' && key == 'killmail_process_parsed') {
+                await app.redis.setex('www:status:mails_parsed', 300, total);
             }
         }
         out.push(str + '    ' + key);
@@ -109,7 +115,8 @@ async function ztop(app) {
     let output = out.join('\n');
     await app.redis.setex("server-information", 60, output);
     await fs.writeFileSync('/tmp/ztop.txt', output, 'utf-8');
-    setTimeout(function() { ztop(app); }, 1000);
+    setTimeout(ztop.bind(null, app), 1000);
+    //setTimeout(function() { ztop(app); }, 1000);
 }
 
 async function get_total(app, redis_base) {

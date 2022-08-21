@@ -60,7 +60,7 @@ async function update_stats(app, collection, epoch, type, find) {
             let record = await iter.next();
 
             if (record.id !== NaN) {
-                while (!app.bailout && concurrent >= (app.dbstats.total > 100 ? 10 : 500)) await app.sleep(10);
+                while (!app.bailout && concurrent >= (app.dbstats.total > 100 ? 0 : 500)) await app.sleep(10);
                 if (app.bailout) return;
 
                 concurrent++;

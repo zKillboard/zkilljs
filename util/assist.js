@@ -17,6 +17,18 @@ const esi_rate_intervals = {
 	1130 : 10, 	// 11:30am UTC
 	1800 : 5 	// 06:00pm UTC
 }
+let rate_limit = 0;
+function doSetRateLimit() {
+	let d = new Date();
+	let current_time = (d.getHours() * 100) + d.getMinutes();
+	let calc_rate_limit = esi_rate_intervals[Object.keys(esi_rate_intervals)[0]]; // initial default
+	for (const [time, timed_rate_limit] of Object.entries(esi_rate_intervals)) {
+		if (current_time >= time) calc_rate_limit = timed_rate_limit;
+	}
+	if (rate_limit != calc_rate_limit) console.log('Setting ESI rate limit per second to', calc_rate_limit);
+	rate_limit = calc_rate_limit;
+}
+setInterval(doSetRateLimit, 1000);
 
 const assist = {
 	esi_result_handler: async function (app, res, url) {
@@ -28,7 +40,11 @@ const assist = {
 		}
 
 		app.util.ztop.zincr(app, 'esi_error');
-		console.log('ESI ERROR', res.statusCode, url);
+		if (res.statusCode != 404) console.log('ESI ERROR', res.statusCode, url);
+		if (res.headers['x-esi-error-limit-remain']) {
+			app.esi_errors_remaining = parseInt(res.headers['x-esi-error-limit-remain']);
+			if (app.esi_errors_remaining < 20) app.no_api = true;
+		}
 
 		await app.sleep(1000); // pause on any and all errors
 		switch (res.statusCode) {
@@ -48,11 +64,6 @@ const assist = {
 	        case 500:
 	            console.log('500 received');
 	            break;
-	        case 404:
-	        case 502:
-	        case 503:
-	        case 504:
-	            break; // Ignore, code should try again later
 		}
 	},
 
@@ -60,15 +71,14 @@ const assist = {
 		app.no_api = false;
 	},
 
-	esi_limiter : async function (app) {
-		let d = new Date();
-		let now = d.getHours() * 100 + d.getMinutes();
-		let rate_limit = 1;
-		for (const [time, timed_rate_limit] of Object.entries(esi_rate_intervals)) {
-			if (now <= time) rate_limit = timed_rate_limit;
-		}
+	get_rate_limit: async function(app) {
+		app.rate_limit = rate_limit;
+		return rate_limit;
+	},
 
-		return await app.util.assist.limit_per_second(app, rate_limit);
+	esi_limiter : async function (app) {
+		app.rate_limit = rate_limit;
+		return await app.util.assist.limit_per_second(app, app.rate_limit);
 	},
 
 	limit_per_second : async function (app, limit = 1) {
@@ -125,6 +135,29 @@ const assist = {
 
 	continue_simul_go: function(app) { 
     	return app.bailout !== true;
+	},
+
+	fetch_tq_status: async function(app) {
+		try {
+			var url = process.env.esi_url + '/latest/status/';
+			let res = await app.orig_phin({url: url, timeout: 5000});
+
+			if (res.statusCode == 200) {
+				var status = JSON.parse(res.body);
+				var keys = Object.keys(status);
+				for (let key of keys) {
+					await app.redis.setex('tq:status:' + key, 3600, status[key]);
+				}
+				app.server_version = status.server_version;
+				app.no_api = false;
+			} else {
+				app.no_api = true;
+			}
+		} catch (e) {
+			console.log(e);
+			console.log('API offline?');
+			app.no_api = true;
+		}
 	}
 }
 

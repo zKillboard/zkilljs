@@ -40,15 +40,8 @@ async function fetch(app, mail) {
             return;
         }
 
-        let url = 'https://zkillboard.com/zkilljs/raw/' + mail.killmail_id + '/';
-        let res = await app.phin(url);
-
-        if (res.statusCode == 200) app.util.ztop.zincr(app, 'killmail_imported_zkill');
-        else {
-            url = process.env.esi_url + '/v1/killmails/' + mail.killmail_id + '/' + mail.hash + '/';
-            res = await app.phin({url: url, timeout: 5000});
-            if (res.statusCode == 200) app.util.ztop.zincr(app, 'killmail_imported_esi');
-        }
+        let url = process.env.esi_url + '/v1/killmails/' + mail.killmail_id + '/' + mail.hash + '/';
+        let res = await app.phin({url: url, timeout: 5000});
 
         if (res.statusCode == 200) {
             let body = JSON.parse(res.body);
@@ -69,6 +62,7 @@ async function fetch(app, mail) {
                     success: true
                 }
             });
+            app.util.ztop.zincr(app, 'killmail_imported_esi');
             return true;
         } else {
             await app.db.killhashes.updateOne(mail, {
