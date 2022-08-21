@@ -91,6 +91,8 @@ async function populateSet(app, typeValue) {
             if (app.bailout == true || app.no_api == true) break;
             const row = await iterator.next();
 
+            if (row.type == 'war_id') await app.sleep(15000); // war calls limited to 4 per minute as too many could affect the cluster
+
             while (concurrent >= app.rate_limit) await app.sleep(10);
 
             concurrent++;
@@ -139,9 +141,6 @@ async function fetch(app, row) {
         }
 
         let url = process.env.esi_url + urls[row.type].replace(':id', row.id);
-
-        if (row.type == 'war_id') await app.sleep(15000);
-        else await app.sleep(100);
         let res = await app.phin({url: url, timeout: 15000});
 
         switch (res.statusCode) {
