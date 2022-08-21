@@ -10,7 +10,10 @@ module.exports = {
 			if (concurrents[name] == undefined) concurrents[name] = 0;
 
 			if (await exec_condition(app) === true) {
-				const iterator = collection.find(query);
+				let iterator = (query.find != undefined ? collection.find(query.find) : collection.find(query));
+				if (query.sort != undefined) iterator = iterator.sort(query.sort);
+				iterator = await iterator;
+
 				while (await iterator.hasNext()) {
 					await waitForConcurrents(app, name, min_wait_interval, max_concurrent); 
 					if (await exec_condition(app) === false) break;
@@ -55,6 +58,5 @@ async function doExec(app, name, exec, row, row_id) {
 }
 
 function returnTrue() {
-	console.log('default'); 
 	return true;
 }
