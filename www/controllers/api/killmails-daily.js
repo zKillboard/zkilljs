@@ -50,6 +50,6 @@ async function get(req, res) {
 
     return {
         json: result,
-        maxAge: 86400
+        ttl: 86400
     };
 }

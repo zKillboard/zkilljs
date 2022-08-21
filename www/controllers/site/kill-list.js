@@ -41,7 +41,7 @@ async function get(req, res) {
     req.alternativeUrl = '/cache/1hour/killmails/' + req.params.type + '/' + req.params.id + '.json';
     var valid = req.verify_query_params(req, valid);
     if (valid !== true) {
-        return {redirect: valid, maxAge: 0};
+        return {redirect: valid, ttl: 0};
     }
 
     var page = Math.max(0, Math.min(9, req.query['page'])); // cannot go below 0 or above 9
@@ -64,7 +64,7 @@ async function get(req, res) {
 
     return {
         json: killmails,
-        maxAge: 3600
+        ttl: 3600
     };
 }
 

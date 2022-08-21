@@ -27,7 +27,7 @@ async function get(req, res) {
             rawmail: rawmail,
             remaining: await app.util.info.fill(app, remaining)
         },
-    	maxAge: 1,
+    	ttl: 1,
         view: 'killmail-remaining.pug'
     }
 }

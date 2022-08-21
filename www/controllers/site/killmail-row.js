@@ -50,7 +50,7 @@ async function get(req, res) {
             rawmail: rawmail,
             victims: victim_array.join(','),
         },
-        maxAge: 3600,
+        ttl: 3600,
         view: 'killmail-row.pug'
     };
 

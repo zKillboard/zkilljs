@@ -27,7 +27,7 @@ async function getStats(req, res) {
 
     var hash = app.md5(JSON.stringify(data));
 
-    if (req.query.current_hash == hash) return {status_code: 204};
+    if (req.query.current_hash == hash) return {status_code: 204}; 
     var valid = {
         required: ['hash'],
         hash: hash
@@ -37,7 +37,7 @@ async function getStats(req, res) {
 
     return {
         json: data,
-        maxAge: 3600
+        ttl: 3600
     };
 }
 

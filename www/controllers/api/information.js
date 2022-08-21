@@ -24,6 +24,6 @@ async function get(req, res) {
 
     return {
         json: (result.length == 1 ? await app.util.info.fill(req.app.app, result[0]) : null),
-        maxAge: 3600
+        ttl: 3600
     };
 }

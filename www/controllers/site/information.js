@@ -65,10 +65,11 @@ async function get(req, res) {
     if (result.type == 'corporation_id' && (result.ticker || '').length > 0) result.ticker = '[' + result.ticker + ']';
     if (result.type == 'alliance_id' && (result.ticker || '').length > 0) result.ticker = '<' + result.ticker + '>';
 
+    result.page_title = result.name;
+
     let ret = {
         package: result,
-        page_title: result.name,
-        maxAge: 0,
+        ttl: 3600,
         view: 'information.pug'
     };
 

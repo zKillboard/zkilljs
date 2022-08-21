@@ -9,7 +9,7 @@ module.exports = {
 async function get(req, res) {
     var ret = {
         package: {title: 'zKillboard'},
-        maxAge: 0,
+        ttl: 0,
         view: 'index.pug'
     };
 

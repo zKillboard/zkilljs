@@ -22,6 +22,6 @@ async function get(req, res) {
 
     return {
         json: (result.length == 1 ? result[0] : null),
-        maxAge: 1
+        ttl: 1
     };
 }

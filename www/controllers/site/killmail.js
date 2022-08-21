@@ -136,9 +136,10 @@ async function get(req, res) {
     var ret = {
         package: {
             rawmail: rawmail,
-            killmail: killmail
+            killmail: killmail,
+            page_title: killmail.killmail_id
         },
-        maxAge: 0,
+        ttl: 3600,
         view: 'killmail.pug'
     };
 

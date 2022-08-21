@@ -21,7 +21,7 @@ async function get(req, res) {
 
     var ret = {
         json: result[0],
-        maxAge: 1,
+        ttl: 300,
         view: 'statistics.pug'
     };
 

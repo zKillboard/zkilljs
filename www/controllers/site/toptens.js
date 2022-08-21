@@ -115,7 +115,7 @@ async function get(req, res) {
 
     return {
         package: ret,
-        maxAge: 0,
+        ttl: 300,
         view: 'toptens.pug'
     };
 }
