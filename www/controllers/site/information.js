@@ -5,11 +5,16 @@ module.exports = {
    get: get
 }
 
+let all_labels = {};
+
 async function get(req, res) {
-    var valid = req.verify_query_params(req, {});
+    let valid = req.verify_query_params(req, {});
     if (valid !== true) return {redirect: valid};
 
     const app = req.app.app;
+
+    if (req.params.type != undefined) req.params.type = req.params.type.toLowerCase();
+    if (req.params.type == 'label' && req.params.id != undefined) req.params.id = req.params.id.toLowerCase();
 
     let query = {};
     if (req.params.type == 'label') query = {
@@ -17,7 +22,7 @@ async function get(req, res) {
         id: req.params.id
     };
     else {
-        var id = parseInt(req.params.id);
+        let id = parseInt(req.params.id);
         if (id == NaN) return {
             json: '[]'
         };
@@ -27,33 +32,40 @@ async function get(req, res) {
         };
     };
 
-    // We don't have information (yet?) for labels
+    // We don't have information for labels so we'll create it
     let result;
     if (query.type == 'label') {
+        if (all_labels[query.type] === undefined) {
+            all_labels[query.type] = await app.db.statistics.distinct('id', {type: 'label', id: {$ne: 'all'}});
+            all_labels[query.type].unshift('all');
+
+            let index = all_labels[query.type].indexOf(query.id);
+            if (index >= 0) all_labels[query.type].splice(index, 1);
+        }
+
         result = [{
             type: query.type,
             id: query.id,
             name: 'Label: ' + query.id,
             label_id: query.id,
             label_name: query.id,
+            all_labels: all_labels[query.type]
         }];
     } else result = await req.app.app.db.information.find(query).toArray();
 
-    //if (result.length == 0) return {package: {}};
-
-
     result = result[0];
 
+    if (result == undefined || result == null) result = {type: query.type, id: query.id};
     if (result.name == undefined) {
         result.name = req.params.type + ' ' + req.params.id;
     } else if (req.params.type == 'label') {
         result.name = req.params.id.toUpperCase() + ' Killmails';
     }
 
-    if (result.type == 'corporation_id') result.ticker = '[' + result.ticker + ']';
-    if (result.type == 'alliance_id') result.ticker = '<' + result.ticker + '>';
+    if (result.type == 'corporation_id' && (result.ticker || '').length > 0) result.ticker = '[' + result.ticker + ']';
+    if (result.type == 'alliance_id' && (result.ticker || '').length > 0) result.ticker = '<' + result.ticker + '>';
 
-    var ret = {
+    let ret = {
         package: result,
         page_title: result.name,
         maxAge: 0,

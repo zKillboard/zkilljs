@@ -7,6 +7,17 @@ module.exports = {
 
 var batch_size = 100;
 
+const sequences = {};
+function cleanupSequences() {
+    let now = Math.floor(Date.now() / 1000);
+    for (let key of Object.keys(sequences)) {
+        let values = key.split('-');
+        let time = parseInt(values[0]);
+        if (time < now) delete sequences[key];
+    }
+}
+setInterval(cleanupSequences, 15000);
+
 async function get(req, res) {
     const app = req.app.app;
 
@@ -15,10 +26,16 @@ async function get(req, res) {
     var record = await app.db.statistics.findOne({type: match.type, id: match.id});
     if (record == null) return { json: [] }; // return an empty list
 
+    // If too many killmails come in too quickly this could lead to too many redirects, so we'll cache
+    // a single sequence per second
+    let now = app.now();
+    let sequence_key = now + '-' + req.params.type + '-' + req.params.id;
+    if (sequences[sequence_key] == undefined) sequences[sequence_key] = record.sequence;
+
     var valid = {
         modifiers: 'string',
         page: 'integer',
-        sequence: record.sequence,
+        sequence: sequences[sequence_key],
         required: ['page', 'sequence'],
     }
     req.alternativeUrl = '/cache/1hour/killmails/' + req.params.type + '/' + req.params.id + '.json';
@@ -32,7 +49,6 @@ async function get(req, res) {
     var killmails;
     var collections = ['killmails_7', 'killmails_90', 'killmails'];
     for (var i = 0; i < collections.length; i++) {
-        var now = Date.now();
         let result = await app.db[collections[i]].find(match.match)
             .sort({ killmail_id: -1 })
             .skip(page * batch_size) // faster without a limit... 

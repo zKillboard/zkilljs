@@ -19,7 +19,7 @@ var fetch_controllers = [];
 
 var connected_online = window.navigator.onLine;
 function connection_status_update() {
-    if (connected_online == false && window.navigator.onLine == true) window.location = window.location; // refresh
+    if (connected_online == false && window.navigator.onLine == true) reloadPage();
     connected_online = window.navigator.onLine;
 
     if (connected_online == false) {
@@ -203,7 +203,7 @@ function showSection(section) {
 }
 
 function loadOverview(path, type, id) {
-    if (path == '/') path = '/label/all';
+    if (path == '/') path = '/label/pvp';
     path = path.replace('/system/', '/solar_system/').replace('/type/', '/item/');
     pagepath = path;
 
@@ -656,20 +656,25 @@ function ws_message(msg) {
         case 'statsfeed':
             delayed_json_call(load_stats_box, json);
             break;
-        case 'toplistsfeed':
+        case 'toplistsfeed': 
             delayed_json_call(load_toplists_box);
             break;
         case 'server_status':
             var started = json.server_started;
             if (server_started == 0) server_started = started;
             else if (started != server_started) {
-                setTimeout(function() { location.reload(true); }, 1000 + Math.random(500, 2000)); 
+                console.log(started, server_started);
+                setTimeout(reloadPage, 1000 + Math.random(500, 2000)); 
             }
             $("#mails_parsed").text(Number.parseInt(json.mails_parsed || 0).toLocaleString());
             break;
         default:
             console.log(json);
     }
+}
+
+function reloadPage() {
+    location.reload(true);
 }
 
 function delayed_json_call(f, json) {
@@ -693,7 +698,7 @@ function load_killmail_rows(killmail_ids) {
         }
         loadUnfetched(document);
     } catch (e) {
-        // window.location = window.location;
+        // reloadPage();
     }
 }
 

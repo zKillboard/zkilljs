@@ -24,7 +24,7 @@ async function get(req, res) {
     }
 
     var victim_array = [];
-    for (const type of Object.keys(killmail.involved)) {
+    if (killmail.involved != undefined) for (const type of Object.keys(killmail.involved)) {
         var lowid = killmail.involved[type].length == 1 ? killmail.involved[type][0] : Math.min(... killmail.involved[type]);
         if (lowid < 0) {
             victim_array.push(lowid);

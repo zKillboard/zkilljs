@@ -128,6 +128,8 @@ async function get(req, res) {
     killmail.ship_price = await app.util.price.get(app, rawmail.victim.ship_type_id, km_date, true);
     killmail.totals.total +=  killmail.ship_price;
     killmail.totals.destroyed += killmail.ship_price;
+
+    killmail.labels.push('all');
     
     delete killmail.involved; // Not needed, present in rawmail 
 

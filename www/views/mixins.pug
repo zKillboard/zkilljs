@@ -49,30 +49,30 @@ mixin add_label(label)
 					= label
 					| &nbsp;
 
-mixin tag_image(tag, url, src, name, size)
+mixin tag_image(tag, url, src, name, size, classes)
 	- tag = (tag ? tag : 'span')
-	#{tag}
+	#{tag}(classes=classes)
 		-var onerror = 'this.onerror = null; this.src="https://images.evetech.net/alliances/1/logo?size=' + size + '"';
 		-var imageHolder = 'width: ' + size + 'px; height: ' + size + 'px;'
 		a.override(href=url)
 			img.image(src=src title=name alt=name style=imageHolder onerror=onerror)
 
-mixin show_image(tag, type, id, name, size)
+mixin show_image(tag, type, id, name, size, classes)
 	if type == 'character_id'
-		+char_image(tag, id, name, size)
+		+char_image(tag, id, name, size, classes)
 	else if type == 'corporation_id'
-		+corp_image(tag, id, name, size)
+		+corp_image(tag, id, name, size, classes)
 	else if type== 'alliance_id'
-		+alli_image(tag, id, name, size)
+		+alli_image(tag, id, name, size, classes)
 	else if type == 'faction_id'
-		+faction_image(tag, id, name, size)
+		+faction_image(tag, id, name, size, classes)
 	else if type == 'item_id'
-		+type_image(tag, id, name, size)
+		+type_image(tag, id, name, size, classes)
 	else
 		-var url = '/' + type.replace('_id', '') + '/' + id
 		-var image = 'https://images.evetech.net/alliances/1/logo?size=' + size
 		-var name = (name == null || name == undefined || name == '' ? type + ' ' + id : name)
-		+tag_image(tag, url, image, name, size)
+		+tag_image(tag, url, image, name, size, classes)
 
 mixin type_image(tag, id, name, size)
 	if id != undefined
@@ -128,7 +128,13 @@ mixin info_row_a(label, type, id, value, classes)
 			tr.info_row
 				td= label
 				td(class=classes)
-					a(href=href class='override')= value
+					+info_a(type, id, value)
+
+mixin info_a(type, id, value, classes)
+	-var href= '/' + type.replace('_id', '') + '/' + id
+	- id = '' + id
+	div.d-inline
+		a(href=href class='override ' + classes)= value
 
 mixin spinner()
 	center
