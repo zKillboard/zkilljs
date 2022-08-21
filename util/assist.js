@@ -2,6 +2,7 @@
 
 const limit_object = {};
 function clean_limit_object() {
+	console.log(limit_object);
 	const now = Math.floor(Date.now() / 1000);
 	for (const key of Object.keys(limit_object)) {
 		if (key < now) delete limit_object[key];
@@ -39,8 +40,10 @@ const assist = {
 			return; // All is well
 		}
 
+		// console.error(res.statusCode, url);
+
 		app.util.ztop.zincr(app, 'esi_error');
-		if (res.statusCode != 404) console.log('ESI ERROR', res.statusCode, url);
+		app.util.ztop.zincr(app, 'esi_error_' + res.statusCode);
 		if (res.headers['x-esi-error-limit-remain']) {
 			app.esi_errors_remaining = parseInt(res.headers['x-esi-error-limit-remain']);
 			if (app.esi_errors_remaining < 20) app.no_api = true;
@@ -82,16 +85,23 @@ const assist = {
 
 	limit_per_second : async function (app, limit = 1) {
 		let count, wait, second;
+		let current_limit;
 		do {
 			const now = Date.now();
 			second = Math.floor(now / 1000);
 			const remaining_ms = 1000 - (now % 1000) + 1;
 
 			count = (limit_object[second] || 0);
-			if (count >= (await limit)) await app.sleep(remaining_ms);
+			current_limit = await this.check_limit(limit);
+			if (count >= current_limit) await app.sleep(remaining_ms);
 
-		} while (count >= (await limit));
+		} while (count >= current_limit);
 		limit_object[second] = (limit_object[second] || 0) + 1;
+	},
+
+	check_limit: async function(limit) {
+		if (typeof limit == 'function') return await limit();
+		return limit;
 	},
 
 	publish_key: async function (app, action, rediskey) {
