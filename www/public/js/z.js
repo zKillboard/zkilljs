@@ -153,8 +153,7 @@ function loadPage(url) {
     $("#page-title").remove();
     $(".clearbeforeload").hide();
     $(".hidebeforeload").hide();
-    reset_filters();
-
+    
     window.scrollTo(0, 0);
     $("#autocomplete").val("");
 
@@ -172,6 +171,7 @@ function loadPage(url) {
         apply('killmail', '/cache/1hour/killmail/' + killmail_id + '.html');
         break;
     default:
+        reset_filters();
         showSection('overview');
         pagepath = type + '/' + id;
         loadOverview(path, type, id);
@@ -228,6 +228,7 @@ function load_killmails(url, subscribe) {
         signal: get_fetch_controller()
     }).then(function (res) {
         if (res.ok) {
+            if (res.abort) return;
             res.text().then(function (text) {
                 var data = parseJSON(text);
                 if (data.length == 0) {
@@ -686,7 +687,6 @@ function delayed_json_call(f, json) {
 
 function load_killmail_rows(killmail_ids) {
     try {
-        killmail_ids.sort();
         for (var i = 0; i < killmail_ids.length; i++) {
             var killmail_id = killmail_ids[i];
 
@@ -696,7 +696,7 @@ function load_killmail_rows(killmail_ids) {
             var url = '/cache/1hour/killmail/row/' + killmail_id + '.html';
             var divraw = '<div fetch="' + url + '" unfetched="true" id="kill-' + killmail_id + '" class="killlist-killmail"></div>';
             let killlist_killmails = $(".killlist-killmail");
-            if (killlist_killmails.length == 0 || killmail_ids.length > 1) $("#killlist").prepend(divraw); // add it at top top of the list
+            if (killlist_killmails.length == 0) $("#killlist").prepend(divraw); // add it at top top of the list
             else { // find the correct spot in the list to add the killmail
                 let inserted = false;
                 killlist_killmails.each(function(i, row) {
