@@ -27,6 +27,7 @@ async function get(req, res) {
     }).toArray();
 
     return {
-        json: result
+        json: result,
+        ttl: 5
     };
 }
