@@ -696,8 +696,8 @@ function load_killmail_rows(killmail_ids) {
             var url = '/cache/1hour/killmail/row/' + killmail_id + '.html';
             var divraw = '<div fetch="' + url + '" unfetched="true" id="kill-' + killmail_id + '" class="killlist-killmail"></div>';
             let killlist_killmails = $(".killlist-killmail");
-            if (killlist_killmails.length == 0 || killmail_ids.length > 1) $("#killlist").prepend(divraw); // add it in
-            else {
+            if (killlist_killmails.length == 0 || killmail_ids.length > 1) $("#killlist").prepend(divraw); // add it at top top of the list
+            else { // find the correct spot in the list to add the killmail
                 let inserted = false;
                 killlist_killmails.each(function(i, row) {
                     if (inserted) return;
@@ -711,8 +711,8 @@ function load_killmail_rows(killmail_ids) {
                         }
                     } catch (e) { console.log(e);}
                 });
-            }
-            
+                if (inserted == false && killlist_killmails.length < 100) $("#killlist").append(divraw);  // add it to the end of the list
+            }            
         }
         loadUnfetched(document);
     } catch (e) {
