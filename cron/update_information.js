@@ -80,33 +80,42 @@ async function f(app) {
 
 async function populateSet(app, typeValue) {
     let fetched = 0;
-    let promises = [];
     try {
         if (app.bailout == true || app.no_api == true) return;
         const dayAgo = app.now() - 86400;
 
-        let iterator = await app.db.information.find({type: typeValue, last_updated: {$lt: dayAgo}}).sort({last_updated: 1}).limit(100);
-
-        while (await iterator.hasNext()) {
-            if (app.bailout == true || app.no_api == true) break;
-            const row = await iterator.next();
-
-            if (row.type == 'war_id') await app.sleep(15000); // war calls limited to 4 per minute as too many could affect the cluster
-
-            while (concurrent >= app.rate_limit) await app.sleep(10);
-
-            concurrent++;
-            promises.push(fetch(app, row));
-        }
-
-        // Wait for all calls to finish and return
-        await app.waitfor(promises);
+        fetched += await iterate(app, await app.db.information.find({type: typeValue, last_updated: {$lt: dayAgo}, waiting: true}).sort({last_updated: 1}).limit(10));
+        if (fetched > 0) await app.sleep(1000); // allow things to wait to maybe add more for us to wait on... 
+        else fetched += await iterate(app, await app.db.information.find({type: typeValue, last_updated: {$lt: dayAgo}}).sort({last_updated: 1}).limit(10));
     } catch (e) {
         console.log(e, 'dropped on ' + typeValue);
     } finally {
-        if (promises.length == 0) await app.sleep(1000);
+        if (fetched == 0) await app.sleep(1000);
         populateSet(app, typeValue);
     }
+}
+
+async function iterate(app, iterator) {
+    let fetched = 0;
+    let promises = [];
+    
+    while (await iterator.hasNext()) {
+        if (app.bailout == true || app.no_api == true) break;
+        const row = await iterator.next();
+        if (row.waiting == true) console.log('Fetching entity:', row.type, row.id);
+
+        if (row.type == 'war_id') await app.sleep(15000); // war calls limited to 4 per minute as too many could affect the cluster
+
+        while (concurrent >= app.rate_limit) await app.sleep(10);
+
+        concurrent++;
+        promises.push(fetch(app, row));
+        fetched++;
+    }
+
+    // Wait for all calls to finish and return
+    await app.waitfor(promises);
+    return fetched;
 }
  
 async function fetch(app, row) {
@@ -135,7 +144,7 @@ async function fetch(app, row) {
                 recent_count = await app.db.killmails_90.countDocuments(recent_match);
             }
             if (recent_count == 0) {
-                await app.db.information.updateOne(row, {$set : { last_updated: now, inactive: true, corporation_id: 0, alliance_id: 0, faction_id: 0}});
+                await app.db.information.updateOne(row, {$set : { last_updated: now, inactive: true}, $unset: {alliance_id: 1, faction_id: 1}});
                 return;  // nothing to update, move on
             }
         }
@@ -149,7 +158,8 @@ async function fetch(app, row) {
             body.inactive = false;
             body.last_updated = now;
             body.etag = res.headers.etag;
-            body.server_version = app.server_version;
+            body.waiting = false;
+            if (dependant_on_server_version) body.server_version = app.server_version;
 
             if (row.type == 'war_id') {
                 // Special case for wars, something with this war changed
@@ -158,6 +168,8 @@ async function fetch(app, row) {
                     body.total_kills = total_kills;
                     body.check_wars = true;
                 }
+            } else {
+                body.update_search = true; // update autocomplete name
             }
 
             // Characters, corporations, and alliances don't always have alliance or faction id set
@@ -193,18 +205,15 @@ async function fetch(app, row) {
                 }
             }
 
-            if (row.type != 'war_id') await updateName(app, row);
-
             break;
         case 304: // ETAG match
             await app.db.information.updateOne(row, {$set: {last_updated: now}});
             break;
         case 404:
             if (row.type == 'character_id') {
-                await doomheimCharacter(app, row);
-                await updateName(app, row);
+                await app.db.information.updateOne(row, {$set: {no_fetch: true, update_name: true, last_updated: app.now(), corporation_id: 1000001}, $unset: {alliance_id: 1, faction_id: 1}});
             } else {
-                await app.db.information.updateOne(row, {$set: {'no_fetch': true, last_updated: now}});
+                await app.db.information.updateOne(row, {$set: {no_fetch: true, update_name: true, last_updated: now}});
             }
             break;
         // all of these codes are handled with a wait in the esi error handler
@@ -225,19 +234,4 @@ async function fetch(app, row) {
     } finally {
         concurrent--;
     }
-}
-
-async function doomheimCharacter(app, row) {
-    if (row.type != 'character_id') return;
-    await app.db.information.updateOne(row, {$set: {'no_fetch': true, last_updated: app.now(), corporation_id: 1000001, alliance_id: 0, faction_id: 0}});
-}
-
-async function updateName(app, row) {
-    if (row.type == 'war_id') return;
-
-    let searchname = row.name;
-    if (row.type =='character_id' && row.corporation_id == 1000001) searchname = searchname + ' (recycled)';
-    else if ((row.type == 'corporation_id' || row.type == 'alliance_id') && row.membercount === 0) searchname = searchname + ' (closed)';
-
-    await app.mysql.query('replace into autocomplete values (?, ?, ?, ?)', [row.type, row.id, searchname, row.ticker]);
 }
