@@ -67,6 +67,7 @@ const entity = {
     },
 
     async info(app, type, id, wait = false) {
+        wait = true; // always waiting seems to be the better option when retrieving info
         if (id == undefined) {
             console.log(new Error().stack);
             throw '(id == undefined) is true!)';
@@ -74,19 +75,28 @@ const entity = {
 
         const key = type + '_' + id;
         if (info_cache[key] != undefined) return info_cache[key];
+        var first = true;
 
         do {
             const row = await app.db.information.findOne({type: type, id: id});
-            if (row == null) {
+            if (row == null && wait == false) {
                 console.log(new Error().stack);
-                throw 'no such item_id ' + type + ' ' + id;
+                throw 'no such ' + type + ' ' + id;
             }
-            if ((row.last_updated || 0) > 0) {
+            if (row == null && wait == true) {
+                await this.add(app, type, id, false);
+            }
+            if (row != null && (row.last_updated || 0) > 0) {
                 info_cache[key] = row;
                 set.add(key);
                 return row;
             }
             if (wait == false) throw type + ' ' + id + ' not updated, yet wait is false';
+            if (first) {
+                await app.db.information.update({type: type, id: id}, {$set: {waiting: true}});
+                waitingon[type + '-' + id] = true;
+                first = false;
+            }
             await app.sleep(100);
         } while (true); // wait for it to be updated... 
     },
@@ -98,3 +108,4 @@ const entity = {
 }
 
 module.exports = entity;
+const waitingon = {};
