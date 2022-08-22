@@ -5,7 +5,12 @@ module.exports = {
    get: get
 }
 
-var batch_size = 100;
+let batch_size = 100;
+const cache = {};
+function clear_kill_list_cache() {
+    cache = {};
+}
+setInterval(clear_kill_list_cache, 3600000);
 
 const sequences = {};
 function cleanupSequences() {
@@ -21,9 +26,9 @@ setInterval(cleanupSequences, 15000);
 async function get(req, res) {
     const app = req.app.app;
 
-    var match = await app.util.match_builder(app, req, 'all');
+    let match = await app.util.match_builder(app, req, 'all');
 
-    var record = await app.db.statistics.findOne({type: match.type, id: match.id});
+    let record = await app.db.statistics.findOne({type: match.type, id: match.id});
     if (record == null) return { json: [] }; // return an empty list
 
     // If too many killmails come in too quickly this could lead to too many redirects, so we'll cache
@@ -32,29 +37,29 @@ async function get(req, res) {
     let sequence_key = now + '-' + req.params.type + '-' + req.params.id;
     if (sequences[sequence_key] == undefined) sequences[sequence_key] = record.sequence;
 
-    var valid = {
+    let valid = {
         modifiers: 'string',
         page: 'integer',
         sequence: sequences[sequence_key],
         required: ['page', 'sequence'],
     }
     req.alternativeUrl = '/cache/1hour/killmails/' + req.params.type + '/' + req.params.id + '.json';
-    var valid = req.verify_query_params(req, valid);
+    valid = req.verify_query_params(req, valid);
     if (valid !== true) {
-        return {redirect: valid, ttl: 0};
+        return {redirect: valid};
     }
 
-    var page = Math.max(0, Math.min(9, req.query['page'])); // cannot go below 0 or above 9
+    let killmails;
+    let page = Math.max(0, Math.min(9, req.query['page'])); // cannot go below 0 or above 9
 
-    var killmails;
-    var collections = ['killmails_7', 'killmails_90', 'killmails'];
-    for (var i = 0; i < collections.length; i++) {
+    let collections = ['killmails_7', 'killmails_90', 'killmails'];
+    for (let i = 0; i < collections.length; i++) {
+        killmails = [];
         let result = await app.db[collections[i]].find(match.match)
             .sort({ killmail_id: -1 })
             .skip(page * batch_size) // faster without a limit... 
-            .limit(batch_size)
+            //.limit(batch_size)
             .batchSize(batch_size);
-        killmails = [];
         while (await result.hasNext()) {
             killmails.push((await result.next()).killmail_id)
             if (killmails.length >= batch_size) break;
