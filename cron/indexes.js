@@ -79,6 +79,7 @@ async function applyIndexes(app) {
     await createIndex(app.db.collection('information'), {type: 1, last_updated: 1}, {});
     await createIndex(app.db.collection('information'), {last_updated: 1}, {});
     await createIndex(app.db.collection('information'), {type: 1, alliance_id: 1}, {sparse: true}); // For determining alliance member counts
+    await createIndex(app.db.collection('information'), {update_search: 1}, {sparse: true}); // for determing if need to update autocomplete search
 
     await create_killmail_collection(app, 'killmails');
     await createIndex(app.db.collection('killmails'), {status: 1}, {sparse: true});
@@ -141,10 +142,10 @@ async function create_killmail_collection(app, collection) {
     };
     await createIndex(app.db.collection(collection), index, {background: true});
         
-    await createIndex(app.db[collection], {padhash: 1}, {});
-    await createIndex(app.db[collection], {killmail_id: 1}, {unique: true});
-    await createIndex(app.db[collection], {sequence: 1}, {unique: true});
-    await createIndex(app.db[collection], index, bg);
+    await createIndex(app.db.collection(collection), {padhash: 1}, {});
+    await createIndex(app.db.collection(collection), {killmail_id: 1}, {unique: true});
+    await createIndex(app.db.collection(collection), {sequence: 1}, {unique: true});
+    await createIndex(app.db.collection(collection), index, bg);
     for (let i of ind) {
         var key = 'involved.' + i;
         index = {};
