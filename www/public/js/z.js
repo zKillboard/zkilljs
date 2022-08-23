@@ -704,6 +704,11 @@ function load_killmail_rows(killmail_ids) {
                     try {
                         row = $(row);
                         let that_kill_id = parseInt(row.attr('id').replace('kill-', ''));
+                        if (killmail_id == that_kill_id) {
+                            // remove the current entry, maybe it was re-processed?
+                            row.remove();
+                            return; // insert it before the next killmail
+                        }
                         if (killmail_id > that_kill_id) {
                             row.before(divraw);
                             inserted = true;
