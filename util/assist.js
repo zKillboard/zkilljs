@@ -85,15 +85,16 @@ const assist = {
 	limit_per_second : async function (app, limit = 1) {
 		let count, wait, second;
 		let current_limit;
+		let num_times_waited = 0;
 		do {
 			const now = Date.now();
 			second = Math.floor(now / 1000);
-			const remaining_ms = 1000 - (now % 1000) + 1;
+			const remaining_ms = Math.max(1000 - (now % 1000) + 1 - (num_times_waited * 10), 10);
 
 			count = (limit_object[second] || 0);
 			current_limit = await this.check_limit(limit);
 			if (count >= current_limit) await app.sleep(remaining_ms);
-
+			num_times_waited++;
 		} while (count >= current_limit);
 		limit_object[second] = (limit_object[second] || 0) + 1;
 	},
