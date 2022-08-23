@@ -93,7 +93,7 @@ const entity = {
             }
             if (wait == false) throw type + ' ' + id + ' not updated, yet wait is false';
             if (first) {
-                await app.db.information.update({type: type, id: id}, {$set: {waiting: true}});
+                await app.db.information.updateOne({type: type, id: id}, {$set: {waiting: true}});
                 waitingon[type + '-' + id] = true;
                 first = false;
             }
