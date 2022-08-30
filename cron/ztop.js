@@ -22,7 +22,7 @@ async function f(app) {
     while (app.zinitialized != true) await app.sleep(100);
 
     if (last_second_exec == 0) last_second_exec = app.now();
-    ztop(app);
+    await ztop(app);
 }
 
 async function cleanup(app) {

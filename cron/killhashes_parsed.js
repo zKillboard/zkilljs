@@ -7,8 +7,13 @@ module.exports = {
 
 async function f(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
-    
-    await app.util.simul.go(app, 'killhashes_parsed', app.db.killhashes, {status: 'parsed'}, prepStats, app.util.assist.continue_simul_go, 100); 
+
+    await app.util.simul.go(app, 'killhashes_parsed', app.db.killhashes, { find: {status: 'parsed'}, sort: {sequence: -1}}, prepStats, app.util.assist.continue_simul_go, max_concurrent); 
+}
+
+async function max_concurrent(app) {
+    if (app.dbstats.fetched > 100) return 1;
+    return 25;
 }
 
 async function prepStats(app, killhash) {
@@ -19,19 +24,16 @@ async function prepStats(app, killhash) {
             return await app.db.killhashes.updateOne({_id: killhash._id}, {$set: {status: 'stats_prepare_error', reason: 'no involved'}});
         }
 
-        killmail.labels.push('all');
+        if (killmail.involved.label == undefined) killmail.involved.label = []; // shoudln't happen, but just in case
+        killmail.involved.label.push('all');
 
         let keys = Object.keys(killmail.involved);
         for (let i = 0; i < keys.length; i++) {
             let type = keys[i];
             let values = killmail.involved[type];
             for (let j = 0; j < values.length; j++) {
-                let id = Math.abs(values[j]);
-                if (!isNaN(id) && id > 0) await add_killmail(app, killmail, type, Math.abs(id));
+                await add_killmail(app, killmail, type, (type == 'label' ? values[j] : Math.abs(values[j])));
             }
-        }
-        for (let j = 0; j < killmail.labels.length; j++) {
-            await add_killmail(app, killmail, 'label', killmail.labels[j]);
         }
 
         await app.db.killhashes.updateOne({_id: killhash._id}, {$set: {status: 'done'} });
@@ -49,7 +51,7 @@ setInterval(function () {
 }, 900000);
 
 async function add_killmail(app, killmail, type, id) {
-    if (id == undefined || id == null) return;
+    if (id == undefined || id == null) throw 'id must be defined';
 
     let addKey = type + ':' + id;
     let previousSequence = sequenceUpdates.get(addKey);

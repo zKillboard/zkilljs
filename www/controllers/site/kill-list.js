@@ -49,11 +49,14 @@ async function get(req, res) {
         return {redirect: valid};
     }
 
+    let total_kl = (record.killed | 0) + (record.lost | 0);
+
     let killmails;
     let page = Math.max(0, Math.min(9, req.query['page'])); // cannot go below 0 or above 9
 
     let collections = ['killmails_7', 'killmails_90', 'killmails'];
     for (let i = 0; i < collections.length; i++) {
+        console.log(collections[i]);
         killmails = [];
         let result = await app.db[collections[i]].find(match.match)
             .sort({ killmail_id: -1 })
@@ -64,7 +67,7 @@ async function get(req, res) {
             killmails.push((await result.next()).killmail_id)
             if (killmails.length >= batch_size) break;
         }
-        if (killmails.length >= batch_size) break;
+        if (killmails.length >= batch_size || killmails.length >= total_kl) break;
     }
 
     return {

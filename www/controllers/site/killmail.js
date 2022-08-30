@@ -16,6 +16,8 @@ async function get(req, res) {
     });
     var km_date = new Date(killmail.epoch * 1000);
 
+    if (rawmail == null || killmail == null) return {status: 404};
+
     
     // Ensure the attackers array exists
     if (rawmail.attackers == undefined) rawmail.attackers = [];
@@ -129,7 +131,8 @@ async function get(req, res) {
     killmail.totals.total +=  killmail.ship_price;
     killmail.totals.destroyed += killmail.ship_price;
 
-    killmail.labels.push('all');
+    killmail.involved.label.push('all');
+    killmail.labels = killmail.involved.label;
     
     delete killmail.involved; // Not needed, present in rawmail 
 

@@ -60,7 +60,7 @@ async function update_stats(app, collection, epoch, type, find) {
             let record = await iter.next();
 
             if (record.id !== NaN) {
-                while (!app.bailout && concurrent >= (app.dbstats.total > 100 ? 0 : 500)) await app.sleep(10);
+                while (!app.bailout && concurrent >= (app.dbstats.total > 100 ? 0 : 25)) await app.sleep(10);
                 if (app.bailout) return;
 
                 concurrent++;
@@ -112,11 +112,9 @@ async function update_record(app, collection, epoch, record) {
 
         if (record.type == 'label' && record.id == 'all') {
             // no match, we want all of the killmails
-        } else if (record.type == 'label') {
-            match['labels'] = record.id;
         } else {
             match['involved.' + record.type] = record.id;
-            match.labels = 'pvp';
+            if (record.type != 'label' && record.id != 'pvp') match['involved.label'] = 'pvp';
         }
 
         // Update the stats based on the result, but don't clear the update_ field yet

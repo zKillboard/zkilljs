@@ -496,10 +496,6 @@ function loadUnfetched(element) {
         tofetch.removeAttribute('unfetched');
         tofetch.removeAttribute('fetch');
         apply(id, path);
-        timeouts.push(setTimeout(function () {
-            loadUnfetched(element)
-        }, 1));
-        return;
     }
     updateNumbers();
     $(".sort-trigger").on('click', sortColumn);
@@ -743,6 +739,7 @@ function load_toplists_box(modifiers = null) {
 function spaTheLinks() {
     try {
         $('.override').removeClass('override').each(spaTheLink);
+        prefetchPrep();
     } catch (e) {
         timeouts.push(setTimeout(spaTheLinks, 100));
     }
@@ -757,6 +754,21 @@ function spaTheLink(index, elem) {
 
         return false;
     });
+}
+
+function prefetchPrep() {
+    $(".prefetch").removeClass('prefetch').each(prefetchSetup);
+}
+
+function prefetchSetup() {
+    elem = $(this);
+    elem.on('mouseover', prefetchGo);
+}
+
+function prefetchGo() {
+    elem = $(this);
+    let href = 'https://zkillboard.dev/cache/1hour' + elem.attr('href') + '.html';
+    $.get(href);
 }
 
 function linkClicked(href) {

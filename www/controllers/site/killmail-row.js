@@ -41,7 +41,7 @@ async function get(req, res) {
 
     rawmail.stats = killmail.stats;
     rawmail.total_value = killmail.total_value;
-    rawmail.labels = killmail.labels.join(' ');
+    rawmail.labels = killmail.involved.label.join(' ');
     rawmail.epoch = killmail.epoch;
     rawmail.involved_cnt = killmail.involved_cnt;
 

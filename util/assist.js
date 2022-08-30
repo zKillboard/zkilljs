@@ -13,8 +13,8 @@ setInterval(clean_limit_object, 5000);
 const esi_rate_intervals = {
 	0 	 : 20, 	// 00:00am UTC
 	800  : 10, 	// 08:00am UTC
-	1030 : 0, 	// 10:30am UTC
-	1130 : 10, 	// 11:30am UTC
+	1059 : 0, 	// 10:59am UTC
+	1110 : 10, 	// 11:10am UTC
 	1800 : 5 	// 06:00pm UTC
 }
 let rate_limit = 0;
@@ -94,7 +94,7 @@ const assist = {
 			count = (limit_object[second] || 0);
 			current_limit = await this.check_limit(limit);
 			if (count >= current_limit) await app.sleep(remaining_ms);
-			num_times_waited++;
+			if (current_limit > 0) num_times_waited++; // only increase when a non-0 rate limit exists
 		} while (count >= current_limit);
 		limit_object[second] = (limit_object[second] || 0) + 1;
 	},
@@ -163,7 +163,7 @@ const assist = {
 				app.no_api = true;
 			}
 		} catch (e) {
-			console.log(e);
+			//console.log(e);
 			console.log('API offline?');
 			app.no_api = true;
 		}

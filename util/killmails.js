@@ -54,8 +54,8 @@ module.exports = {
             }
         }
 
-        killmail.labels.push('all');
-        for (const label of killmail.labels) {
+        killmail.involved.label.push('all');
+        for (const label of killmail.involved.label) {
             var reset_key = 'label:' + label;
             if (resets.indexOf(reset_key) != -1) continue;
             resets.push(reset_key);

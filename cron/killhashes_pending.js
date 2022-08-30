@@ -18,7 +18,7 @@ async function f(app) {
         resetBadMails(app);
     }
 
-    await app.util.simul.go(app, 'killhashes_pending', app.db.killhashes, {status: 'pending'}, fetch, app.util.assist.continue_simul_go, 100);
+    await app.util.simul.go(app, 'killhashes_pending', app.db.killhashes, {status: 'pending'}, fetch, app.util.assist.continue_simul_go, 10);
 }
 
 function bailout() {
@@ -43,6 +43,9 @@ async function fetch(app, mail) {
             app.util.ztop.zincr(app, 'killmail_imported_preexisting');
             return;
         }
+
+        while (app.bailout != true && app.dbstats.prices > 0) await app.sleep(100); // give priority to price fetches
+
 
         let url = process.env.esi_url + '/v1/killmails/' + mail.killmail_id + '/' + mail.hash + '/';
         let res = await app.phin({url: url, timeout: 5000});

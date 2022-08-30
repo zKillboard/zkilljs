@@ -26,6 +26,7 @@ module.exports = {
 					concurrents[name]++;
 					doExec(app, name, exec, row, row_id);
 					total_exec_calls++;
+					if (query.sort != undefined && total_exec_calls > 25000) break;
 				}
 			}
 		} catch (e) {
@@ -43,8 +44,10 @@ module.exports = {
 }
 
 async function waitForConcurrents(app, name, min_wait_interval, max_concurrent) {
-	if (max_concurrent > 0) max_concurrent--;
-	while (concurrents[name] > max_concurrent) await app.sleep(min_wait_interval);
+	let max = max_concurrent;
+	if (typeof max_concurrent == 'function') max = await max_concurrent(app);
+	if (max > 1) max--;
+	while (concurrents[name] > max) await app.sleep(min_wait_interval);
 }
 
 async function doExec(app, name, exec, row, row_id) {

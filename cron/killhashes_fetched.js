@@ -30,7 +30,12 @@ const match = {
 async function f(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
 
-    await app.util.simul.go(app, 'killhashes_fetched', app.db.killhashes, {status: 'fetched'}, parse_mail,  app.util.assist.continue_simul_go, 25);
+    await app.util.simul.go(app, 'killhashes_fetched', app.db.killhashes, {status: 'fetched'}, parse_mail,  app.util.assist.continue_simul_go, max_concurrent); 
+}
+
+async function max_concurrent(app) {
+    if (app.dbstats.pending > 100) return 1;
+    return 10;
 }
 
 async function parse_mail(app, killhash) {
@@ -149,7 +154,6 @@ async function parse_mail(app, killhash) {
         if (killmail.total_value >= 1000000000000) labels.push('insaneisk');
 
         killmail.stats = !npc;
-        killmail.labels = labels;
         killmail.involved_cnt = rawmail.attackers.length;
 
         if (prev_parsed_mail != undefined && prev_parsed_mail.sequence != undefined) killmail.sequence = prev_parsed_mail.sequence;
@@ -165,6 +169,7 @@ async function parse_mail(app, killhash) {
         }
 
         await app.waitfor(promises);
+        involved.label = labels;
         killmail.involved = involved;
 
         if (padpromise != undefined && (await padpromise) > 5) killmail.stats = false;

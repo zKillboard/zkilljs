@@ -26,7 +26,7 @@ async function match_builder(app, req, kl_default = 'all') {
     	if (id == undefined) id = 0;
     	type = type + '_id';
     	key = 'involved.' + type;
-    }
+    } else key = 'involved.label';
 
     for (const modifier of modifiers) {
         switch (modifier) {
@@ -58,15 +58,15 @@ async function match_builder(app, req, kl_default = 'all') {
                 timespan = 'prior month';
                 break;
             default:
-                match_and.push({
-                    labels: modifier.replace(' ', '+')
-                });
+                /*match_and.push({
+                    //labels: modifier.replace(' ', '+')
+                });*/
         }
     }
     if (kl == undefined) kl = kl_default;
 
     if (type == 'label') {
-        if (id != 'all') match_and.push({labels: id});
+        if (id != 'all') match_and.push({'involved.label': id});
     } else {
     	var or = [];
         if (kl == 'all' || kl == 'killed') or.push({[key]: id});

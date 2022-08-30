@@ -35,7 +35,7 @@ async function f(app) {
     }
 }
 
-let bg = {background: true};
+let bg = {}; // {background: true};
 
 async function applyIndexes(app) {
     await create_collection(app, 'scopes');
@@ -80,6 +80,11 @@ async function applyIndexes(app) {
     await createIndex(app.db.collection('information'), {last_updated: 1}, {});
     await createIndex(app.db.collection('information'), {type: 1, alliance_id: 1}, {sparse: true}); // For determining alliance member counts
     await createIndex(app.db.collection('information'), {update_search: 1}, {sparse: true}); // for determing if need to update autocomplete search
+    await createIndex(app.db.collection('information'), {update_name: 1}, {sparse: true}); // for determing if need to update autocomplete search
+    await createIndex(app.db.collection('information'), {type: 1, last_updated: 1}, {});
+    await createIndex(app.db.collection('information'), {type: 1, last_updated: -1}, {});
+    await createIndex(app.db.collection('information'), {type: 1, last_updated: 1, waiting: 1}, {}); 
+    await createIndex(app.db.collection('information'), {type: 1, last_updated: -1, waiting: 1}, {}); 
 
     await create_killmail_collection(app, 'killmails');
     await createIndex(app.db.collection('killmails'), {status: 1}, {sparse: true});
@@ -120,8 +125,8 @@ async function create_collection(app, name) {
 }
 
 async function createIndex(collection, index, options) {
-    //console.log("Creating", index, options);
-    await collection.createIndex(index, options);
+    console.log("Checking index: ", index, options);
+    let r = await collection.createIndex(index, options);
 }
 
 async function create_killmail_collection(app, collection) {
@@ -145,7 +150,9 @@ async function create_killmail_collection(app, collection) {
     await createIndex(app.db.collection(collection), {padhash: 1}, {});
     await createIndex(app.db.collection(collection), {killmail_id: 1}, {unique: true});
     await createIndex(app.db.collection(collection), {sequence: 1}, {unique: true});
-    await createIndex(app.db.collection(collection), index, bg);
+
+    await createIndex(app.db.collection(collection), {involved: 1, killmail_id: -1}, bg);
+    await createIndex(app.db.collection(collection), {involved: 1, sequence: 1}, bg);
     for (let i of ind) {
         var key = 'involved.' + i;
         index = {};
@@ -163,10 +170,8 @@ async function create_killmail_collection(app, collection) {
         };
         index[key] = 1;
         await createIndex(app.db.collection(collection), index, bg);
-    }
+    } 
 }
-
-//'labels'
 
 var ind = [
     'character_id',
@@ -181,4 +186,5 @@ var ind = [
     'solar_system_id',
     'constellation_id',
     'region_id',
+    'label',
 ];

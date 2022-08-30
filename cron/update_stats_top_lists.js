@@ -59,11 +59,9 @@ async function do_update(app, epoch, record) {
         var match = {};
         if (record.type == 'label' && record.id == 'all') {
             // no match, we want all of the killmails
-        } else if (record.type == 'label') {
-            match['labels'] = record.id;
         } else {
             match['involved.' + record.type] = record.id;
-            match.labels = 'pvp';
+            if (record.type != 'label' && record.id != 'pvp') match['involved.label'] = 'pvp';
         }
 
         var top_killers = await do_queries(app, collections[epoch], record, match, record[epoch].killed_top, (record[epoch].killed || 0), 'killed');

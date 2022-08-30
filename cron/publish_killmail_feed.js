@@ -7,9 +7,10 @@ module.exports = {
 
 async function f(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
-    
+
     let raw;
     do {
+        if (app.dbstats.total > 100) return; // come back later when we're not so busy
         raw = await app.redis.blpop('publishkillfeed', 1);
         if (raw != null && raw.length > 0) {
             let killmail_id = parseInt(raw[1] || 0);
@@ -28,7 +29,7 @@ async function requeuePublish(app, killmail_id) {
 
 const has_infos = {};
 async function publishToKillFeed(app, killmail) {
-    try {
+    try {        
         var sent = [];
         var msg = JSON.stringify({
             'action': 'killlistfeed',
@@ -54,6 +55,9 @@ async function publishToKillFeed(app, killmail) {
             }
         }
 
+        await app.phin({url: 'http://localhost:' + process.env.PORT + '/cache/1hour/killmail/row/' + killmail.killmail_id + '.html'}),
+        await app.phin({url: 'http://localhost:' + process.env.PORT + '/killmail/' + killmail.killmail_id}),
+
         app.redis.publish('killlistfeed:all', msg);
         for (var i = 0; i < keys.length; i++) {
             type = keys[i];
@@ -70,12 +74,13 @@ async function publishToKillFeed(app, killmail) {
                 sent.push(key);
             }
         }
-        killmail.labels.push('all');
+        killmail.involved.label.push('all');
         for (var label of killmail.labels) {
             key = '/label/' + label;
             await app.redis.publish('killlistfeed:' + key, msg);
         }
     } catch (e) {
+        console.log(e);
         // ignore the error
     }
 }

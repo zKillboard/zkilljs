@@ -42,7 +42,7 @@ async function f(app) {
     let keys = ['pending', 'fetched', 'parsed'];
     let total = 0;
     for (let key of keys) {
-        let count = await app.db.killhashes.countDocuments({status: key});
+        let count = await has_min(app, app.db.killhashes, {status: key}, 1000);
         app.dbstats[key] = count;
         total += count;
     }
@@ -51,4 +51,15 @@ async function f(app) {
     app.dbstats['total'] = total;
 
     app.zinitialized = true;
+}
+
+async function has_min(app, collection, query, min) {
+    let iterator = await collection.find(query);
+    let count = 0;
+    while (await iterator.hasNext()) {
+        await iterator.next();
+        count++;
+        if (count >= min) break;
+    }
+    return count;
 }
