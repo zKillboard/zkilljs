@@ -5,16 +5,30 @@ module.exports = {
     span: 1
 }
 
+const max_concurrent = (process.env.max_concurrent_parsed | 25);
+
 async function f(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
 
-    await app.util.simul.go(app, 'killhashes_parsed', app.db.killhashes, { find: {status: 'parsed'}, sort: {sequence: -1}}, prepStats, app.util.assist.continue_simul_go, max_concurrent); 
+    //if (app.dbstats.fetched > 100) return;
+
+    await app.util.simul.go(app, 'killhashes_parsed', app.db.killhashes, { find: {status: 'parsed'}, sort: {sequence: -1}}, prepStats, app.util.assist.continue_simul_go, max); 
 }
 
-async function max_concurrent(app) {
+async function max(app) {
     if (app.dbstats.fetched > 100) return 1;
-    return 25;
+    return max_concurrent;
 }
+
+let sequences = {};
+let added = {};
+let handling = {};
+function clear_caches() {
+    sequences = {};
+    added = {};
+    handling = {};
+}
+setInterval(clear_caches, 300000);
 
 async function prepStats(app, killhash) {
     try {
@@ -24,41 +38,42 @@ async function prepStats(app, killhash) {
             return await app.db.killhashes.updateOne({_id: killhash._id}, {$set: {status: 'stats_prepare_error', reason: 'no involved'}});
         }
 
-        if (killmail.involved.label == undefined) killmail.involved.label = []; // shoudln't happen, but just in case
         killmail.involved.label.push('all');
-
+ 
         let keys = Object.keys(killmail.involved);
         for (let i = 0; i < keys.length; i++) {
             let type = keys[i];
             let values = killmail.involved[type];
             for (let j = 0; j < values.length; j++) {
-                await add_killmail(app, killmail, type, (type == 'label' ? values[j] : Math.abs(values[j])));
+                let id = (type == 'label' ? values[j] : Math.abs(values[j]));
+                let skey = type + '-' + id;
+
+                while (handling[skey] == true) await app.sleep(1);
+                handling[skey] = true;
+
+                let sequence = sequences[skey] | 0;
+                if (sequence == 0 || killmail.sequence > sequence) await add_killmail(app, killmail, type, id);
+
+                sequences[skey] = Math.max((sequences[skey] | 0), killmail.sequence);
+                handling[skey] = false;
             }
         }
 
-        await app.db.killhashes.updateOne({_id: killhash._id}, {$set: {status: 'done'} });
+        await app.db.killhashes.updateOne({_id: killhash._id}, {$set: {status: 'done'}});
         app.util.ztop.zincr(app, 'killmail_process_stats');
     } catch (e) {
-        console.log(e);
+        console.log(killhash, e);
+        await app.db.killhashes.updateOne({_id: killhash._id}, {$set: {status: 'stat-error'}});
     }
 }
-
-const addSet = new Set(); // cache for keeping track of what has been inserted to stats collection
-let sequenceUpdates = new Map();
-setInterval(function () {
-    addSet.clear();
-    sequenceUpdates.clear();
-}, 900000);
 
 async function add_killmail(app, killmail, type, id) {
     if (id == undefined || id == null) throw 'id must be defined';
 
-    let addKey = type + ':' + id;
-    let previousSequence = sequenceUpdates.get(addKey);
-    if (previousSequence != undefined && previousSequence > killmail.sequence) return; // no need to do any of this
+    let addKey = type + '-' + id;
 
     try {
-        if (!addSet.has(addKey)) {
+        if (added[addKey] == undefined) {
             await app.db.statistics.insertOne({
                 type: type,
                 id: id,
@@ -67,31 +82,27 @@ async function add_killmail(app, killmail, type, id) {
                 update_week: true,
                 sequence: killmail.sequence
             });
-            addSet.add(addKey);
-            if (previousSequence == undefined || previousSequence < killmail.sequence) sequenceUpdates.set(addKey, killmail.sequence);
+            added[addKey] = true;
             return;
         }
     } catch (e) {
         if (e.code == 11000) { // ignore duplicate key error
-            addSet.add(addKey);
+            added[addKey] = true; // something else beat us to it
         } else {
             console.log(e);
         }
     }
 
     const now = Math.floor(Date.now() / 1000);
-    var update_recent = (killmail.epoch > (now - (90 * 86400)));
-    var update_week =  (killmail.epoch > (now - (7 * 86400)));
+    let update_recent = (killmail.epoch > (now - (90 * 86400)));
+    let update_week =  (killmail.epoch > (now - (7 * 86400)));
 
-    var set = {
+    let set = {
                 update_alltime: true,
                 update_recent: update_recent,
                 update_week: update_week,
                 sequence: killmail.sequence
-        };
-    if (update_recent) set.update_recent = true;
-    if (update_week) set.update_week = true;
+    };
 
     await app.db.statistics.updateOne({type: type, id: id, sequence: { $lt: killmail.sequence } }, { $set: set, });
-    sequenceUpdates.set(addKey, killmail.sequence);
 }

@@ -52,6 +52,9 @@ async function update_stats(app, collection, epoch, type, find) {
     let promises = [];
     try {
         if (app.bailout) return;
+
+        if (epoch == 'recent' && app.dbstats.update_week >= 1000) return;
+        if (epoch == 'alltime' && app.dbstats.update_recent >= 1000) return;
     
         let iter = await app.db.statistics.find(find);
         while (await iter.hasNext()) {
@@ -114,7 +117,7 @@ async function update_record(app, collection, epoch, record) {
             // no match, we want all of the killmails
         } else {
             match['involved.' + record.type] = record.id;
-            if (record.type != 'label' && record.id != 'pvp') match['involved.label'] = 'pvp';
+            if (record.type != 'label') match['involved.label'] = 'pvp';
         }
 
         // Update the stats based on the result, but don't clear the update_ field yet
@@ -155,16 +158,13 @@ async function update_record(app, collection, epoch, record) {
         // Now clear the update field only if the sequence matches
         set = {};
         set['update_' + epoch] = false;
-        await app.db.statistics.updateOne({
-            _id: record._id,
-            sequence: record.sequence
-        }, {
-            $set: set
-        });
+        let modified = await app.db.statistics.updateOne({_id: record._id, sequence: record.sequence}, {$set: set});
 
-        // announce that the stats have been updated
-        await app.redis.sadd('zkilljs:stats:publish', redis_base);
-        await app.redis.sadd('zkilljs:toplists:publish', redis_base);
+        if (modified.modifiedCount > 0) {
+            // announce that the stats have been updated
+            await app.redis.sadd('zkilljs:stats:publish', redis_base);
+            await app.redis.sadd('zkilljs:toplists:publish', redis_base);
+        }
         app.util.ztop.zincr(app, 'stats_calced_' + epoch);
     } finally {
         record = null; // memory leak prevention

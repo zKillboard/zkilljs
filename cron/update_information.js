@@ -84,9 +84,9 @@ async function populateSet(app, typeValue) {
         if (app.bailout == true || app.no_api == true) return;
         const dayAgo = app.now() - 86400;
 
-        /*fetched += await iterate(app, await app.db.information.find({type: typeValue, last_updated: {$lt: dayAgo}, waiting: true}).sort({last_updated: 1}).limit(10));
+        fetched += await iterate(app, await app.db.information.find({type: typeValue, waiting: true}).limit(10));
         if (fetched > 0) await app.sleep(1000); // allow things to wait to maybe add more for us to wait on... 
-        else*/ fetched += await iterate(app, await app.db.information.find({type: typeValue, last_updated: {$lt: dayAgo}}).sort({last_updated: 1}).limit(10));
+        else fetched += await iterate(app, await app.db.information.find({type: typeValue, last_updated: {$lt: dayAgo}}).sort({last_updated: 1}).limit(10));
     } catch (e) {
         console.log(e, 'dropped on ' + typeValue);
     } finally {
@@ -136,20 +136,18 @@ async function fetch(app, row) {
 
         if (row.last_updated > 0 && (row.type == 'character_id' || row.type == 'corporation_id' || row.type == 'alliance_id')) {
             // Do they have a recent killmail?
-            let recent_match = {}
-            recent_match['involved.' + row.type] = row.id;
-            let recent_count = await app.util.assist.hasMinimum(app.db.killmails_90, recent_match, 1);
-            if (recent_count == 0) {
-                recent_match['involved.' + row.type] = -1 * row.id;
-                recent_count = await app.util.assist.hasMinimum(app.db.killmails_90, recent_match, 1);
+            let recent = await app.db.killmails_90.find({['involved.' + row.type]: row.id}).project({_id: 1}).limit(1);
+            if (recent.length == 0) {
+                recent = await app.db.killmails_90.find({['involved.' + row.type]: (-1 * row.id)}).project({_id: 1}).limit(1);
             }
-            if (recent_count == 0) {
+            if (recent.length == 0) {
                 await app.db.information.updateOne(row, {$set : { last_updated: now, inactive: true}, $unset: {alliance_id: 1, faction_id: 1}});
                 return;  // nothing to update, move on
             }
         }
 
         while (app.bailout != true && app.dbstats.prices > 0) await app.sleep(100); // give priority to price fetches
+        while (app.bailout != true && app.dbstats.pending > 0) await app.sleep(100); // give priority to killmail fetches
 
         let url = process.env.esi_url + urls[row.type].replace(':id', row.id);
         let res = await app.phin({url: url, timeout: 15000});

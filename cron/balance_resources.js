@@ -50,11 +50,21 @@ async function f(app) {
     total += app.dbstats.prices;
     app.dbstats['total'] = total;
 
+    keys = ['update_alltime', 'update_recent', 'update_week'];
+    total = 0;
+    for (let key of keys) {
+        let count = await has_min(app, app.db.statistics, {[key]: true}, 1000);
+        app.dbstats[key] = count;
+        total += count;
+    }
+    total += await has_min(app, app.db.statistics, {'week.update_top': true}, 1000);
+    app.dbstats['stats_total'] = total;
+
     app.zinitialized = true;
 }
 
 async function has_min(app, collection, query, min) {
-    let iterator = await collection.find(query);
+    let iterator = await collection.find(query).project({_id: 1});
     let count = 0;
     while (await iterator.hasNext()) {
         await iterator.next();

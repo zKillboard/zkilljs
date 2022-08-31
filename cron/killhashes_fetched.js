@@ -5,47 +5,59 @@ module.exports = {
     span: 1
 }
 
-const involved_add_cache = {};
-const added_cache = {};
-const price_cache = {};
-const universe_cache = {};
+
+let item_cache = {};
+let group_cache = {};
+let category_cache = {};
+let involved_add_cache = {};
+let added_cache = {};
+let price_cache = {};
+let universe_cache = {};
+function clear_caches() {
+    item_cache = {};
+    group_cache = {};
+    category_cache = {};
+    involved_add_cache = {};
+    added_cache = {};
+    price_cache = {};
+    universe_cache = {};
+}
+setInterval(clear_caches, 900000); // every 15 minutes
 
 
 const no_solo_ships = [29, 31, 237];
-const parsed = {
-    $set: {
-        status: 'parsed'
-    }
-};
 
-
-const set = new Set();
-var firstRun = true;
-
-const sw = require('../util/StreamWatcher.js');
-const match = {
-    status: 'fetched'
-};
+let firstRun = true;
+let sequence = undefined;
 
 async function f(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
 
-    await app.util.simul.go(app, 'killhashes_fetched', app.db.killhashes, {status: 'fetched'}, parse_mail,  app.util.assist.continue_simul_go, max_concurrent); 
+    if (sequence == undefined) {
+        // get the highest sequence
+        let result = await app.db.killmails.find().sort({sequence: -1}).limit(1).toArray();
+        if (result.length == 0) sequence = 0;
+        else sequence = result[0].sequence;
+        console.log('Sequence starting at:', sequence);
+    }
+
+    await app.util.simul.go(app, 'killhashes_fetched', app.db.killhashes, {status: 'fetched'}, parse_mail,  app.util.assist.continue_simul_go, max); 
 }
 
-async function max_concurrent(app) {
+const max_concurrent = (process.env.max_concurrent_fetched | 10);
+async function max(app) {
     if (app.dbstats.pending > 100) return 1;
-    return 10;
+    return max_concurrent;
 }
 
 async function parse_mail(app, killhash) {
-    var killmail = {};
+    let killmail = {};
     let success = false;
     const now = Math.floor(Date.now() / 1000);
 
     try {
         // just so we can reuse the sequence number
-        var prev_parsed_mail = undefined;
+        let prev_parsed_mail = undefined;
 
         const remove_alltime = app.db.killmails.removeOne({killmail_id: killhash.killmail_id});
         const remove_recent = app.db.killmails_90.removeOne({killmail_id: killhash.killmail_id});
@@ -71,15 +83,16 @@ async function parse_mail(app, killhash) {
             return;
         }
 
-        var km_date = new Date(rawmail.killmail_time);
+        let km_date = new Date(rawmail.killmail_time);
         killmail.year = km_date.getFullYear();
         killmail.month = km_date.getMonth() + 1;
         killmail.day = km_date.getDate();
         killmail.epoch = Math.floor(km_date.getTime() / 1000);
-        var km_date_str = app.util.price.format_date(km_date);
+        let km_date_str = app.util.price.format_date(km_date);
 
-        const ship_price = app.util.price.get(app, rawmail.victim.ship_type_id, km_date_str);
-        const item_prices = get_item_prices(app, rawmail.victim.items, km_date, false);
+        let price_date = app.util.price.format_date(km_date);
+        const ship_price = get_item_price(app, {item_type_id: rawmail.victim.ship_type_id, singleton: 0, quantity_destroyed: 1}, price_date, false);
+        const item_prices = get_item_prices(app, rawmail.victim.items, price_date, false);
 
         let promises = [];
         const involved = {};
@@ -117,15 +130,29 @@ async function parse_mail(app, killhash) {
 
         if (rawmail.war_id != undefined) {
             addTypeId(app, involved, 'war_id', rawmail.war_id);
-            app.util.entity.add(app, 'war_id', rawmail.war_id);
+            await app.util.entity.add(app, 'war_id', rawmail.war_id);
         }
 
         const npc = isNPC(rawmail);
         const labels = [];
+
+        if (npc != true) {
+            let padhash = await get_pad_hash(app, rawmail, killmail);
+            if (padhash != undefined) {
+                killmail.padhash = padhash;
+                let pad_matches = await app.db.killmails.find({padhash: padhash}, {killmail_id: 1}).limit(6).toArray();
+                if (pad_matches.length > 5) {
+                    killmail.stats = false;
+                    labels.push('padding');
+                    labels.push('nostats');
+                }
+            }
+        }
+
         if (npc === true) {
             labels.push('npc');
             labels.push('nostats');
-        } else {
+        } else if (killmail.stats != false) {
             labels.push('pvp');
             if (await isSolo(app, rawmail) === true) labels.push('solo');
         }
@@ -153,26 +180,15 @@ async function parse_mail(app, killhash) {
         if (killmail.total_value >= 100000000000) labels.push('extremeisk');
         if (killmail.total_value >= 1000000000000) labels.push('insaneisk');
 
-        killmail.stats = !npc;
+        killmail.stats = (labels.indexOf('pvp') > -1);
         killmail.involved_cnt = rawmail.attackers.length;
 
-        if (prev_parsed_mail != undefined && prev_parsed_mail.sequence != undefined) killmail.sequence = prev_parsed_mail.sequence;
-        else killmail.sequence = await app.util.killmails.next_sequence(app);
-
-        let padhash = await get_pad_hash(app, rawmail, killmail);
-        let padpromise = undefined;
-        if (npc === false && padhash != undefined) {
-            killmail.padhash = padhash;
-            padpromise = app.db.killmails.countDocuments({
-                padhash: padhash
-            });
-        }
+        sequence++;
+        killmail.sequence = sequence;
 
         await app.waitfor(promises);
         involved.label = labels;
         killmail.involved = involved;
-
-        if (padpromise != undefined && (await padpromise) > 5) killmail.stats = false;
 
         await remove_alltime;
         await remove_recent;
@@ -182,7 +198,7 @@ async function parse_mail(app, killhash) {
 
         if (killmail.epoch > (now - (90 * 86400))) await app.db.killmails_90.insertOne(killmail);
         if (killmail.epoch > (now - (7 * 86400))) await app.db.killmails_7.insertOne(killmail);
-        await app.db.killhashes.updateOne(killhash, parsed);
+        await app.db.killhashes.updateOne(killhash, {$set: {status: 'parsed', sequence: killmail.sequence}});
         app.util.ztop.zincr(app, 'killmail_process_parsed');
         success = true;
     } catch (e) {
@@ -214,9 +230,17 @@ async function addInvolved(app, object, involved, is_victim) {
         addTypeId(app, object, type, (is_victim ? -1 * id : id));
 
         if (type == 'item_id') {
-            var item = await app.util.entity.info(app, type, id, true);
+            let item = item_cache[id]; 
+            if (item == undefined) {
+                item = await app.util.entity.info(app, type, id, true);
+                item_cache[id] = item;
+            }
             if (item && item.group_id) {
-                var group = await app.util.entity.info(app, 'group_id', item.group_id, true);
+                let group = group_cache[item.group_id];
+                if (group == undefined) {
+                    group = await app.util.entity.info(app, 'group_id', item.group_id, true);
+                    group_cache[item.group_id] = group;
+                }
                 addTypeId(app, object, 'group_id', (is_victim ? -1 * item.group_id : item.group_id));
                 if (group && group.category_id) addTypeId(app, object, 'category_id', (is_victim ? -1 * group.category_id : group.category_id));
             }
@@ -249,18 +273,18 @@ async function isSolo(app, rawmail) {
     if (ship_type_id == undefined) return false;
 
     // Rookie ships, shuttles, and capsules are not considered as solo
-    let item = universe_cache['item_' + ship_type_id];
+    let item = item_cache[ship_type_id];
     if (item == undefined) {
         item = await app.util.entity.info(app, 'item_id', ship_type_id, true);
-        universe_cache['item_' + ship_type_id] = item;
+        item_cache[ship_type_id] = item;
     }
     if (no_solo_ships.indexOf(item.group_id) != -1) return false;
 
     // Only ships can be solo'ed
-    let group = universe_cache['group_' + item.group_id];
+    let group = group_cache[item.group_id];
     if (group == undefined) {
         group = await app.util.entity.info(app, 'group_id', item.group_id);
-        universe_cache['group_' + item.group_id] = item;
+        group_cache[item.group_id] = item;
     }
     if (group.category_id != 6) return false;
 
@@ -272,17 +296,17 @@ async function isSolo(app, rawmail) {
         ship_type_id = attacker.ship_type_id;
         if (ship_type_id == undefined) return false;
 
-        item = universe_cache['item_' + ship_type_id];
+        item = item_cache[ship_type_id];
         if (item == undefined || item == null) {
             item = await app.util.entity.info(app, 'item_id', ship_type_id, true);
-            universe_cache['item_' + ship_type_id] = item;
+            item_cache[ship_type_id] = item;
         }
         if (item.group_id == undefined) return false;
 
-        group = universe_cache['group_' + item.group_id];
+        group = group_cache[item.group_id];
         if (group == undefined) {
             group = await app.util.entity.info(app, 'group_id', item.group_id);
-            universe_cache['group_' + item.group_id] = item;
+            group_cache[item.group_id] = group;
         }
         if (group.id == 65) return false;
     }
@@ -295,14 +319,46 @@ async function get_item_prices(app, items, date, in_container = false) {
     let promises = [];
 
     for (let item of items) {
-        promises.push(get_item_price(app, item, date, in_container));
+        let result = get_item_price(app, item, date, in_container);
+        if (typeof result == 'number') total += result; // sync
+        else promises.push(result); // async, need to await the result
     }
     for (let p of promises) total += await p;
-    
+
     return total;
 }
 
-async function get_item_price(app, item, date, in_container) {
+function get_item_price(app, item, date, in_container) {
+    if (item.singleton != 0 || in_container) return get_item_price_async(app, item, date, in_container);
+    if (added_cache[item.item_type_id] != true) return get_item_price_async(app, item, date, in_container);
+
+    let total = 0;
+    if (item.items instanceof Array) return get_item_price_async(app, item, date, in_container);
+
+    if (item.singleton != 0 || in_container == true) {
+        let item_info = item_cache[item.item_type_id];
+        if (item_info == undefined) return get_item_price_async(app, item, date, in_container);
+        let group = group_cache[item_info.group_id];
+        if (group == undefined) return get_item_price_async(app, item, date, in_container);
+        let category = category_cache[group.category_id];
+        if (category == undefined) return get_item_price_async(app, item, date, in_container);
+        if (category != undefined) {
+            if (category.id == 9 && (item.singleton != 0 || in_container == true)) item.singleton = 2;
+        }
+    }
+
+    let cache_key = item.item_type_id + '-' + date;
+    let item_price = (item.singleton != 0 ? 0.01 : price_cache[cache_key]); 
+    if (item_price == undefined) return get_item_price_async(app, item, date, in_container);
+
+    let qty = (item.quantity_dropped | 0) + (item.quantity_destroyed | 0);
+
+    total += (qty * item_price);
+
+    return total;
+}
+
+async function get_item_price_async(app, item, date, in_container) {
     if (added_cache[item.item_type_id] != true) {
         await app.util.entity.add(app, 'item_id', item.item_type_id);
         added_cache[item.item_type_id] = true;
@@ -314,20 +370,36 @@ async function get_item_price(app, item, date, in_container) {
     }
 
     if (item.singleton != 0 || in_container == true) {
-        const item_info = await app.util.entity.info(app, 'item_id', item.item_type_id);
-        const group = (item_info.group_id == undefined ? undefined : await app.util.entity.info(app, 'group_id', item_info.group_id));
+        let item_info = item_cache[item.item_type_id];
+        if (item_info == undefined) {
+            item_info = await app.util.entity.info(app, 'item_id', item.item_type_id);
+            item_cache[item.item_type_id] = item_info;
+        }
+        let group = group_cache[item_info.group_id];
+        if (group == undefined) {
+            group = (item_info.group_id == undefined ? undefined : await app.util.entity.info(app, 'group_id', item_info.group_id));
+            group_cache[item_info.group_id] = group;
+        }
         if (group != undefined) {
-            const category = await app.util.entity.info(app, 'category_id', group.category_id);
+            let category = category_cache[group.category_id];
+            if (category == undefined) {
+                category = await app.util.entity.info(app, 'category_id', group.category_id);
+                category_cache[group.category_id] = category;
+            }
             if (category != undefined) {
                 if (category.id == 9 && (item.singleton != 0 || in_container == true)) item.singleton = 2;
             }
         }
     }
 
-    const item_price = (item.singleton != 0 ? 0.01 : await app.util.price.get(app, item.item_type_id, date));
-    const qty = (item.quantity_dropped || 0) + (item.quantity_destroyed || 0);
-
-    if (isNaN(item_price)) console.log('isNaN price on ', item);
+    let cache_key = item.item_type_id + '-' + date;
+    let item_price = price_cache[cache_key];
+    if (item_price == undefined) {
+        item_price = (item.singleton != 0 ? 0.01 : await app.util.price.get(app, item.item_type_id, date));
+        price_cache[cache_key] = item_price;
+        if (isNaN(item_price)) console.log('isNaN price on ', item);
+    }
+    let qty = (item.quantity_dropped | 0) + (item.quantity_destroyed | 0);
 
     total += (qty * item_price);
 
@@ -340,10 +412,7 @@ async function check_for_padding(app, rawmail) {
 
     let count = 0;
     for (let i = rawmail.killmail_id - 100; i <= rawmail.killmail_id; i++) {
-        if (await app.db.killhashes.findOne({
-                killmail_id: i + '',
-                hash: hash
-            }) != null) count++;
+        if (await app.db.killhashes.findOne({killmail_id: i, hash: hash}) != null) count++;
     }
     return count;
 }
@@ -359,8 +428,16 @@ async function get_pad_hash(app, rawmail, killmail) {
     if (shipTypeID == 0) return undefined;
 
     if (padhash_ship_2_group[shipTypeID] == undefined) {
-        let item = await app.util.entity.info(app, 'item_id', shipTypeID);
-        let group = await app.util.entity.info(app, 'group_id', item.group_id);
+        let item = item_cache[shipTypeID];
+        if (item == undefined) {
+            item = await app.util.entity.info(app, 'item_id', shipTypeID);
+            item_cache[shipTypeID] = item;
+        } 
+        let group = group_cache[item.group_id];
+        if (group == undefined) {
+            group = await app.util.entity.info(app, 'group_id', item.group_id);
+            group_cache[item.group_id] = group;
+        }
         padhash_ship_2_group[shipTypeID] = group.category_id;
     }
     if (padhash_ship_2_group[shipTypeID] != 6) return undefined;

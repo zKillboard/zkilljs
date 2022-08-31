@@ -20,7 +20,7 @@ const esi_rate_intervals = {
 let rate_limit = 0;
 function doSetRateLimit() {
 	let d = new Date();
-	let current_time = (d.getHours() * 100) + d.getMinutes();
+	let current_time = (d.getUTCHours() * 100) + d.getUTCMinutes();
 	let calc_rate_limit = esi_rate_intervals[Object.keys(esi_rate_intervals)[0]]; // initial default
 	for (const [time, timed_rate_limit] of Object.entries(esi_rate_intervals)) {
 		if (current_time >= time) calc_rate_limit = timed_rate_limit;

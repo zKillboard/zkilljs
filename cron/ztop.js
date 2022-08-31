@@ -56,9 +56,9 @@ async function ztop(app) {
     out.push([]);
 
     t = '';
-    t += padLeftSlice(app.dbstats.pending.toLocaleString() + ' - pending', -22);
-    t += padLeftSlice(app.dbstats.fetched.toLocaleString() + ' - fetched', -22);
-    t += padLeftSlice(app.dbstats.parsed.toLocaleString() + ' - parsed', -22);
+    t += padLeftSlice(app.dbstats.pending.toLocaleString() + (app.dbstats.pending >= 1000 ? '+' : '') + ' pending', -20);
+    t += padLeftSlice(app.dbstats.fetched.toLocaleString() + (app.dbstats.fetched >= 1000 ? '+' : '') + ' fetched', -20);
+    t += padLeftSlice(app.dbstats.parsed.toLocaleString() + (app.dbstats.parsed >= 1000 ? '+' : '') + ' parsed', -20);
     t += padLeftSlice(app.dbstats.prices.toLocaleString() + ' - prices', -22);
     out.push(t);
     out.push([]);

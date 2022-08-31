@@ -3,15 +3,18 @@
 const concurrents = {};
 const row_ids = {};
 
+let limit = {};
+
 module.exports = {
 	go: async function(app, name, collection, query, exec, exec_condition = returnTrue, max_concurrent = 1, max_wait_interval = 1000, min_wait_interval = 1, self_exec = false) {
 		let total_exec_calls = 0;
+		if (limit[name] == undefined) limit[name] = 1000000;
 		try {
 			if (concurrents[name] == undefined) concurrents[name] = 0;
 
 			if (await exec_condition(app) === true) {
 				let iterator = (query.find != undefined ? collection.find(query.find) : collection.find(query));
-				if (query.sort != undefined) iterator = iterator.sort(query.sort);
+				if (query.sort != undefined) iterator = iterator.sort(query.sort).limit(limit[name]);
 				iterator = await iterator;
 
 				while (await iterator.hasNext()) {
@@ -26,10 +29,13 @@ module.exports = {
 					concurrents[name]++;
 					doExec(app, name, exec, row, row_id);
 					total_exec_calls++;
-					if (query.sort != undefined && total_exec_calls > 25000) break;
 				}
 			}
 		} catch (e) {
+			if (e.code == 292) {
+				limit[name] = Math.ceil(limit[name] * 0.9) + 1;
+				return console.log('Adjusted sort limit to ', limit[name], 'for', name);
+			}
 			console.error('simul.go error within', name);
 			console.error(e);
 		} finally {

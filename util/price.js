@@ -5,7 +5,8 @@ let cache = {};
 
 setInterval(function () {
     price_cache = {};
-}, 36000000);
+    cache = {};
+}, 300000);
 
 const price = {
     async get(app, item_id, date, skip_fetch) {
@@ -259,7 +260,7 @@ async function get_blueprint(app, item_id) {
             let reqs = await import_reqs(app);
 
             cache.blueprints = {};
-            console.log('Fetching https://sde.zzeve.com/industryActivityProducts.json');
+            console.log('Importing https://sde.zzeve.com/industryActivityProducts.json');
             let res = await app.phin('https://sde.zzeve.com/industryActivityProducts.json');
             let json = JSON.parse(res.body);
             for (let i = 0; i < json.length; i++) {
@@ -275,21 +276,28 @@ async function get_blueprint(app, item_id) {
     }
 }
 
+let importing = false;
+let reqs_store = [];
 async function import_reqs(app) {
+    while (importing == true) await app.sleep(100);
+    importing = true;
+
+    if (reqs_store.length > 0) return reqs_store;
+
     console.log("Importing http://sde.zzeve.com/industryActivityMaterials.json");
     let res = await app.phin('http://sde.zzeve.com/industryActivityMaterials.json');
     let json = JSON.parse(res.body);
 
-    let reqs = [];
     for (let i = 0; i < json.length; i++) {
         let row = json[i];
         if (row.activityID != 1) continue;
 
         let key = 'item_id:' + row.typeID;
-        if (reqs[key] == undefined) reqs[key] = [];
-        reqs[key].push(row);
+        if (reqs_store[key] == undefined) reqs_store[key] = [];
+        reqs_store[key].push(row);
     }
-    return reqs;
+    importing = false;
+    return reqs_store;
 }
 
 function numeric_sort(a, b) {

@@ -5,9 +5,9 @@ module.exports = {
     span: 1
 }
 
-var firstRun = true;
+let firstRun = true;
 
-const sw = require('../util/StreamWatcher.js');
+const max_concurrent = (process.env.max_concurrent_pending == undefined ? 10 : Math.max(1, parseInt(process.env.max_concurrent_pending)));
 
 async function f(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
@@ -15,10 +15,10 @@ async function f(app) {
     if (firstRun) {
         firstRun = false;
         app.db.killhashes.updateMany({status: 'done', failure_reason : {$exists: true}}, {$unset: {failure_reason : 1}}, {multi: true});
-        resetBadMails(app);
+        // resetBadMails(app);
     }
 
-    await app.util.simul.go(app, 'killhashes_pending', app.db.killhashes, {status: 'pending'}, fetch, app.util.assist.continue_simul_go, 10);
+    await app.util.simul.go(app, 'killhashes_pending', app.db.killhashes, {find: {status: 'pending'}, sort: {killmail_id: -1}}, fetch, app.util.assist.continue_simul_go, max_concurrent);
 }
 
 function bailout() {
@@ -44,7 +44,7 @@ async function fetch(app, mail) {
             return;
         }
 
-        while (app.bailout != true && app.dbstats.prices > 0) await app.sleep(100); // give priority to price fetches
+        while (app.bailout != true && app.dbstats.prices > 1) await app.sleep(100); // give priority to price fetches
 
 
         let url = process.env.esi_url + '/v1/killmails/' + mail.killmail_id + '/' + mail.hash + '/';

@@ -83,7 +83,7 @@ async function update_price(app, row, todays_price_key) {
             return;
         }
 
-        var url = process.env.esi_url + '/v1/markets/10000002/history/?type_id=' + item_id;
+        let url = process.env.esi_url + '/v1/markets/10000002/history/?type_id=' + item_id;
         // console.log('Fetching ESI prices for', item_id); 
         let res = await app.phin(url);
 

@@ -2,11 +2,11 @@
 
 module.exports = {
     exec: f,
-    span: 60,
-    offset: -10
+    span: 15,
+//    offset: -10
 }
 
-var types = [
+const types = [
     'character_id',
     'corporation_id',
     'alliance_id',
@@ -20,43 +20,50 @@ var types = [
     'region_id',
 ];
 
-var collections = {
+const collections = {
     week: 'killmails_7',
-    recent: 'killmails_90',
+    //recent: 'killmails_90',
     //alltime: 'killmails',
 };
 
-var sequential = 0;
+let concurrent = 0;
 
 async function f(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
 
-    if (!app.no_api && app.dbstats.total > 1000) return await app.sleep(1000);
+    if (!app.no_api && app.dbstats.total >= 100) return;
+
+    let promises = [];
     
-    var epochs = Object.keys(collections);
-    for (var i = 0; i < epochs.length; i++) {
-        await do_epoch(app, epochs[i]);
+    let epochs = Object.keys(collections);
+    for (let i = 0; i < epochs.length; i++) {
+        promises.push(do_epoch(app, epochs[i]));
     }
+    await app.waitfor(promises);
 }
 
 async function do_epoch(app, epoch) {
-    var result = await app.db.statistics.find({[epoch + '.update_top']: true}).limit(10000);
-    while (await result.hasNext()) {
-        if (app.bailout) return await app.sleep(1000);
+    let promises = [];
+    let iterator = await app.db.statistics.find({[epoch + '.update_top']: true}).limit(10000);
+    while (await iterator.hasNext()) {
+        if (app.bailout) return;
 
-        await do_update(app, epoch, await result.next());
+        while (app.bailout != true && concurrent >= 10) await app.sleep(10);
+
+        concurrent++;
+        promises.push(do_update(app, epoch, await iterator.next()));
     }
+    await app.waitfor(promises);
 }
 
 async function do_update(app, epoch, record) {
     try {
         if (app.dbstats.total > 100) return await app.sleep(1000);
 
-        sequential++;
-        var last_sequence = record.last_sequence;
-        var oldhash = (record.week == undefined ? '' : record.week.hash_killed_top);
+        let last_sequence = record.last_sequence;
+        let oldhash = (record.week == undefined ? '' : record.week.hash_killed_top);
 
-        var match = {};
+        let match = {};
         if (record.type == 'label' && record.id == 'all') {
             // no match, we want all of the killmails
         } else {
@@ -64,14 +71,15 @@ async function do_update(app, epoch, record) {
             if (record.type != 'label' && record.id != 'pvp') match['involved.label'] = 'pvp';
         }
 
-        var top_killers = await do_queries(app, collections[epoch], record, match, record[epoch].killed_top, (record[epoch].killed || 0), 'killed');
+        let top_killers = await do_queries(app, collections[epoch], record, match, record[epoch].killed_top, (record[epoch].killed || 0), 'killed');
 
+        let top_losers;
         if (record.type != 'label') {
             match['involved.' + record.type] = -1 * record.id;
-            var top_losers = await do_queries(app, collections[epoch], record, match, record[epoch].lost_top, (record[epoch].lost || 0), 'lost');
+            top_losers = await do_queries(app, collections[epoch], record, match, record[epoch].lost_top, (record[epoch].lost || 0), 'lost');
         } else top_losers = {};
 
-        var n = await app.db.statistics.updateOne({
+        let n = await app.db.statistics.updateOne({
             _id: record._id,
             last_sequence: last_sequence
         }, {
@@ -90,29 +98,29 @@ async function do_update(app, epoch, record) {
         await app.redis.sadd('zkilljs:toplists:publish', redis_base);
         app.util.ztop.zincr(app, 'stats_toplist_' + epoch);
     } finally {
-        sequential--;
+        concurrent--;
     }
 }
 
 async function do_queries(app, collection, record, match, existing, total_kills, killed_lost) {
-    var ret = {
+    let ret = {
         types: {},
         topisk: []
     };
 
     // Start the top Isk query
-    var topIsk = await app.util.stats.topISK(app, collection, match, record.type, 6, killed_lost);
+    let topIsk = await app.util.stats.topISK(app, collection, match, record.type, 6, killed_lost);
 
     // Compare to see if we need to actually do these expensive group queries
-    var last_total = (existing ? (existing['last_topten_total_' + killed_lost] || 0) : 0);
+    let last_total = (existing ? (existing['last_topten_total_' + killed_lost] || 0) : 0);
     if (total_kills < 10000 || ((total_kills - last_total) > Math.floor(last_total * 0.01))) {
         // Start the group queries
-        for (var i = 0; i < types.length; i++) {
+        for (let i = 0; i < types.length; i++) {
             ret.types[types[i]] = app.util.stats.group(app, collection, match, types[i], killed_lost);
         }
 
         // and wait for all the queries to finish
-        for (var i = 0; i < types.length; i++) {
+        for (let i = 0; i < types.length; i++) {
             ret.types[types[i]] = await ret.types[types[i]];
             if (ret.types[types[i]] == undefined || ret.types[types[i]].length == 0) delete ret.types[types[i]];
         }
@@ -123,8 +131,8 @@ async function do_queries(app, collection, record, match, existing, total_kills,
 
     ret.topisk = [];
     topIsk = await topIsk;
-    for (var i = 0; i < topIsk.length; i++) {
-        var record = topIsk[i];
+    for (let i = 0; i < topIsk.length; i++) {
+        let record = topIsk[i];
         delete record._id;
         ret.topisk.push(record);
     }

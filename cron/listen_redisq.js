@@ -13,6 +13,7 @@ async function f(app) {
     if (process.env.listen_redisq != 'true') return;
 
     try {
+        let body;
         do {
             if (app.bailout) return;
 
@@ -20,7 +21,7 @@ async function f(app) {
 
             if (res.statusCode != 200) return;
 
-            var body = JSON.parse(res.body);
+            body = JSON.parse(res.body);
             if (body.package !== null) {
                 await app.util.killmails.add(app, body.package.killID, body.package.zkb.hash);
                 app.util.ztop.zincr(app, 'killmail_add_redisq');

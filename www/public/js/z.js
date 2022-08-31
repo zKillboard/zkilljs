@@ -767,7 +767,7 @@ function prefetchSetup() {
 
 function prefetchGo() {
     elem = $(this);
-    let href = 'https://zkillboard.dev/cache/1hour' + elem.attr('href') + '.html';
+    let href = '/cache/1hour' + elem.attr('href') + '.html';
     $.get(href);
 }
 

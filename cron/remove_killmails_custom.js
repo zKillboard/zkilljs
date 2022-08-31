@@ -5,8 +5,8 @@ let epochs = ['killmails', 'killmails_90', 'killmails_7'];
 async function f(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
     
-    var key = process.argv[3];
-    var id = process.argv[4];
+    let key = process.argv[3];
+    let id = process.argv[4];
     id = parseInt(id);
     let query = {[key]: id};
 

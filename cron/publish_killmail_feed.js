@@ -17,10 +17,10 @@ async function f(app) {
 
             if (killmail_id > 0) {
                 const killmail = await app.db.killmails.findOne({killmail_id: killmail_id});
-                await publishToKillFeed(app, killmail);
+                if (killmail != null) await publishToKillFeed(app, killmail);
             }
         }
-    } while (raw != null);
+    } while (app.bailout != true && raw != null);
 }
 
 async function requeuePublish(app, killmail_id) {
@@ -55,8 +55,8 @@ async function publishToKillFeed(app, killmail) {
             }
         }
 
-        await app.phin({url: 'http://localhost:' + process.env.PORT + '/cache/1hour/killmail/row/' + killmail.killmail_id + '.html'}),
-        await app.phin({url: 'http://localhost:' + process.env.PORT + '/killmail/' + killmail.killmail_id}),
+        app.phin({url: 'http://localhost:' + process.env.PORT + '/cache/1hour/killmail/row/' + killmail.killmail_id + '.html'}),
+        app.phin({url: 'http://localhost:' + process.env.PORT + '/killmail/' + killmail.killmail_id}),
 
         app.redis.publish('killlistfeed:all', msg);
         for (var i = 0; i < keys.length; i++) {
