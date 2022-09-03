@@ -8,6 +8,8 @@ module.exports = {
 async function f(app) {
 	while (app.zinitialized != true) await app.sleep(100);
 
+	if (app.dbstats.total > 1000) return;
+
 	let iterator = await app.db.information.find({update_name: true}).limit(10000);
 	while (await iterator.hasNext()) {
 		if (app.bailout) break;
@@ -33,4 +35,5 @@ async function f(app) {
     		await app.db.information.updateOne({_id: row._id}, {$unset: {update_name: 1}});
     	    }
 	}
+	await iterator.close();
 }

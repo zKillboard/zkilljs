@@ -14,6 +14,7 @@ const entity = {
         // check that id is numeric
         if (typeof type != 'string') throw 'type is not a string: ' + type + ' ' + id;
         if (typeof id != 'number') throw 'id is not a number: ' + type + ' ' + id;
+        if (isNaN(id)) throw 'id is not a number: ' + type + ' ' + id;
 
         if (id <= 0) return;
         const key = type + '_' + id;

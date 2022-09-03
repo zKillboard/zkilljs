@@ -44,7 +44,7 @@ async function f(app) {
     await app.util.simul.go(app, 'killhashes_fetched', app.db.killhashes, {status: 'fetched'}, parse_mail,  app.util.assist.continue_simul_go, max); 
 }
 
-const max_concurrent = (process.env.max_concurrent_fetched | 10);
+const max_concurrent = Math.max(1, (parseInt(process.env.max_concurrent_fetched) | 5));
 async function max(app) {
     if (app.dbstats.pending > 100) return 1;
     return max_concurrent;
@@ -52,7 +52,6 @@ async function max(app) {
 
 async function parse_mail(app, killhash) {
     let killmail = {};
-    let success = false;
     const now = Math.floor(Date.now() / 1000);
 
     try {
@@ -79,7 +78,8 @@ async function parse_mail(app, killhash) {
             await app.db.rawmails.removeOne({
                 killmail_id: killhash.killmail_id
             });
-            await app.db.killhashes.removeOne(killhash);
+            await app.waitfor([remove_alltime, remove_recent, remove_week]);
+            await app.db.killhashes.updateOne({_id: killhash._id}, {$set: {status: 'pending'}});
             return;
         }
 
@@ -183,29 +183,29 @@ async function parse_mail(app, killhash) {
         killmail.stats = (labels.indexOf('pvp') > -1);
         killmail.involved_cnt = rawmail.attackers.length;
 
+        await app.waitfor(promises);
+
         sequence++;
         killmail.sequence = sequence;
-
-        await app.waitfor(promises);
         involved.label = labels;
         killmail.involved = involved;
 
-        await remove_alltime;
-        await remove_recent;
-        await remove_week; 
+        await app.waitfor([remove_alltime, remove_recent, remove_week]);
 
         await app.db.killmails.insertOne(killmail);
-
         if (killmail.epoch > (now - (90 * 86400))) await app.db.killmails_90.insertOne(killmail);
         if (killmail.epoch > (now - (7 * 86400))) await app.db.killmails_7.insertOne(killmail);
+
         await app.db.killhashes.updateOne(killhash, {$set: {status: 'parsed', sequence: killmail.sequence}});
+        
         app.util.ztop.zincr(app, 'killmail_process_parsed');
-        success = true;
+
+        // Publish after killhash record has been updated, even publish older killmails if we're not doing too much
+        if (killmail.epoch > (now - (7 * 86400)) || app.dbstats.total < 1000) await app.redis.rpush('publishkillfeed', killmail.killmail_id);
     } catch (e) {
         console.log('ERROR', killhash, '\n', e);
         await app.db.killhashes.updateOne(killhash, {$set: {status: 'parse-error'}});
     } finally {
-        if (killmail.epoch > (now - (7 * 86400)) && success) await app.redis.rpush('publishkillfeed', killmail.killmail_id);
         killmail = null; // memory leak protection
     }
 }
@@ -371,18 +371,22 @@ async function get_item_price_async(app, item, date, in_container) {
 
     if (item.singleton != 0 || in_container == true) {
         let item_info = item_cache[item.item_type_id];
-        if (item_info == undefined) {
+        if (item_info == undefined || item_info.group_id == undefined) {
             item_info = await app.util.entity.info(app, 'item_id', item.item_type_id);
             item_cache[item.item_type_id] = item_info;
         }
         let group = group_cache[item_info.group_id];
-        if (group == undefined) {
+        if (group == undefined || group.category_id == undefined) {
             group = (item_info.group_id == undefined ? undefined : await app.util.entity.info(app, 'group_id', item_info.group_id));
             group_cache[item_info.group_id] = group;
         }
         if (group != undefined) {
             let category = category_cache[group.category_id];
             if (category == undefined) {
+                if (group.category_id == undefined) {
+                    console.log(item);
+                    console.log(group);
+                }
                 category = await app.util.entity.info(app, 'category_id', group.category_id);
                 category_cache[group.category_id] = category;
             }

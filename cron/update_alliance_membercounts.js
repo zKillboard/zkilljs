@@ -16,11 +16,15 @@ async function f(app) {
     	const member_corps = await app.db.information.find({type: 'corporation_id', 'alliance_id': alliance.id}).toArray();
 
     	let member_count = 0;
+        let previous_member_count = alliance.member_count | 0;
     	for (const corp of member_corps) member_count += (corp.member_count || 0);
 
     	if (alliance.member_count !== member_count) {
             alliance.member_count = member_count;            
     		await app.db.information.updateOne({_id: alliance._id}, {$set: {member_count: member_count}});
     	}
+        if (previous_member_count != member_count) {
+            // TODO broadcast information update
+        }
     }
 }

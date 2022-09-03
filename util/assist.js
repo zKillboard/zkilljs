@@ -18,6 +18,7 @@ const esi_rate_intervals = {
 	1800 : 5 	// 06:00pm UTC
 }
 let rate_limit = 0;
+let rate_limit_override = parseInt(process.env.rate_limit_override);
 function doSetRateLimit() {
 	let d = new Date();
 	let current_time = (d.getUTCHours() * 100) + d.getUTCMinutes();
@@ -25,6 +26,7 @@ function doSetRateLimit() {
 	for (const [time, timed_rate_limit] of Object.entries(esi_rate_intervals)) {
 		if (current_time >= time) calc_rate_limit = timed_rate_limit;
 	}
+	if (rate_limit_override > 0) calc_rate_limit = rate_limit_override;
 	if (rate_limit != calc_rate_limit) console.log('Setting ESI rate limit per second to', calc_rate_limit);
 	rate_limit = calc_rate_limit;
 }
@@ -118,7 +120,7 @@ const assist = {
 
 	            var base = '/' + json.type.replace('_id', '') + '/' + json.id;
 	            var pubkey = action + ':' + base;
-	            await app.redis.publish(pubkey, JSON.stringify({
+	            await app.redis.publish(pubkey, JSON.stringify({ 
 	                action: action,
 	                path: base
 	            }));
@@ -136,6 +138,7 @@ const assist = {
 	            if (count >= min) return true;
 	        }
 	    }  finally {
+	    	await cursor.close();
 	        collection = null;
 	        cursor = null;
 	    }

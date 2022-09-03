@@ -3,7 +3,6 @@
 module.exports = {
     exec: f,
     span: 15,
-//    offset: -10
 }
 
 const types = [
@@ -32,6 +31,7 @@ async function f(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
 
     if (!app.no_api && app.dbstats.total >= 100) return;
+    if (app.dbstats.stats_total >= 1000) return;
 
     let promises = [];
     
@@ -53,6 +53,7 @@ async function do_epoch(app, epoch) {
         concurrent++;
         promises.push(do_update(app, epoch, await iterator.next()));
     }
+    await iterator.close();
     await app.waitfor(promises);
 }
 

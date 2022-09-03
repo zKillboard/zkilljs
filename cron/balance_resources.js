@@ -23,7 +23,8 @@ async function f(app) {
                 while (app.no_api == true) await app.sleep(1000);
             }
 
-            if (esi_url) await app.util.assist.esi_limiter(app);
+            if (esi_url && options.no_limit != true) await app.util.assist.esi_limiter(app);
+            delete options.no_limit;
             let res = await app.orig_phin(options);
             if (esi_url) await app.util.assist.esi_result_handler(app, res, options.url);
 
@@ -71,5 +72,6 @@ async function has_min(app, collection, query, min) {
         count++;
         if (count >= min) break;
     }
+    await iterator.close();
     return count;
 }

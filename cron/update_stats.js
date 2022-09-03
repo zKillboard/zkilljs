@@ -34,6 +34,8 @@ let first_run = true;
 async function f(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
 
+    await app.db.statistics.updateMany({reset: true}, {$set: {'update_alltime': true, update_recent: true, update_week: true, 'week.reset': true, 'recent.reset': true, 'alltime.reset': true}, $unset: {reset: 1}}, {multi: true});
+
     if (first_run) {
         for (const type of types) {
             for (const epoch of epoch_keys) {
@@ -51,30 +53,36 @@ async function f(app) {
 async function update_stats(app, collection, epoch, type, find) {
     let promises = [];
     try {
-        if (app.bailout) return;
+        if (app.dbstats.total >= 100) return await app.sleep(1000);
 
-        if (epoch == 'recent' && app.dbstats.update_week >= 1000) return;
-        if (epoch == 'alltime' && app.dbstats.update_recent >= 1000) return;
-    
-        let iter = await app.db.statistics.find(find);
+        let iter = await app.db.statistics.find(find).project({_id: 1}).limit(1000).batchSize(100);
         while (await iter.hasNext()) {
             if (app.bailout) return;
 
-            let record = await iter.next();
+            if (app.dbstats.total >= 100) return await app.sleep(1000);
 
+            let record_id = await iter.next();
             if (record.id !== NaN) {
-                while (!app.bailout && concurrent >= (app.dbstats.total > 100 ? 0 : 25)) await app.sleep(10);
-                if (app.bailout) return;
+                if (epoch == 'recent' && app.dbstats.update_week >= 100) return;
+                if (epoch == 'alltime' && app.dbstats.update_recent >= 100) return;
+                if (app.dbstats.total > 100) await app.sleep(10);
+
+                while (!app.bailout && concurrent >= 5) await app.sleep(1);
+
+                // statistics records can be large, by only pulling it in when we're going to
+                // work on it, we conserve memory usage this way.
+                let record = await app.db.statistics.findOne({_id: record_id._id});
 
                 concurrent++;
                 promises.push(update_record(app, collection, epoch, record));
             }
         }
+        await iter.close();
     } catch (e) {
         console.log(e);
     } finally {
         await app.waitfor(promises);
-        setTimeout(update_stats.bind(null, app, collection, epoch, type, find), (promises.length == 0 ? 1000 : 1));
+        setTimeout(update_stats.bind(null, app, collection, epoch, type, find), (promises.length == 0 ? 15000 : 1));
     }
 }
 
@@ -160,11 +168,9 @@ async function update_record(app, collection, epoch, record) {
         set['update_' + epoch] = false;
         let modified = await app.db.statistics.updateOne({_id: record._id, sequence: record.sequence}, {$set: set});
 
-        if (modified.modifiedCount > 0) {
-            // announce that the stats have been updated
-            await app.redis.sadd('zkilljs:stats:publish', redis_base);
-            await app.redis.sadd('zkilljs:toplists:publish', redis_base);
-        }
+        // announce that the stats have been updated
+        await app.redis.sadd('zkilljs:stats:publish', redis_base);
+        await app.redis.sadd('zkilljs:toplists:publish', redis_base);
         app.util.ztop.zincr(app, 'stats_calced_' + epoch);
     } finally {
         record = null; // memory leak prevention

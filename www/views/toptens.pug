@@ -1,5 +1,8 @@
 include mixins.pug
 
+- let timespan = (epoch == 'week' ? 'Past 7 Days' : (epoch == 'recent' ? 'Past 90 Days' : 'Alltime'));
+h5.text-right= timespan
+div#numtopkills.d-none= topisk.length
 div#loaded-topisk
 	if topisk && topisk.length > 0
 		div#topisk-block.p-0.m-0
@@ -26,12 +29,17 @@ div#loaded-topisk
 								tr
 									td.fnumber= row.total_value
 	else
-		i nothing to see here... 
+		i.text-right nothing to see here... 
+		br
+		if types
+			i.text-right no top kills worth more than 10000 isk
+		else
+			i.text-right no top kills to list...
 		br
 		br
 		br
-		br
-hr
+if types
+	hr
 div#fulltoptenblock
 	if types
 		div#toptensfullblock.row.d-flex.flex-wrap
@@ -48,14 +56,7 @@ div#fulltoptenblock
 									td.top10name
 										+show_link('span', type, value[type], value[name])
 									td.top10count.text-right.integer= value.count
-	else
-		i nothing to see here...
-		br
-		br
-		br
-		br
-	hr
-	i= timespan
+
 	if next_update
 		hr
 		i= 'Next update: ' + next_update

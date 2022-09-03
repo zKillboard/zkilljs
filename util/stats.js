@@ -268,6 +268,7 @@ const stats = {
             delete row._id;
             retval.push(row);
         }
+        await result.close();
         return retval;
     },
 
@@ -309,6 +310,7 @@ const stats = {
             delete row._id;
             retval.push(row);
         }
+        await result.close();
         return retval;
     },
 

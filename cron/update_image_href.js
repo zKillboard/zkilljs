@@ -60,6 +60,7 @@ async function f(app) {
             process.exit();
         }
     }
+    await information.close();
     process.exit();
 
 }

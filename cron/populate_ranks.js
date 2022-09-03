@@ -28,6 +28,7 @@ async function f(app) {
         await add_killed(app, row, 'recent', formatted_date_now, formatted_date_week_ago);
         await add_killed(app, row, 'alltime', formatted_date_now, formatted_date_week_ago);
     }
+    await result.close();
 }
 
 async function add_killed(app, row, epoch, date, date7) {

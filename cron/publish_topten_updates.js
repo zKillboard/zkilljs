@@ -2,7 +2,7 @@
 
 module.exports = {
     exec: f,
-    span: 900
+    span: 300
 }
 
 async function f(app) {

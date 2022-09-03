@@ -112,6 +112,7 @@ async function iterate(app, iterator) {
         promises.push(fetch(app, row));
         fetched++;
     }
+    await iterator.close();
 
     // Wait for all calls to finish and return
     await app.waitfor(promises);
@@ -204,6 +205,8 @@ async function fetch(app, row) {
                     }
                 }
             }
+
+            // TODO broadcast information update
 
             break;
         case 304: // ETAG match

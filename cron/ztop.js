@@ -2,7 +2,7 @@
 
 module.exports = {
     exec: f,
-    span: 1
+    span: 5
 }
 
 const fs = require('fs');

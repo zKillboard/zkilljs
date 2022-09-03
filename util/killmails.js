@@ -43,6 +43,7 @@ module.exports = {
 
         // Mark everyone involved as needing a stat update
         for (const type of Object.keys(killmail.involved)) {
+            if (type == 'label') continue;
             for (var id of killmail.involved[type]) {
                 if (typeof id == 'number') id = Math.abs(id);
 
@@ -77,6 +78,7 @@ module.exports = {
             var killmail = await purging.next();
             await app.util.killmails.remove_killmail(app, collection, killmail, epoch);
         }
+        await purging.close();
     }
 }
 

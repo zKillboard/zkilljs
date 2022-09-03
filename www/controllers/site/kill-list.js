@@ -29,19 +29,20 @@ async function get(req, res) {
     let match = await app.util.match_builder(app, req, 'all');
 
     let record = await app.db.statistics.findOne({type: match.type, id: match.id});
-    if (record == null) return { json: [] }; // return an empty list
+    if (record == null) record = {};
 
     // If too many killmails come in too quickly this could lead to too many redirects, so we'll cache
     // a single sequence per second
     let now = app.now();
     let sequence_key = now + '-' + req.params.type + '-' + req.params.id;
-    if (sequences[sequence_key] == undefined) sequences[sequence_key] = record.sequence;
+    if (sequences[sequence_key] == undefined) sequences[sequence_key] = record.sequence | 0; 
 
     let valid = {
         modifiers: 'string',
         page: 'integer',
         sequence: sequences[sequence_key],
-        required: ['page', 'sequence'],
+        required: ['page', 'sequence', 'v'],
+        v: app.server_started
     }
     req.alternativeUrl = '/cache/1hour/killmails/' + req.params.type + '/' + req.params.id + '.json';
     valid = req.verify_query_params(req, valid);
@@ -55,10 +56,10 @@ async function get(req, res) {
     let page = Math.max(0, Math.min(9, req.query['page'])); // cannot go below 0 or above 9
 
     let collections = ['killmails_7', 'killmails_90', 'killmails'];
-    for (let i = 0; i < collections.length; i++) {
-        console.log(collections[i]);
+    for (let collection of collections) {
+        console.log(collection, match);
         killmails = [];
-        let result = await app.db[collections[i]].find(match.match)
+        let result = await app.db[collection].find(match.match)
             .sort({ killmail_id: -1 })
             .skip(page * batch_size) // faster without a limit... 
             //.limit(batch_size)
@@ -67,7 +68,8 @@ async function get(req, res) {
             killmails.push((await result.next()).killmail_id)
             if (killmails.length >= batch_size) break;
         }
-        if (killmails.length >= batch_size || killmails.length >= total_kl) break;
+        await result.close();
+        if (killmails.length >= batch_size) break;
     }
 
     return {

@@ -15,7 +15,7 @@ module.exports = {
 			if (await exec_condition(app) === true) {
 				let iterator = (query.find != undefined ? collection.find(query.find) : collection.find(query));
 				if (query.sort != undefined) iterator = iterator.sort(query.sort).limit(limit[name]);
-				iterator = await iterator;
+				iterator = await iterator.project({_id: 1}).batchSize(100);
 
 				while (await iterator.hasNext()) {
 					await waitForConcurrents(app, name, min_wait_interval, max_concurrent); 
@@ -25,16 +25,19 @@ module.exports = {
 					let row_id = row._id.toString();
 					if (row_ids[row_id] === true) continue;
 
+					row = await collection.findOne({_id: row._id});
+
 					row_ids[row_id] = true;
 					concurrents[name]++;
 					doExec(app, name, exec, row, row_id);
 					total_exec_calls++;
 				}
+				await iterator.close();
 			}
 		} catch (e) {
 			if (e.code == 292) {
 				limit[name] = Math.ceil(limit[name] * 0.9) + 1;
-				return console.log('Adjusted sort limit to ', limit[name], 'for', name);
+				return console.log('Adjusted sort limit to', limit[name], 'for', name);
 			}
 			console.error('simul.go error within', name);
 			console.error(e);
@@ -53,7 +56,7 @@ async function waitForConcurrents(app, name, min_wait_interval, max_concurrent) 
 	let max = max_concurrent;
 	if (typeof max_concurrent == 'function') max = await max_concurrent(app);
 	if (max > 1) max--;
-	while (concurrents[name] > max) await app.sleep(min_wait_interval);
+	while (concurrents[name] > max) await app.sleep(Math.max(1, min_wait_interval));
 }
 
 async function doExec(app, name, exec, row, row_id) {

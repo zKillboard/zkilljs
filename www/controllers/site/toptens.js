@@ -5,7 +5,7 @@ module.exports = {
    get: get
 }
 
-var types = [
+let types = [
     'character_id',
     'corporation_id',
     'alliance_id',
@@ -20,46 +20,47 @@ var types = [
 ];
 
 // poor man's mutex
-var pmm = {};
+let pmm = {};
 
 async function get(req, res) {
     const app = req.app.app;
 
-    var match = await app.util.match_builder(app, req, 'killed');
+    let match = await app.util.match_builder(app, req, 'killed');
 
-    var start_time = app.now();
-    var timestamp = start_time;
-    var mod = 900;
-    timestamp = timestamp - (timestamp % mod);
+    let start_time = app.now();
+    let timestamp = start_time;
+    let mod = 300; // default, 5 minutes
+
+    // Pull the stats record, do they have enough kills to warrant week long caches?
+    let stats = app.db.statistics.findOne({type: match.type, id: match.id});
+    let total = (stats.killed || 0) + (stats.lost || 0);
+    if (total > 1000000) mod = 86400 * 7;
+    else if (total >= 100000) mod = 86400;
+    else if (total < 1000) mod = 30;
+    else if (total < 100) mod = 15;
+
+    timestamp = timestamp - (timestamp % mod); // daily
 
 
-    var ret = {
+    let ret = {
         topisk: {},
         types: {}
     };
 
-    var valid = {
+    let valid = {
         modifiers: 'string',
         timestamp: timestamp,
-        required: ['timestamp'],
+        required: ['timestamp', 'v'],
+        v: app.server_started
     }
     req.alternativeUrl = '/cache/1hour/toptens/' + req.params.epoch + '/' + req.params.type + '/' + req.params.id + '.html';
-    var valid = req.verify_query_params(req, valid);
+    valid = req.verify_query_params(req, valid);
     if (valid !== true) {
+        console.log('Redirecting to', valid);
         return {redirect: valid};
     }
 
-    if (match.epoch == 'alltime') {
-        // Pull the stats record, do they have enough kills to warrant week long caches?
-        var stats = app.db.statistics.findOne({type: match.type, id: match.id});
-        var total = (stats.killed || 0) + (stats.lost || 0);
-        if (total > 1000000) mod = 86400 * 7;
-        else if (total >= 100000) mod = 86400;
-
-        timestamp = timestamp - (timestamp % mod); // daily
-    }
-
-    var pmm_key = match.epoch + '-' + match.type;
+    let pmm_key = match.epoch + '-' + match.type;
     while (pmm[pmm_key] != undefined) {
         await app.sleep(100); // poor man's mutex
     }
@@ -67,18 +68,18 @@ async function get(req, res) {
     try {
         pmm[pmm_key] = true;
 
-        var cached = await app.db.datacache.findOne({requrl: req.url});
+        let cached = await app.db.datacache.findOne({requrl: req.url});
         if (cached != null) {
             ret = JSON.parse(cached.data);
         } else {
             ret.topisk = app.util.stats.topISK(app, match.collection, match.match, match.type, 6, match.kl);
-            for (var i = 0; i < types.length; i++) {
+            for (let i = 0; i < types.length; i++) {
                 ret.types[types[i]] = app.util.stats.group(app, match.collection, match.match, types[i], match.kl);
             }
 
             // Now wait for everything to finish
             ret.topisk = await ret.topisk;
-            for (var i = 0; i < types.length; i++) {
+            for (let i = 0; i < types.length; i++) {
                 ret.types[types[i]] = await ret.types[types[i]];
                 if (ret.types[types[i]] == undefined || ret.types[types[i]].length == 0) delete ret.types[types[i]];
             }
@@ -88,11 +89,11 @@ async function get(req, res) {
             else await app.util.info.fill(app, ret.types);
 
             // Fill in the information for the top isk block
-            var topisk = [];
+            let topisk = [];
             if (ret.topisk != undefined) {
-                for (var i = 0; i < ret.topisk.length; i++) {
-                    var row = ret.topisk[i];
-                    var killmail = await app.db.killmails.findOne({
+                for (let i = 0; i < ret.topisk.length; i++) {
+                    let row = ret.topisk[i];
+                    let killmail = await app.db.killmails.findOne({
                         killmail_id: row.killmail_id
                     });
                     row.item_id = getVictim(killmail, 'item_id');
@@ -104,11 +105,12 @@ async function get(req, res) {
             ret.topisk = topisk;
             ret.killed_lost = match.kl || '';
 
-            var next_update = timestamp + mod;
+            let next_update = timestamp + mod;
 
             await app.db.datacache.deleteOne({requrl: req.url});
             await app.db.datacache.insertOne({requrl : req.url, epoch: next_update, data : JSON.stringify(ret)});
         }
+        ret.epoch = req.params.epoch;
     } finally {
         delete pmm[pmm_key];
     }
@@ -121,10 +123,10 @@ async function get(req, res) {
 }
 
 function getVictim(killmail, type) {
-    var involved = killmail.involved || {};
-    var types = involved[type] || [];
+    let involved = killmail.involved || {};
+    let types = involved[type] || [];
     types.sort();
-    var id = types.shift();
+    let id = types.shift();
     if (id < 0) return (-1 * id);
     return undefined;
 }

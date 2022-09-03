@@ -32,6 +32,7 @@ async function fetchWarMails(app, row) {
     do {
         url = process.env.esi_url + '/v1/wars/' + row.id + '/killmails/?page=' + page;
         res = await app.phin(url);
+        app.util.ztop.zincr(app, 'info_war_mails', count);
 
         if (res.statusCode != 200) return; // we'll try again later
 
@@ -52,8 +53,10 @@ async function fetchWarMails(app, row) {
     } while (page > 0 && fetch_complete == false);
     this_max_killmail_id = Math.max(this_max_killmail_id, max_war_killmail_id);
 
-    if (count > 0) console.log('war_id', row.id, 'added', count, 'killmails');
-    app.util.ztop.zincr(app, 'killmail_imported_warmails', count);
+    if (count > 0) {
+        console.log('war_id', row.id, 'added', count, 'killmails');
+        app.util.ztop.zincr(app, 'killmail_imported_warmails', count);
+    }
 
     await app.db.information.updateOne({_id: row._id}, {$set: {max_war_killmail_id: this_max_killmail_id}, $unset: {check_wars: 1}});
 }

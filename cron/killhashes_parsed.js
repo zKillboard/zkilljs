@@ -5,18 +5,18 @@ module.exports = {
     span: 1
 }
 
-const max_concurrent = (process.env.max_concurrent_parsed | 25);
+const max_concurrent = Math.max(1, (parseInt(process.env.max_concurrent_pending) | 5));
 
 async function f(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
 
-    //if (app.dbstats.fetched > 100) return;
+    if (app.dbstats.fetched > 100) return;
 
     await app.util.simul.go(app, 'killhashes_parsed', app.db.killhashes, { find: {status: 'parsed'}, sort: {sequence: -1}}, prepStats, app.util.assist.continue_simul_go, max); 
 }
 
 async function max(app) {
-    if (app.dbstats.fetched > 100) return 1;
+    if (app.dbstats.fetched > 0) return 1;
     return max_concurrent;
 }
 
@@ -26,9 +26,8 @@ let handling = {};
 function clear_caches() {
     sequences = {};
     added = {};
-    handling = {};
 }
-setInterval(clear_caches, 300000);
+setInterval(clear_caches, 3600000);
 
 async function prepStats(app, killhash) {
     try {
@@ -43,19 +42,23 @@ async function prepStats(app, killhash) {
         let keys = Object.keys(killmail.involved);
         for (let i = 0; i < keys.length; i++) {
             let type = keys[i];
+            if (type == 'killmail_id' || type == 'sequence') continue;
             let values = killmail.involved[type];
             for (let j = 0; j < values.length; j++) {
                 let id = (type == 'label' ? values[j] : Math.abs(values[j]));
                 let skey = type + '-' + id;
 
                 while (handling[skey] == true) await app.sleep(1);
-                handling[skey] = true;
 
-                let sequence = sequences[skey] | 0;
-                if (sequence == 0 || killmail.sequence > sequence) await add_killmail(app, killmail, type, id);
+                try {
+                    handling[skey] = true;
+                    let sequence = sequences[skey] | 0;
+                    if (sequence == 0 || killmail.sequence > sequence) await add_killmail(app, killmail, type, id);
 
-                sequences[skey] = Math.max((sequences[skey] | 0), killmail.sequence);
-                handling[skey] = false;
+                    sequences[skey] = Math.max((sequences[skey] | 0), killmail.sequence);
+                } finally {
+                    delete handling[skey];                    
+                }
             }
         }
 

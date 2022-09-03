@@ -7,7 +7,7 @@ module.exports = {
 
 let firstRun = true;
 
-const max_concurrent = (process.env.max_concurrent_pending == undefined ? 10 : Math.max(1, parseInt(process.env.max_concurrent_pending)));
+const max_concurrent = Math.max(1, (parseInt(process.env.max_concurrent_pending) | 20));
 
 async function f(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
@@ -18,7 +18,7 @@ async function f(app) {
         // resetBadMails(app);
     }
 
-    await app.util.simul.go(app, 'killhashes_pending', app.db.killhashes, {find: {status: 'pending'}, sort: {killmail_id: -1}}, fetch, app.util.assist.continue_simul_go, max_concurrent);
+    await app.util.simul.go(app, 'killhashes_pending', app.db.killhashes, {find: {status: 'pending'}, sort: {killmail_id: -1}}, fetch, app.util.assist.continue_simul_go, max_concurrent, 100, 0);
 }
 
 function bailout() {

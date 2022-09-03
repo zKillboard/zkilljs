@@ -5,7 +5,7 @@ let cache = {};
 
 setInterval(function () {
     price_cache = {};
-    cache = {};
+    // cache = {}; // don't clear this cache, it contains the SDE files we need
 }, 300000);
 
 const price = {
@@ -276,18 +276,12 @@ async function get_blueprint(app, item_id) {
     }
 }
 
-let importing = false;
-let reqs_store = [];
 async function import_reqs(app) {
-    while (importing == true) await app.sleep(100);
-    importing = true;
-
-    if (reqs_store.length > 0) return reqs_store;
-
-    console.log("Importing http://sde.zzeve.com/industryActivityMaterials.json");
-    let res = await app.phin('http://sde.zzeve.com/industryActivityMaterials.json');
+    console.log("Importing https://sde.zzeve.com/industryActivityMaterials.json");
+    let res = await app.phin('https://sde.zzeve.com/industryActivityMaterials.json');
     let json = JSON.parse(res.body);
 
+    let reqs_store = [];
     for (let i = 0; i < json.length; i++) {
         let row = json[i];
         if (row.activityID != 1) continue;
@@ -296,7 +290,6 @@ async function import_reqs(app) {
         if (reqs_store[key] == undefined) reqs_store[key] = [];
         reqs_store[key].push(row);
     }
-    importing = false;
     return reqs_store;
 }
 

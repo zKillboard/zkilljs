@@ -30,7 +30,6 @@ async function f(app) {
 }
 
 async function fetch_locations(app, system_row) {
-    console.log('Fetching fuzz map for system ' + system_row.id);
     let res = await app.phin('https://www.fuzzwork.co.uk/api/mapdata.php?solarsystemid=' + system_row.id + '&format=json');
     if (res.statusCode == 200) {
         let body = JSON.parse(res.body);
@@ -57,7 +56,6 @@ async function fetch_locations(app, system_row) {
             });
             await app.db.information.insertOne(row);
         }
-        console.log(system_row.id + ' has ' + body.length + ' locations');
         await app.db.information.updateOne({
             _id: system_row._id
         }, {

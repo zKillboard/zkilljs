@@ -17,7 +17,9 @@ async function f(app) {
 
             if (killmail_id > 0) {
                 const killmail = await app.db.killmails.findOne({killmail_id: killmail_id});
-                if (killmail != null) await publishToKillFeed(app, killmail);
+                if (killmail != null) {
+                    await publishToKillFeed(app, killmail);
+                }
             }
         }
     } while (app.bailout != true && raw != null);
@@ -30,7 +32,7 @@ async function requeuePublish(app, killmail_id) {
 const has_infos = {};
 async function publishToKillFeed(app, killmail) {
     try {        
-        var sent = [];
+        var sent = {};
         var msg = JSON.stringify({
             'action': 'killlistfeed',
             'killmail_id': killmail.killmail_id
@@ -42,6 +44,7 @@ async function publishToKillFeed(app, killmail) {
         // before sending it off to the masses
         for (var i = 0; i < keys.length; i++) {
             type = keys[i];
+            if (type == 'label') continue;
             keybase = type.replace('_id', '');
             ids = killmail.involved[type];
             for (entity_id of ids) {
@@ -50,7 +53,9 @@ async function publishToKillFeed(app, killmail) {
                 if (has_infos[key] === true) continue;
 
                 let info = await app.db.information.findOne({type: type, id: entity_id});
-                if (info == null || info.last_updated == 0) return setTimeout(requeuePublish.bind(null, app, killmail.killmail_id), 15000);
+                if (info == null || info.last_updated == 0) {
+                    return setTimeout(requeuePublish.bind(null, app, killmail.killmail_id), 15000);
+                }
                 has_infos[key] = true;
             }
         }
@@ -59,25 +64,21 @@ async function publishToKillFeed(app, killmail) {
         app.phin({url: 'http://localhost:' + process.env.PORT + '/killmail/' + killmail.killmail_id}),
 
         app.redis.publish('killlistfeed:all', msg);
+        killmail.involved.label.push('all');
         for (var i = 0; i < keys.length; i++) {
             type = keys[i];
             keybase = type.replace('_id', '');
             ids = killmail.involved[type];
             for (entity_id of ids) {
-                entity_id = Math.abs(entity_id);
+                entity_id = (type == 'label' ? entity_id : Math.abs(entity_id));
                 // Make sure we have information on this entity
-                await app.util.entity.wait(app, type, entity_id);
+                if (type != 'label') await app.util.entity.wait(app, type, entity_id);
 
                 key = '/' + keybase + '/' + entity_id;
-                if (sent.indexOf(key) != -1) continue;
+                if (sent[key] != undefined) continue;
                 await app.redis.publish('killlistfeed:' + key, msg);
-                sent.push(key);
+                sent[key] = true;
             }
-        }
-        killmail.involved.label.push('all');
-        for (var label of killmail.labels) {
-            key = '/label/' + label;
-            await app.redis.publish('killlistfeed:' + key, msg);
         }
     } catch (e) {
         console.log(e);

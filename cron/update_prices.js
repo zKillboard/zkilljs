@@ -28,6 +28,7 @@ async function f(app) {
         concurrent++;
         update_price(app, row, todays_price_key);
     }
+    await prices_cursor.close();
     while (concurrent > 0) await app.sleep(100);
 }
 
@@ -85,7 +86,7 @@ async function update_price(app, row, todays_price_key) {
 
         let url = process.env.esi_url + '/v1/markets/10000002/history/?type_id=' + item_id;
         // console.log('Fetching ESI prices for', item_id); 
-        let res = await app.phin(url);
+        let res = await app.phin({url: url, no_limit: true});
 
         if (res.statusCode == 200) {
             let json = JSON.parse(res.body);

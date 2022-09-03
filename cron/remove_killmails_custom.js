@@ -17,6 +17,7 @@ async function f(app) {
         await app.util.killmails.remove_killmail(app, 'killmails', row, 'alltime');
         await app.db.killhashes.updateOne({killmail_id: row.killmail_id}, {$set: {status: 'fetched'}});
     }
+    await results.close();
 }
 
 module.exports = f;

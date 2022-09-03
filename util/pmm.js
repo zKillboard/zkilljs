@@ -9,8 +9,7 @@ var mutexes = {};
 const pmm = {
 	acquire: async function (app, key) {
 		while (mutexes[key] != undefined) {
-			mutexes[key] = true;
-			await app.sleep(15);
+			await app.sleep(1);
 		}
 		mutexes[key] = true;
 		return;
@@ -20,7 +19,7 @@ const pmm = {
 		return mutexes[key] == true;
 	},
 
-	release: async function (key) {
+	release: function (key) {
 		delete mutexes[key];
 	}
 }

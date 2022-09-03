@@ -50,13 +50,14 @@ async function iterate(app, iterator, f, isStream, set, limit) {
     try {
         while (await iterator.hasNext()) {
             if (app.bailout) return;
-            while (set.size >= limit) await app.sleep(1); // don't flood the stack
+            while (set.size >= limit) await app.sleep(1);
             const s = Symbol();
             set.add(s);
     
             call(app, f, (isStream ? (await iterator.next()).fullDocument : await iterator.next()), set, s);
             count++;
         }
+        await iterator.close();
     } catch(e) {
         console.log(e);
     } finally {

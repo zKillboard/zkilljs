@@ -15,6 +15,17 @@ var pagepath;
 
 function noop() {}
 
+var page_reloaded = false;
+function detectBackForward() {
+    if (window.performance && window.performance.navigation.type === window.performance.navigation.TYPE_BACK_FORWARD) {
+        if (page_reloaded == false) {
+            page_reloaded = true;
+            reloadPage();
+        }
+    }
+}
+setInterval(detectBackForward, 5000);
+
 var fetch_controllers = [];
 
 var connected_online = window.navigator.onLine;
@@ -48,6 +59,7 @@ function is_jquery_loaded() {
 
 // Called at the end of this document since all js libraries are deferred
 function documentReady() {
+    page_reloaded = false;
     if (typeof Promise == 'undefined' || typeof fetch == 'undefined') {
         alert("This browser sucks, use a better one.");
         return;
@@ -589,6 +601,7 @@ function ws_connect() {
             ws_action('sub', 'zkilljs:public');
         }
         ws.onclose = function (event) {
+            ws_interrupted = true;
             feed_toggle(null, false);
         }
     } catch (e) {
