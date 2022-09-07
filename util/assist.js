@@ -41,8 +41,6 @@ const assist = {
 			return; // All is well
 		}
 
-		// console.error(res.statusCode, url);
-
 		app.util.ztop.zincr(app, 'esi_error');
 		app.util.ztop.zincr(app, 'esi_error_' + res.statusCode);
 		if (res.headers['x-esi-error-limit-remain']) {
@@ -64,9 +62,6 @@ const assist = {
 	                setTimeout(function() { app.util.assist.clear_no_api(app);}, 61000);
 	                console.log("420'ed");
 	            }
-	            break;
-	        case 500:
-	            console.log('500 received');
 	            break;
 		}
 	},

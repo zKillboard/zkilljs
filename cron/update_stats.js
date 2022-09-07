@@ -50,32 +50,29 @@ async function f(app) {
     }
 }
 
+function max(app, epoch) {
+    if (app.dbstats.parsed >= 100) return 0;
+
+    if (epoch == 'alltime' && app.dbstats.update_recent >= 100) return 0;
+    if (epoch == 'recent' && app.dbstats.update_week >= 100) return 0;
+
+    return 50;
+}
+
 async function update_stats(app, collection, epoch, type, find) {
     let promises = [];
     try {
-        if (app.dbstats.total >= 100) return await app.sleep(1000);
-
         let iter = await app.db.statistics.find(find).project({_id: 1}).limit(1000).batchSize(100);
-        while (await iter.hasNext()) {
-            if (app.bailout) return;
-
-            if (app.dbstats.total >= 100) return await app.sleep(1000);
-
+        while (app.bailout != true && await iter.hasNext()) {
+            while (app.bailout != true && concurrent >= max(app, epoch)) await app.sleep(10);
+            
             let record_id = await iter.next();
-            if (record.id !== NaN) {
-                if (epoch == 'recent' && app.dbstats.update_week >= 100) return;
-                if (epoch == 'alltime' && app.dbstats.update_recent >= 100) return;
-                if (app.dbstats.total > 100) await app.sleep(10);
+            concurrent++;
 
-                while (!app.bailout && concurrent >= 5) await app.sleep(1);
-
-                // statistics records can be large, by only pulling it in when we're going to
-                // work on it, we conserve memory usage this way.
-                let record = await app.db.statistics.findOne({_id: record_id._id});
-
-                concurrent++;
-                promises.push(update_record(app, collection, epoch, record));
-            }
+            // statistics records can be large, by only pulling it in when we're going to
+            // work on it, we conserve memory usage this way.
+            let record = await app.db.statistics.findOne({_id: record_id._id});
+            promises.push(update_record(app, collection, epoch, record));
         }
         await iter.close();
     } catch (e) {

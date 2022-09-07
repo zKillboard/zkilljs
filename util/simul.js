@@ -1,14 +1,16 @@
 'use strict';
 
 const concurrents = {};
-const row_ids = {};
-
 let limit = {};
+let in_progress = {};
+let promises = {};
+let index = 0;
 
 module.exports = {
 	go: async function(app, name, collection, query, exec, exec_condition = returnTrue, max_concurrent = 1, max_wait_interval = 1000, min_wait_interval = 1, self_exec = false) {
 		let total_exec_calls = 0;
 		if (limit[name] == undefined) limit[name] = 1000000;
+
 		try {
 			if (concurrents[name] == undefined) concurrents[name] = 0;
 
@@ -18,18 +20,20 @@ module.exports = {
 				iterator = await iterator.project({_id: 1}).batchSize(100);
 
 				while (await iterator.hasNext()) {
-					await waitForConcurrents(app, name, min_wait_interval, max_concurrent); 
+					if (max_concurrent != 1) await waitForConcurrents(app, name, min_wait_interval, max_concurrent);
 					if (await exec_condition(app) === false) break;
 
 					let row = await iterator.next();
 					let row_id = row._id.toString();
-					if (row_ids[row_id] === true) continue;
+					
+					if (in_progress[row] != undefined) continue;
+					in_progress[row_id] = true;
 
 					row = await collection.findOne({_id: row._id});
 
-					row_ids[row_id] = true;
 					concurrents[name]++;
-					doExec(app, name, exec, row, row_id);
+					if (max_concurrent != 1) promises[row_id] = doExec(app, name, exec, row, row_id);
+					else await doExec(app, name, exec, row, row_id);
 					total_exec_calls++;
 				}
 				await iterator.close();
@@ -57,15 +61,16 @@ async function waitForConcurrents(app, name, min_wait_interval, max_concurrent) 
 	if (typeof max_concurrent == 'function') max = await max_concurrent(app);
 	if (max > 1) max--;
 	while (concurrents[name] > max) await app.sleep(Math.max(1, min_wait_interval));
+	//while (concurrents[name] > max) await Promise.race(Object.values(promises));
 }
 
 async function doExec(app, name, exec, row, row_id) {
-	try {
-		// not sure how row could be null if it matched a query, but it has happened
-		if (row != null) await exec(app, row);
+	try {		
+		await exec(app, row);
 	} finally {
 		concurrents[name]--;
-		delete row_ids[row_id];
+		delete in_progress[row_id];
+		delete promises[row_id];
 	}
 }
 

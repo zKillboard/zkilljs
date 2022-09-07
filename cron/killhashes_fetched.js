@@ -5,6 +5,7 @@ module.exports = {
     span: 1
 }
 
+let in_progress = {};
 
 let item_cache = {};
 let group_cache = {};
@@ -53,10 +54,10 @@ async function max(app) {
 async function parse_mail(app, killhash) {
     let killmail = {};
     const now = Math.floor(Date.now() / 1000);
+    if (in_progress[killhash.killmail_id] != undefined) return;
 
     try {
-        // just so we can reuse the sequence number
-        let prev_parsed_mail = undefined;
+        in_progress[killhash.killmail_id] = true;
 
         const remove_alltime = app.db.killmails.removeOne({killmail_id: killhash.killmail_id});
         const remove_recent = app.db.killmails_90.removeOne({killmail_id: killhash.killmail_id});
@@ -207,6 +208,7 @@ async function parse_mail(app, killhash) {
         await app.db.killhashes.updateOne(killhash, {$set: {status: 'parse-error'}});
     } finally {
         killmail = null; // memory leak protection
+        delete in_progress[killhash.killmail_id];
     }
 }
 
