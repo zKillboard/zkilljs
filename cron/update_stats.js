@@ -5,21 +5,21 @@ module.exports = {
     span: 15
 }
 
-const types = [
-    "character_id",
-    "corporation_id",
-    "alliance_id",
-    "faction_id",
-    "item_id",
-    "group_id",
-    "category_id",
-    "location_id",
-    "solar_system_id",
-    "constellation_id",
-    "region_id",
-    "war_id",
-    "label",
-];
+const types = {
+    "character_id": 50,
+    "corporation_id": 20,
+    "alliance_id": 10,
+    "faction_id": 1,
+    "item_id": 1,
+    "group_id": 1,
+    "category_id": 1,
+    "location_id": 25,
+    "solar_system_id": 5,
+    "constellation_id": 3,
+    "region_id": 1,
+    "war_id": 5,
+    "label": 1,
+};
 
 const epochs = {
     "week": "killmails_7",
@@ -37,7 +37,7 @@ async function f(app) {
     await app.db.statistics.updateMany({reset: true}, {$set: {'update_alltime': true, update_recent: true, update_week: true, 'week.reset': true, 'recent.reset': true, 'alltime.reset': true}, $unset: {reset: 1}}, {multi: true});
 
     if (first_run) {
-        for (const type of types) {
+        for (const type of Object.keys(types)) {
             for (const epoch of epoch_keys) {
                 let find = {
                     type: type
@@ -50,13 +50,13 @@ async function f(app) {
     }
 }
 
-function max(app, epoch) {
+function max(app, epoch, type) {
     if (app.dbstats.parsed >= 100) return 0;
 
     if (epoch == 'alltime' && app.dbstats.update_recent >= 100) return 0;
     if (epoch == 'recent' && app.dbstats.update_week >= 100) return 0;
 
-    return 50;
+    return types[type];
 }
 
 async function update_stats(app, collection, epoch, type, find) {
@@ -64,7 +64,7 @@ async function update_stats(app, collection, epoch, type, find) {
     try {
         let iter = await app.db.statistics.find(find).project({_id: 1}).limit(1000).batchSize(100);
         while (app.bailout != true && await iter.hasNext()) {
-            while (app.bailout != true && concurrent >= max(app, epoch)) await app.sleep(10);
+            while (app.bailout != true && concurrent >= max(app, epoch, type)) await app.sleep(10);
             
             let record_id = await iter.next();
             concurrent++;
