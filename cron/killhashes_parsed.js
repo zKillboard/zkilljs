@@ -10,7 +10,7 @@ async function f(app) {
 
     if (app.dbstats.fetched > 100) return;
 
-    await app.util.simul.go(app, app.db.killhashes.find({status: 'parsed'}).sort({sequence: -1}).batchSize(100), prepStats, app.util.assist.continue_simul_go, 5); 
+    await app.util.asyncpool.go(app.db.killhashes.find({status: 'parsed'}).sort({sequence: -1}).batchSize(100), prepStats, app.util.assist.continue_simul_go, 5, app); 
 }
 
 let sequences = {};
@@ -22,8 +22,9 @@ function clear_caches() {
 }
 setInterval(clear_caches, 3600000);
 
-async function prepStats(app, killhash) {
-    //let promises = [];
+async function prepStats(killhash) {
+    let app = this;
+
     try {
         let killmail = await app.db.killmails.findOne({killmail_id: killhash.killmail_id});
         if (killmail.involved == undefined) {

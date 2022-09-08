@@ -15,10 +15,10 @@ async function f(app) {
     if (firstRun) {
         firstRun = false;
         app.db.killhashes.updateMany({status: 'done', failure_reason : {$exists: true}}, {$unset: {failure_reason : 1}}, {multi: true});
-        // resetBadMails(app);
+        resetBadMails(app);
     }
 
-    await app.util.simul.go(app, app.db.killhashes.find({status: 'pending'}).sort({killmail_id: -1}).batchSize(100), fetch, app.util.assist.continue_simul_go, max_concurrent);
+    await app.util.asyncpool.go(app.db.killhashes.find({status: 'pending'}).sort({killmail_id: -1}).batchSize(100), fetch, app.util.assist.continue_simul_go, max_concurrent, app);
 }
 
 function bailout() {
@@ -36,7 +36,9 @@ async function resetBadMails(app) {
     setTimeout(function() { resetBadMails(app); }, 60000);
 }
 
-async function fetch(app, mail) {
+async function fetch(mail) {
+    let app = this;
+
     try {
         if (await app.db.rawmails.countDocuments({killmail_id: mail.killmail_id}) > 0) {
             await app.db.killhashes.updateOne(mail, { $set: {status: 'fetched', success: true}});
@@ -69,6 +71,7 @@ async function fetch(app, mail) {
                     success: true
                 }
             });
+
             app.util.ztop.zincr(app, 'killmail_imported_esi');
             return true;
         } else {

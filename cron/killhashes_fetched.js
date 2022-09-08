@@ -42,16 +42,18 @@ async function f(app) {
         console.log('Sequence starting at:', sequence);
     }
 
-    await app.util.simul.go(app, app.db.killhashes.find({status: 'fetched'}).sort({killmail_id: -1}).batchSize(100), parse_mail,  app.util.assist.continue_simul_go, max); 
+    await app.util.asyncpool.go(app.db.killhashes.find({status: 'fetched'}).sort({killmail_id: -1}).batchSize(100), parse_mail,  app.util.assist.continue_simul_go, max, app);
 }
 
 const max_concurrent = Math.max(1, (parseInt(process.env.max_concurrent_fetched) | 5));
-async function max(app) {
-    if (app.dbstats.pending > 100) return 1;
+async function max() {
+    if (this.dbstats.pending > 100) return 1;
     return max_concurrent;
 }
 
-async function parse_mail(app, killhash) {
+async function parse_mail(killhash) {
+    let app = this;
+
     let killmail = {};
     const now = Math.floor(Date.now() / 1000);
     if (in_progress[killhash.killmail_id] != undefined) return;

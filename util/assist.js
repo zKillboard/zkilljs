@@ -140,8 +140,8 @@ const assist = {
 	    return false;
 	},
 
-	continue_simul_go: function(app) { 
-    	return app.bailout !== true;
+	continue_simul_go: function() { 
+    	return this.bailout !== true;
 	},
 
 	fetch_tq_status: async function(app) {
