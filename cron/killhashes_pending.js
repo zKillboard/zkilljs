@@ -18,7 +18,7 @@ async function f(app) {
         // resetBadMails(app);
     }
 
-    await app.util.simul.go(app, 'killhashes_pending', app.db.killhashes, {find: {status: 'pending'}, sort: {killmail_id: -1}}, fetch, app.util.assist.continue_simul_go, max_concurrent, 100, 0);
+    await app.util.simul.go(app, app.db.killhashes.find({status: 'pending'}).sort({killmail_id: -1}).batchSize(100), fetch, app.util.assist.continue_simul_go, max_concurrent);
 }
 
 function bailout() {

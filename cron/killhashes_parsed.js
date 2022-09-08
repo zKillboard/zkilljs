@@ -10,7 +10,7 @@ async function f(app) {
 
     if (app.dbstats.fetched > 100) return;
 
-    await app.util.simul.go(app, 'killhashes_parsed', app.db.killhashes, { find: {status: 'parsed'}, sort: {sequence: -1}}, prepStats, app.util.assist.continue_simul_go, 5); 
+    await app.util.simul.go(app, app.db.killhashes.find({status: 'parsed'}).sort({sequence: -1}).batchSize(100), prepStats, app.util.assist.continue_simul_go, 5); 
 }
 
 let sequences = {};

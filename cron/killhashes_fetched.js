@@ -42,7 +42,7 @@ async function f(app) {
         console.log('Sequence starting at:', sequence);
     }
 
-    await app.util.simul.go(app, 'killhashes_fetched', app.db.killhashes, {status: 'fetched'}, parse_mail,  app.util.assist.continue_simul_go, max); 
+    await app.util.simul.go(app, app.db.killhashes.find({status: 'fetched'}).sort({killmail_id: -1}).batchSize(100), parse_mail,  app.util.assist.continue_simul_go, max); 
 }
 
 const max_concurrent = Math.max(1, (parseInt(process.env.max_concurrent_fetched) | 5));
@@ -320,47 +320,14 @@ async function get_item_prices(app, items, date, in_container = false) {
     let total = 0;
     let promises = [];
 
-    for (let item of items) {
-        let result = get_item_price(app, item, date, in_container);
-        if (typeof result == 'number') total += result; // sync
-        else promises.push(result); // async, need to await the result
-    }
+    for (let item of items) promises.push(get_item_price(app, item, date, in_container));
+
     for (let p of promises) total += await p;
 
     return total;
 }
 
-function get_item_price(app, item, date, in_container) {
-    if (item.singleton != 0 || in_container) return get_item_price_async(app, item, date, in_container);
-    if (added_cache[item.item_type_id] != true) return get_item_price_async(app, item, date, in_container);
-
-    let total = 0;
-    if (item.items instanceof Array) return get_item_price_async(app, item, date, in_container);
-
-    if (item.singleton != 0 || in_container == true) {
-        let item_info = item_cache[item.item_type_id];
-        if (item_info == undefined) return get_item_price_async(app, item, date, in_container);
-        let group = group_cache[item_info.group_id];
-        if (group == undefined) return get_item_price_async(app, item, date, in_container);
-        let category = category_cache[group.category_id];
-        if (category == undefined) return get_item_price_async(app, item, date, in_container);
-        if (category != undefined) {
-            if (category.id == 9 && (item.singleton != 0 || in_container == true)) item.singleton = 2;
-        }
-    }
-
-    let cache_key = item.item_type_id + '-' + date;
-    let item_price = (item.singleton != 0 ? 0.01 : price_cache[cache_key]); 
-    if (item_price == undefined) return get_item_price_async(app, item, date, in_container);
-
-    let qty = (item.quantity_dropped | 0) + (item.quantity_destroyed | 0);
-
-    total += (qty * item_price);
-
-    return total;
-}
-
-async function get_item_price_async(app, item, date, in_container) {
+async function get_item_price(app, item, date, in_container) {
     if (added_cache[item.item_type_id] != true) {
         await app.util.entity.add(app, 'item_id', item.item_type_id);
         added_cache[item.item_type_id] = true;
@@ -399,11 +366,14 @@ async function get_item_price_async(app, item, date, in_container) {
     }
 
     let cache_key = item.item_type_id + '-' + date;
-    let item_price = price_cache[cache_key];
-    if (item_price == undefined) {
-        item_price = (item.singleton != 0 ? 0.01 : await app.util.price.get(app, item.item_type_id, date));
-        price_cache[cache_key] = item_price;
-        if (isNaN(item_price)) console.log('isNaN price on ', item);
+    let item_price;
+    if (item.singleton != 0) item_price = 0.01;
+    else {
+        item_price = price_cache[cache_key];
+        if (item_price == undefined) {
+            item_price = await app.util.price.get(app, item.item_type_id, date);
+            price_cache[cache_key] = item_price;
+        }
     }
     let qty = (item.quantity_dropped | 0) + (item.quantity_destroyed | 0);
 
