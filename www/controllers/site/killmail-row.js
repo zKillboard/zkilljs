@@ -6,12 +6,22 @@ module.exports = {
 }
 
 async function get(req, res) {
-    var valid = req.verify_query_params(req, {});
-    if (valid !== true) return {redirect: valid};
-
     var now = Date.now();
     const app = req.app.app;
     var killmail_id = parseInt(req.params.id);
+
+    let valid = {
+        required: ['v'],
+        v: app.server_started
+    }
+    valid = req.verify_query_params(req, valid);
+    if (valid !== true) {
+        console.log('Redirecting to', valid);
+        return {redirect: valid};
+    }
+    if (valid !== true) return {redirect: valid};
+
+    console.log(killmail_id)
 
     let killmail = await app.db.killmails.findOne({killmail_id: killmail_id});
     let rawmail = await app.db.rawmails.findOne({killmail_id: killmail_id});

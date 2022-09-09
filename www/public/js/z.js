@@ -385,6 +385,7 @@ function postLoadActions(element) {
     });
 
     if ($("#fwraw").length > 0) setFittingWheel();
+    adjustDateHeaders();
 }
 
 function handleJSON(res) {
@@ -1093,6 +1094,20 @@ function setSelectedStatsKL() {
     $(".stats-killed-lost").removeClass("btn-primary").addClass("btn-secondary");
     $(this).removeClass("btn-secondary").addClass("btn-primary").blur();
     load_toplists_box();
+}
+
+function adjustDateHeaders() {
+    let shown = [];
+    $(".killmaildate").each(function() {
+        let elem = $(this);
+        let date = elem.text();
+        if (shown.indexOf(date) == -1) {
+            elem.removeClass('d-none');
+            shown.push(date);
+        } else {
+            if (!elem.hasClass('d-none')) elem.addClass('d-none');
+        }
+    });
 }
 
 // Everything has loaded, let's go!

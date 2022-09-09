@@ -4,7 +4,9 @@ include mixins.pug
 
 -var rowid = 'killmail-' + rawmail.killmail_id
 -var time = rawmail.killmail_time.replace("T", "<br/>").replace("Z", "");
+-var date = rawmail.killmail_time.substr(0, rawmail.killmail_time.indexOf('T'));
 
+h5.d-none.killmaildate= date
 div.row.m-0.p-0.killrow(victims=victims labels=rawmail.labels epoch=rawmail.epoch)
 	div.killrowblock.col-12.col-md-4.m-0.p-0
 		ul.image
