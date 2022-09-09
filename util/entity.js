@@ -6,7 +6,7 @@ const set = new Set(); // cache for keeping track of what has been inserted to i
 setInterval(function () {
     set.clear();
     info_cache = {};
-}, 36000000);
+}, 60000);
 
 const entity = {
     async add(app, type, id, wait = false) {
@@ -51,10 +51,7 @@ const entity = {
     async wait(app, type, id) {
         let count = 0;
         while (true) {
-            let row = await app.db.information.findOne({
-                type: type,
-                id: id
-            });
+            let row = await app.db.information.findOne({type: type, id: id});
             if (row != null && row.last_updated != 0) return;
             if (row == null) {
                 console.log('Adding entity: ', type, id);
@@ -95,7 +92,6 @@ const entity = {
             if (wait == false) throw type + ' ' + id + ' not updated, yet wait is false';
             if (first) {
                 await app.db.information.updateOne({type: type, id: id}, {$set: {waiting: true}});
-                waitingon[type + '-' + id] = true;
                 first = false;
             }
             await app.sleep(100);
@@ -109,4 +105,3 @@ const entity = {
 }
 
 module.exports = entity;
-const waitingon = {};

@@ -5,8 +5,6 @@ module.exports = {
     span: 1
 }
 
-let in_progress = {};
-
 let item_cache = {};
 let group_cache = {};
 let category_cache = {};
@@ -14,6 +12,7 @@ let involved_add_cache = {};
 let added_cache = {};
 let price_cache = {};
 let universe_cache = {};
+let padhash_ship_2_group = {};
 function clear_caches() {
     item_cache = {};
     group_cache = {};
@@ -22,8 +21,9 @@ function clear_caches() {
     added_cache = {};
     price_cache = {};
     universe_cache = {};
+    padhash_ship_2_group = {};
 }
-setInterval(clear_caches, 900000); // every 15 minutes
+setInterval(clear_caches, 60000);
 
 
 const no_solo_ships = [29, 31, 237];
@@ -42,7 +42,7 @@ async function f(app) {
         console.log('Sequence starting at:', sequence);
     }
 
-    await app.util.asyncpool.go(app.db.killhashes.find({status: 'fetched'}).sort({killmail_id: -1}).batchSize(100), parse_mail,  app.util.assist.continue_simul_go, max, app);
+    await app.util.asyncpool.go(app.db.killhashes.find({status: 'fetched'}).sort({killmail_id: -1}).batchSize(100), parse_mail,  app.util.assist.continue_simul_go, 5, app);
 }
 
 const max_concurrent = Math.max(1, (parseInt(process.env.max_concurrent_fetched) | 5));
@@ -56,11 +56,8 @@ async function parse_mail(killhash) {
 
     let killmail = {};
     const now = Math.floor(Date.now() / 1000);
-    if (in_progress[killhash.killmail_id] != undefined) return;
 
     try {
-        in_progress[killhash.killmail_id] = true;
-
         const remove_alltime = app.db.killmails.removeOne({killmail_id: killhash.killmail_id});
         const remove_recent = app.db.killmails_90.removeOne({killmail_id: killhash.killmail_id});
         const remove_week = app.db.killmails_7.removeOne({killmail_id: killhash.killmail_id});
@@ -68,19 +65,11 @@ async function parse_mail(killhash) {
         killmail.killmail_id = killhash.killmail_id;
         killmail.hash = killhash.hash;
 
-        const rawmail = await app.db.rawmails.findOne({
-            killmail_id: killhash.killmail_id
-        });
-
+        const rawmail = await app.db.rawmails.findOne({killmail_id: killhash.killmail_id});
         if (rawmail == null) {
             // wth?
-            console.log('marking as failed: ', killhash);
-            await app.db.killmails.removeOne({
-                killmail_id: killhash.killmail_id
-            });
-            await app.db.rawmails.removeOne({
-                killmail_id: killhash.killmail_id
-            });
+            await app.db.killmails.removeOne({killmail_id: killhash.killmail_id});
+            await app.db.rawmails.removeOne({killmail_id: killhash.killmail_id});
             await app.waitfor([remove_alltime, remove_recent, remove_week]);
             await app.db.killhashes.updateOne({_id: killhash._id}, {$set: {status: 'pending'}});
             return;
@@ -122,13 +111,9 @@ async function parse_mail(killhash) {
         addTypeId(app, involved, 'constellation_id', constellation.id);
         addTypeId(app, involved, 'region_id', region.id);
 
+        let location_id = undefined;
         if (rawmail.victim.position != undefined) {
-            const location_id = await app.util.info.get_location_id(app, rawmail.solar_system_id, rawmail.victim.position);
-
-            if (location_id != undefined) {
-                involved.location_id = [];
-                involved.location_id.push(location_id);
-            }
+            location_id = app.util.info.get_location_id(app, rawmail.solar_system_id, rawmail.victim.position);
         }
 
         if (rawmail.war_id != undefined) {
@@ -139,7 +124,7 @@ async function parse_mail(killhash) {
         const npc = isNPC(rawmail);
         const labels = [];
 
-        if (npc != true) {
+        /*if (npc != true) {
             let padhash = await get_pad_hash(app, rawmail, killmail);
             if (padhash != undefined) {
                 killmail.padhash = padhash;
@@ -150,12 +135,12 @@ async function parse_mail(killhash) {
                     labels.push('nostats');
                 }
             }
-        }
+        }*/
 
         if (npc === true) {
             labels.push('npc');
             labels.push('nostats');
-        } else if (killmail.stats != false) {
+        } else {
             labels.push('pvp');
             if (await isSolo(app, rawmail) === true) labels.push('solo');
         }
@@ -187,6 +172,11 @@ async function parse_mail(killhash) {
         killmail.involved_cnt = rawmail.attackers.length;
 
         await app.waitfor(promises);
+        if (location_id != undefined) {
+            location_id = await location_id;
+            involved.location_id = [];
+            involved.location_id.push(location_id);
+        }
 
         sequence++;
         killmail.sequence = sequence;
@@ -210,7 +200,6 @@ async function parse_mail(killhash) {
         await app.db.killhashes.updateOne(killhash, {$set: {status: 'parse-error'}});
     } finally {
         killmail = null; // memory leak protection
-        delete in_progress[killhash.killmail_id];
     }
 }
 
@@ -394,8 +383,6 @@ async function check_for_padding(app, rawmail) {
     }
     return count;
 }
-
-const padhash_ship_2_group = {};
 
 // https://forums.eveonline.com/default.aspx?g=posts&m=4900335#post4900335
 async function get_pad_hash(app, rawmail, killmail) {

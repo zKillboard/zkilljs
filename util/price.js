@@ -38,7 +38,7 @@ const price = {
     },
 
     getFloat(rkey, price) {
-        var orig = price;
+        let orig = price;
         price = parseFloat(price);
         if (isNaN(price)) console.log(rkey + ' converted to NaN: ', orig);
         return price;
@@ -54,9 +54,9 @@ const price = {
 
     format_date(date) {
         if (date instanceof String) return (date.length > 10 ? date.substr(0, 10) : date);
-        var year = date.getFullYear();
-        var month = date.getMonth() + 1;
-        var day = date.getDate();
+        let year = date.getFullYear();
+        let month = date.getMonth() + 1;
+        let day = date.getDate();
         if (day < 10) day = '0' + day;
         if (month < 10) month = '0' + month;
         return year + '-' + month + '-' + day;
@@ -155,7 +155,7 @@ async function fetch(app, item_id, date, skip_fetch) {
 
     let epoch = Math.floor(Date.parse(date) / 1000);
     if (epoch > 1259976605) epoch = epoch - (36 * 3600);
-    var d = new Date(0);
+    let d = new Date(0);
     d.setUTCSeconds(epoch);
     date = price.format_date(d);
 
@@ -164,7 +164,7 @@ async function fetch(app, item_id, date, skip_fetch) {
 
     let marketHistory;
     let todays_key = app.util.price.get_todays_price_key();
-    var iterations = 0;
+    let iterations = 0;
     do {
         marketHistory = await app.db.prices.findOne({ item_id: item_id });
         if (marketHistory == null) {
