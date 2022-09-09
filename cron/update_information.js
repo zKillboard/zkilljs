@@ -15,12 +15,14 @@ const adds = [
     'region_id', 
     'creator_corporation_id', 
     'executor_corporation_id', 
-    'creator_id', 'ceo_id', 
+    'creator_id',
+    'ceo_id', 
     'types', 
     'groups', 
     'systems', 
     'constellations', 
-    'star_id'
+    'star_id',
+    'stargates'
 ];
 
 const maps = {
@@ -31,7 +33,8 @@ const maps = {
     'types': 'item_id',
     'groups': 'group_id',
     'systems': 'solar_system_id',
-    'constellations': 'constellation_id'
+    'constellations': 'constellation_id',
+    'stargates': 'stargate_id'
 };
 
 
@@ -46,7 +49,8 @@ const urls = {
     'constellation_id': '/v1/universe/constellations/:id/',
     'region_id': '/v1/universe/regions/:id/',
     'star_id': '/v1/universe/stars/:id/',
-    'war_id': '/v1/wars/:id/'
+    'war_id': '/v1/wars/:id/',
+    'stargate_id': '/v2/universe/stargates/:id/'
 };
 const types = Object.keys(urls);
 
@@ -182,6 +186,8 @@ async function fetch(app, row) {
             // Just to prevent any accidental cross contamination
             body.type = row.type;
             body.id = row.id; 
+
+            if (row.type == 'location_id' && body.name == null && row.name != null && row.name != undefined) delete body.name; // Don't overwrite existing names
 
             await app.db.information.updateOne(row, {$set: body});
             app.util.ztop.zincr(app, 'info_' + row.type);
