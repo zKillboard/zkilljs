@@ -1,10 +1,10 @@
 include mixins.pug
 
 - let timespan = (epoch == 'week' ? 'Past 7 Days' : (epoch == 'recent' ? 'Past 90 Days' : 'Alltime'));
-h5.text-right= timespan
 div#numtopkills.d-none= topisk.length
-div#loaded-topisk
-	if topisk && topisk.length > 0
+if topisk && topisk.length > 0
+	h5= 'Most Value - ' + timespan
+	div#loaded-topisk
 		div#topisk-block.p-0.m-0
 			div.d-flex.align-content-around.flex-wrap
 				each row in topisk
@@ -28,18 +28,13 @@ div#loaded-topisk
 										+show_link('span', 'item_id', row.item_id, row.item_name)
 								tr
 									td.fnumber= row.total_value
-	else
-		i.text-right nothing to see here... 
-		br
-		if types
-			i.text-right no top kills worth more than 10000 isk
-		else
-			i.text-right no top kills to list...
-		br
-		br
-		br
+else
+	i.text-right no results with current filters
+	br
+	br
 if types
 	hr
+	h5= 'Affiliates - ' + timespan
 div#fulltoptenblock
 	if types
 		div#toptensfullblock.row.d-flex.flex-wrap
