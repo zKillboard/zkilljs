@@ -35,8 +35,8 @@ div.row.m-0.p-0
 					+info_row_a('Region:', 'region', rawmail.region_id, rawmail.region_name)
 					+info_row_a('Location:', 'location', rawmail.location_id, rawmail.location_name)
 					+info_row('Time:', time)
-					+info_row('Destroyed:', killmail.totals.destroyed, 'isk')
-					+info_row('Dropped:', killmail.totals.dropped, 'isk')
+					+info_row('Destroyed:', killmail.totals.destroyed, 'isk value-x-ed red')
+					+info_row('Dropped:', killmail.totals.dropped, 'isk value-checked green')
 					+info_row('Total Value:', killmail.total_value, 'isk')
 					tr
 						td Labels
@@ -45,12 +45,12 @@ div.row.m-0.p-0
 								+add_label(label)
 		div#killmail-cargo.col-12
 			if victim.category_id == 87
-				h6.text-right Note: Accurate fighter counts are not reflected in ESI.
+				h6 Note: Accurate fighter counts are not reflected in ESI.
 			table#cargotable.table.table-sm.table-hover.table-responsive-sm
 				tbody
 					tr.border-0#master-sort-row(style='background-color: inherit;')
 						td.border-0.cargoimage(style='min-width: 50px;')
-							button.btn.group-toggle.p-0.m-0(type='button',data-toggle='collapse',data-target='.item-group',aria-expanded="true" )
+							button.btn.group-toggle.p-0.m-0.d-none(type='button',data-toggle='collapse',data-target='.item-group',aria-expanded="true" )
 							button.btn.btn-primary.sort-trigger.collapse.bi.bi-backspace#sort-reset
 						td.border-0.cargoname(width='100%')
 						td.border-0.text-right.cargoamount 
@@ -60,18 +60,18 @@ div.row.m-0.p-0
 					each group in killmail.cargo_groups
 						tr.group-name
 							td
-								button.btn.group-toggle.p-0.m-0(type='button',data-toggle='collapse',data-target='.group-' + group,aria-expanded="true" )
+								button.btn.group-toggle.p-0.m-0.d-none(type='button',data-toggle='collapse',data-target='.group-' + group,aria-expanded="true" )
 							td(colspan='3')
 								h5= killmail.group_names[group]
 						- var items = killmail.group_items[killmail.group_names[group]]
 						each item in items
 							tr.item-group.show(class=item.class, class='group-' + group)
 								td.cargoimage
-									+type_image('span', item.item_type_id, item.item_type_name, 32)
+									+type_image('span', item.item_type_id, item.item_type_name, 32, item.category)
 								td.cargoname(col-value=item_type_name)
-									+type_id_link('span', 'item', item.item_type_id, item.item_type_name )
+									+type_id_link('span', 'item', item.item_type_id, item.item_type_name)
 								td.cargoamount.integer.text-right(col-value=item.total)= item.total
-								td.cargoprice.integer.text-right(col-value=item.total_price)= item.total_price
+								td.cargoprice.integer.text-right(col-value=item.total_price, class=item.checkorx)= item.total_price
 					tr
 						td
 						td(colspan='3')
@@ -82,7 +82,7 @@ div.row.m-0.p-0
 							td
 								+type_id_link('span', 'item', victim.ship_type_id, victim.ship_type_name)
 							td
-							td.integer.text-right= killmail.ship_price
+							td.cargoprice.integer.text-right(col-value=killmail.ship_price)= killmail.ship_price
 					tr
 						td
 						td
@@ -93,12 +93,12 @@ div.row.m-0.p-0
 						td
 						td 
 						td.text-right Dropped:
-						td.integer.text-right= killmail.totals.dropped
+						td.integer.text-right.value-checked= killmail.totals.dropped
 					tr.victimrow
 						td
 						td 
 						td.text-right Destroyed:
-						td.integer.text-right= killmail.totals.destroyed
+						td.integer.text-right.value-x-ed= killmail.totals.destroyed
 					tr
 						td
 						td 

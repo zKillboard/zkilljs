@@ -58,7 +58,7 @@ const info_fill = {
     				case 'weapon_type_id':
     				case 'item_type_id':
     					record = await app.util.info.get_info(app, 'item_id', o);
-    					if (record != null) object[key.replace('_id', '_name')] = record.name;
+    					if (record != null) object[key.replace('_id', '_name')] = (record.name + (object.singleton > 0 ? ' (copy)' : ''));
     					break;
 
     				default:

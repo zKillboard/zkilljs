@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = {
-   paths: ['/site/killmails/:type/:id.json', '/cache/1hour/killmails/:type/:id.json'],
+   paths: ['/site/killmails.json', '/cache/1hour/killmails.json'],
    get: get
 }
 
@@ -41,23 +41,26 @@ async function get(req, res) {
         modifiers: 'string',
         page: 'integer',
         sequence: sequences[sequence_key],
-        required: ['page', 'sequence', 'v'],
+        type: 'string',
+        id: 'string',
+        required: ['page', 'sequence', 'v', 'type', 'id'],
         v: app.server_started
     }
-    req.alternativeUrl = '/cache/1hour/killmails/' + req.params.type + '/' + req.params.id + '.json';
+    req.alternativeUrl = '/cache/1hour/killmails.json';
     valid = req.verify_query_params(req, valid);
     if (valid !== true) {
         return {redirect: valid};
     }
+    console.log(match);
 
     let total_kl = (record.killed | 0) + (record.lost | 0);
 
     let killmails;
-    let page = Math.max(0, Math.min(9, req.query['page'])); // cannot go below 0 or above 9
+    let page = Math.max(1, Math.min(10, parseInt(req.query['page']))); // cannot go below 0 or above 9
+    page--;
 
     let collections = ['killmails_7', 'killmails_90', 'killmails'];
     for (let collection of collections) {
-        console.log(collection, match);
         killmails = [];
         let result = await app.db[collection].find(match.match)
             .sort({ killmail_id: -1 })
@@ -76,9 +79,4 @@ async function get(req, res) {
         json: killmails,
         ttl: 3600
     };
-}
-
-function get_sum(record, epoch) {
-    if (record[epoch] == undefined || record[epoch] == 0) return 0;
-    return (record[epoch].killed) || (record[epoch].lost || 0);
 }

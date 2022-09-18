@@ -3,17 +3,19 @@
 async function match_builder(app, req, kl_default = 'all') {
     if (req == undefined) return;
 
-	if (req.params.type == 'system') {
-		req.params.type = 'solar_system';
-	} else if (req.params.type == 'type') {
-		req.params.type = 'item';
+    if (req.query == undefined) req.query = {};
+
+	if (req.query.type == 'system') {
+		req.query.type = 'solar_system';
+	} else if (req.query.type == 'type') {
+		req.query.type = 'item';
 	}
 
-	var type = req.params.type;
-	var id = req.params.id;
+	var type = req.query.type;
+	var id = req.query.id;
 	var key = type;
 	var timespan;
-	var epoch = req.params.epoch || 'week'; // default to week if epoch is not available
+	var epoch = req.query.epoch || 'week'; // default to week if epoch is not available
 	var modifiers = (req.query['modifiers'] == undefined ? [] : req.query.modifiers.split(','));
 
     let match = {};
@@ -23,10 +25,10 @@ async function match_builder(app, req, kl_default = 'all') {
 
     if (type != 'label') {
     	id = parseInt(id);
-    	if (id == undefined) id = 0;
+    	if (id == undefined || isNaN(id)) id = 0;
     	type = type + '_id';
     	key = 'involved.' + type;
-    } else key = 'involved.label';
+    }
 
     for (const modifier of modifiers) {
         switch (modifier) {
@@ -38,7 +40,9 @@ async function match_builder(app, req, kl_default = 'all') {
             case 'recent':
             case 'alltime':
                 epoch = modifier;
-                timespan = modifier;
+                if (modifier == 'week') timespan = 'last 7 days';
+                else if (modifier == 'recent') timespan = 'last 90 days';
+                else timespan = 'alltime';
                 break;
             case 'current-month':
                 var date = new Date(), y = date.getFullYear(), m = date.getMonth();
@@ -58,15 +62,13 @@ async function match_builder(app, req, kl_default = 'all') {
                 timespan = 'prior month';
                 break;
             default:
-                /*match_and.push({
-                    //labels: modifier.replace(' ', '+')
-                });*/
+                match_and.push({'involved.label': modifier});
         }
     }
     if (kl == undefined) kl = kl_default;
 
     if (type == 'label') {
-        if (id != 'all') match_and.push({'involved.label': id});
+        if (id != '0') match_and.push({'involved.label': 'bad-person-trying-to-bust-query-cache'});
     } else {
     	var or = [];
         if (kl == 'all' || kl == 'killed') or.push({[key]: id});

@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = {
-   paths: ['/site/toptens/:epoch/:type/:id.html', '/cache/1hour/toptens/:epoch/:type/:id.html'],
+   paths: ['/site/toptens.html', '/cache/1hour/toptens.html'],
    get: get
 }
 
@@ -41,24 +41,24 @@ async function get(req, res) {
 
     timestamp = timestamp - (timestamp % mod); // daily
 
+    let valid = {
+        modifiers: 'string',
+        type: 'string',
+        id: 'string',
+        timestamp: timestamp,
+        required: ['timestamp', 'v', 'type', 'id'],
+        v: app.server_started
+    }
+    req.alternativeUrl = '/cache/1hour/toptens.html';
+    valid = req.verify_query_params(req, valid);
+    if (valid !== true) {
+        return {redirect: valid};
+    }
 
     let ret = {
         topisk: {},
         types: {}
     };
-
-    let valid = {
-        modifiers: 'string',
-        timestamp: timestamp,
-        required: ['timestamp', 'v'],
-        v: app.server_started
-    }
-    req.alternativeUrl = '/cache/1hour/toptens/' + req.params.epoch + '/' + req.params.type + '/' + req.params.id + '.html';
-    valid = req.verify_query_params(req, valid);
-    if (valid !== true) {
-        console.log('Redirecting to', valid);
-        return {redirect: valid};
-    }
 
     let pmm_key = match.epoch + '-' + match.type;
     while (pmm[pmm_key] != undefined) {
@@ -110,7 +110,8 @@ async function get(req, res) {
             await app.db.datacache.deleteOne({requrl: req.url});
             await app.db.datacache.insertOne({requrl : req.url, epoch: next_update, data : JSON.stringify(ret)});
         }
-        ret.epoch = req.params.epoch;
+        ret.epoch = match.epoch;
+        ret.timespan = match.timespan;
     } finally {
         delete pmm[pmm_key];
     }

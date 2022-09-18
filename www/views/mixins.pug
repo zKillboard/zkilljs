@@ -77,9 +77,9 @@ mixin show_image(tag, type, id, name, size, classes)
 		-var name = (name == null || name == undefined || name == '' ? type + ' ' + id : name)
 		+tag_image(tag, url, image, name, size, classes)
 
-mixin type_image(tag, id, name, size)
+mixin type_image(tag, id, name, size, category = undefined)
 	if id != undefined
-		-var category = (size <= 64 ? 'icon' : 'render')
+		-if (category == undefined) category = (size <= 64 ? 'icon' : 'render')
 		-var url = '/type/' + id
 		-var image = 'https://images.evetech.net/types/' + id + '/' + category + '?size=' + size
 		-var name = (name == null || name == undefined || name == '' ? type + ' ' + id : name)

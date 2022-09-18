@@ -163,6 +163,16 @@ div#overview-information ul li {
     border:  solic 1px red;
 }
 
+.value-x-ed:after, .victimrow .cargoprice:after {
+    margin-left:  0.25em;
+    content: '✕';
+}
+
+.value-checked:after, .aggressorrow .cargoprice:after {
+    margin-left:  0.25em;
+    content: '✓';
+}
+
 .item_destroyed,
 .red {
     color: red;

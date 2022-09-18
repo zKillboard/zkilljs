@@ -18,10 +18,10 @@ div.row.m-0.p-0.killrow(victims=victims labels=rawmail.labels epoch=rawmail.epoc
 			li
 				| !{time}
 			li
+				span.fnumber= rawmail.total_value
 				span.killmail-icon
 					i.bi.bi-check.aggressor
 					i.bi.bi-x.victim
-				span.fnumber= rawmail.total_value
 		ul.info2
 			+type_id_link('li', 'system', rawmail.solar_system_id, rawmail.solar_system_name, null, 'sec' + rawmail.solar_system_security_rounded)
 			+type_id_link('li', 'constellation', rawmail.constellation_id, rawmail.constellation_name)

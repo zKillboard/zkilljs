@@ -14,32 +14,21 @@ div.btn-toolbar(role="tooolbar" aria-label="Overview Filter").mt-1
         button.filter.btn.btn-secondary(type='button' radio='geography') W-SPACE
         button.filter.btn.btn-secondary(type='button' radio='geography') Abyssal
     div.btn-group.btn-group-sm.mr-2
-        button.filter.btn.btn-secondary(type='button' radio='stats') NOSTATS
         button.filter.btn.btn-secondary(type='button' radio='stats') PVP
-        button.filter.btn.btn-secondary(type='button' radio='involved') Solo
-        button.filter.btn.btn-secondary(type='button' radio='isk') BIGISK
+        button.filter.btn.btn-secondary(type='button' radio='stats') Solo
+        button.filter.btn.btn-secondary(type='button' radio='stats') NPC
     div.m-auto
     div.btn-group.btn-group-sm
         button#reset_filters.btn.btn-secondary(disabled)
             i.bi.bi-backspace
         button#more_filters_button.btn.btn-secondary.aria-button(type='button' aria-label='More Filters' data-toggle='collapse' data-target='#morefilters' aria-expanded='false')
-            i.bi.bi-filter
+            i.bi.bi-caret-down
 div#morefilters.btn-toolbar(role="tooolbar" aria-label="Overview Filter").mt-1.collapse
     div.btn-group.btn-group-sm.mr-2
+        button.filter.btn.btn-secondary(type='button' radio='stats') Padding
         button.filter.btn.btn-secondary(type='button' radio='involved') 10+
         button.filter.btn.btn-secondary(type='button' radio='involved') 100+
         button.filter.btn.btn-secondary(type='button' radio='involved') 1000+
+        button.filter.btn.btn-secondary(type='button' radio='isk') BIGISK
         button.filter.btn.btn-secondary(type='button' radio='isk') EXTREMEISK
         button.filter.btn.btn-secondary(type='button' radio='isk') INSANEISK
-    div.m-auto
-    div.btn-group.btn-group-sm
-        button#stats-epoch-week.filter.tfilter.stats-epoch.btn.btn-primary(value='week' radio='epoch') 7
-        button#stats-epoch-recent.filter.tfilter.stats-epoch.btn.btn-secondary(value='recent' radio='epoch') 90
-        button#stats-epoch-recent.filter.tfilter.stats-epoch.btn.btn-secondary(value='current-month' radio='epoch')
-            i.bi.bi-calendar3
-        button#stats-epoch-recent.stats-epoch.filter.tfilter.btn.btn-secondary(value='prior-month' radio='epoch')
-            i.bi.bi-arrow-left-circle
-            i.bi.bi-calendar3
-        button#stats-epoch-recent.stats-epoch.filter.tfilter.btn.btn-secondary(value='custom-range'  radio='epoch' disabled)
-            i.bi.bi-clock
-        button#stats-epoch-alltime.stats-epoch.filter.tfilter.btn.btn-secondary(value='alltime' radio='epoch') ∞

@@ -1,9 +1,8 @@
 include mixins.pug
 
-- let timespan = (epoch == 'week' ? 'Past 7 Days' : (epoch == 'recent' ? 'Past 90 Days' : 'Alltime'));
 div#numtopkills.d-none= topisk.length
 if topisk && topisk.length > 0
-	h5= 'Most Value - ' + timespan
+	h5.text-capitalize= 'most value - ' + timespan
 	div#loaded-topisk
 		div#topisk-block.p-0.m-0
 			div.d-flex.align-content-around.flex-wrap
@@ -33,8 +32,8 @@ else
 	br
 	br
 if types
-	hr
-	h5= 'Affiliates - ' + timespan
+	hr.thin
+	h5.text-capitalize= 'Affiliates - ' + timespan
 div#fulltoptenblock
 	if types
 		div#toptensfullblock.row.d-flex.flex-wrap
@@ -53,6 +52,6 @@ div#fulltoptenblock
 									td.top10count.text-right.integer= value.count
 
 	if next_update
-		hr
+		hr.thin
 		i= 'Next update: ' + next_update
 

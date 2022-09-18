@@ -42,11 +42,38 @@ html
                     div.row#overview-filters.mb-5
                         div.col-12.mb-2
                             include filters.pug
-                    hr
+                    hr.thin
                     div.row.d-flex
                         div.col-xs-12.col-md-8.pr-3
+                            div.d-flex
+                                div.btn-group.btn-group-sm.mr-2
+                                    button.pagefilter.btn.btn-primary(type='button' radio='pagenum') 1
+                                    button.pagefilter.btn.btn-secondary(type='button' radio='pagenum') 2
+                                    button.pagefilter.btn.btn-secondary(type='button' radio='pagenum') 3
+                                    button.pagefilter.btn.btn-secondary(type='button' radio='pagenum') 4
+                                    button.pagefilter.btn.btn-secondary(type='button' radio='pagenum') 5
+                                    button.pagefilter.btn.btn-secondary(type='button' radio='pagenum') 6
+                                    button.pagefilter.btn.btn-secondary(type='button' radio='pagenum') 7
+                                    button.pagefilter.btn.btn-secondary(type='button' radio='pagenum') 8
+                                    button.pagefilter.btn.btn-secondary(type='button' radio='pagenum') 9
+                                    button.pagefilter.btn.btn-secondary(type='button' radio='pagenum') 10
+                            hr.thin.mt-1
                             div#killlist
                         div.col-xs-12.col-md-4
+                            div.d-flex
+                                div.m-auto
+                                div.btn-group.btn-group-sm
+                                    button#stats-epoch-week.tfilter.stats-epoch.btn.btn-primary(value='week' radio='epoch') 7
+                                    button#stats-epoch-recent.tfilter.stats-epoch.btn.btn-secondary(value='recent' radio='epoch') 90
+                                    button#stats-epoch-recent.tfilter.stats-epoch.btn.btn-secondary(value='current-month' radio='epoch')
+                                        i.bi.bi-calendar3
+                                    button#stats-epoch-recent.stats-epoch.tfilter.btn.btn-secondary(value='prior-month' radio='epoch')
+                                        i.bi.bi-arrow-left-circle
+                                        i.bi.bi-calendar3
+                                    button#stats-epoch-recent.stats-epoch.tfilter.btn.btn-secondary(value='custom-range'  radio='epoch' disabled)
+                                        i.bi.bi-clock
+                                    button#stats-epoch-alltime.stats-epoch.tfilter.btn.btn-secondary(value='alltime' radio='epoch') ∞
+                            hr.thin.mt-1
                             div#overview-toptens
                     div.m-5
                 div#killmail.collapse

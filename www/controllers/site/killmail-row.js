@@ -21,8 +21,6 @@ async function get(req, res) {
     }
     if (valid !== true) return {redirect: valid};
 
-    console.log(killmail_id)
-
     let killmail = await app.db.killmails.findOne({killmail_id: killmail_id});
     let rawmail = await app.db.rawmails.findOne({killmail_id: killmail_id});
 

@@ -88,8 +88,21 @@ async function get(req, res) {
         for (let i = 0; i < value.length; i++) {
             let v = value[i];
             let value_key = v.item_type_id + (v.quantity_destroyed > 0 ? ':1' : ':0');
-            // Unless it's an item or in a container, then it is
-            // all or nothing anyway
+            let no_value = false;
+            
+            let group_id = await app.util.info.get_info_field(app, 'item_id', v.item_type_id, 'group_id');
+            let category_id = await app.util.info.get_info_field(app, 'group_id', group_id, 'category_id');
+            if (category_id == 9) {
+                if (v.singleton == 0) {
+                    v.category = 'bp';
+                } else {
+                    v.category = 'bpc';
+                    no_value = true;
+                }
+                value_key = value_key + ':' + v.category;
+            }
+
+            // Unless it's an item or in a container, then it is all or nothing anyway
             if (v.items != undefined || v.in_container == true) {
                 delete v.items;
                 value_key = 'item:' + i;
@@ -97,12 +110,15 @@ async function get(req, res) {
 
             let vv = new_value[value_key];
             if (vv == undefined) {
-                vv = JSON.parse(JSON.stringify(v));
+                if (no_value) v.total_price = 0;
+                vv = JSON.parse(JSON.stringify(v)); // object copy ...
             } else {
                 vv.quantity_destroyed += v.quantity_destroyed;
                 vv.quantity_dropped += v.quantity_dropped;
                 vv.total += v.total;
+                if (no_value) v.total_price = 0;
                 vv.total_price += v.total_price;
+                vv.category = v.category;
             }
             new_value[value_key] = vv;
         }
