@@ -232,6 +232,7 @@ async function fetch(app, row) {
         case 502:
         case 503:
         case 504:
+        case undefined:
             await app.db.information.updateOne(row, {$set: {last_updated: (app.now() - 86100)}}); // Try again later
             break;
         default:

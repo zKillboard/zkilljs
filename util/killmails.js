@@ -39,6 +39,25 @@ module.exports = {
     },
 
     remove_killmail: async function (app, collection, killmail, epoch) {
+        await app.util.killmails.reset_stats(app, killmail, epoch);
+        await app.db[collection].removeOne({killmail_id: killmail.killmail_id});
+    },
+
+    remove_old_killmails: async function(app, epoch, num_days) {
+        var now = app.now();
+        var remove = now - (num_days * 86400);
+        var collection = 'killmails' + (epoch == 'alltime' ? '' : (epoch == 'week' ? '_7' : (epoch == 'recent' ? '_90' : '_unknown_collection')));
+        var purging = await app.db[collection].find({epoch : {$lt : remove}});
+
+        while (await purging.hasNext()) {
+            if (app.bailout) return;
+            var killmail = await purging.next();
+            await app.util.killmails.remove_killmail(app, collection, killmail, epoch);
+        }
+        await purging.close();
+    },
+
+    reset_stats: async function(app, killmail, epoch) {
         var resets = [];
 
         // Mark everyone involved as needing a stat update
@@ -62,23 +81,7 @@ module.exports = {
             resets.push(reset_key);
 
             await app.db.statistics.updateOne({type: 'label', id: label}, {$set: {['update_' + epoch]: true, [epoch + '.reset']: true}});
-        }
-
-        await app.db[collection].removeOne({killmail_id: killmail.killmail_id});
-    },
-
-    remove_old_killmails: async function(app, epoch, num_days) {
-        var now = app.now();
-        var remove = now - (num_days * 86400);
-        var collection = 'killmails' + (epoch == 'alltime' ? '' : (epoch == 'week' ? '_7' : (epoch == 'recent' ? '_90' : '_unknown_collection')));
-        var purging = await app.db[collection].find({epoch : {$lt : remove}});
-
-        while (await purging.hasNext()) {
-            if (app.bailout) return;
-            var killmail = await purging.next();
-            await app.util.killmails.remove_killmail(app, collection, killmail, epoch);
-        }
-        await purging.close();
+        }        
     }
 }
 

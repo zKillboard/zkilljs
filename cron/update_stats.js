@@ -64,6 +64,7 @@ async function update_stats(app, collection, epoch, type, find) {
     try {
         let iter = await app.db.statistics.find(find).project({_id: 1}).limit(1000).batchSize(100);
         while (app.bailout != true && await iter.hasNext()) {
+            if (app.padhash_checking == true) break;
             while (app.bailout != true && concurrent >= max(app, epoch, type)) await app.sleep(10);
             
             let record_id = await iter.next();

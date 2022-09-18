@@ -144,7 +144,12 @@ const assist = {
     	return this.bailout !== true;
 	},
 
-	fetch_tq_status: async function(app) {
+	fetch_tq_status: async function(app, attempt = 1) {
+		if (attempt > 3) {
+			console.log('API may be offline. 3 attempts made...');
+			app.no_api = true;
+			return;
+		}
 		try {
 			var url = process.env.esi_url + '/latest/status/';
 			let res = await app.orig_phin({url: url, timeout: 5000});
@@ -157,13 +162,13 @@ const assist = {
 				}
 				app.server_version = status.server_version;
 				app.no_api = false;
+				console.log('TQ Online with', status.players.toLocaleString(), 'players online');
 			} else {
 				app.no_api = true;
 			}
 		} catch (e) {
-			//console.log(e);
-			console.log('API offline?');
-			app.no_api = true;
+			await app.sleep(5000);
+			await this.fetch_tq_status(app, (attempt + 1));
 		}
 	}
 }

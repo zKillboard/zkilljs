@@ -14,22 +14,7 @@ async function f(app) {
     if (first_run == true) {
         // override default phin behavior
         app.orig_phin = app.phin;
-        app.phin = async function(options) {
-            if (typeof options == 'string') options = {url: options};
-
-            const esi_url = (options.url.indexOf(process.env.esi_url) > -1);
-            const esi_url_status_check = (options.url == (process.env.esi_url + '/latest/status/'));
-            if (esi_url && !esi_url_status_check) {
-                while (app.no_api == true) await app.sleep(1000);
-            }
-
-            if (esi_url && options.no_limit != true) await app.util.assist.esi_limiter(app);
-            delete options.no_limit;
-            let res = await app.orig_phin(options);
-            if (esi_url) await app.util.assist.esi_result_handler(app, res, options.url);
-
-            return res;
-        }
+        app.phin = phin_replace.bind(app);
 
         console.log('zkilljs cron initialization complete');
         app.dbstats = [];
@@ -74,4 +59,35 @@ async function has_min(app, collection, query, min) {
     }
     await iterator.close();
     return count;
+}
+
+async function phin_replace(options, attempts = 0) {
+    if (attempts > 5) {
+        console.log('too many timeout attempts');
+        throw {statusCode: 502, message: 'too many timeout attempts'};
+    }
+
+    let app = this;
+    try {
+        if (typeof options == 'string') options = {url: options};
+        options.timeout = 10000;
+
+        const esi_url = (options.url.indexOf(process.env.esi_url) > -1);
+        const esi_url_status_check = (options.url == (process.env.esi_url + '/latest/status/'));
+        if (esi_url && !esi_url_status_check) {
+            while (app.no_api == true) await app.sleep(1000);
+        }
+
+        if (esi_url && options.no_limit != true) await app.util.assist.esi_limiter(app);
+        delete options.no_limit;
+        let res = await app.orig_phin(options);
+        if (esi_url) await app.util.assist.esi_result_handler(app, res, options.url);
+
+        return res;
+    } catch (e) {
+        if (e.message != undefined && (e.message.indexOf('Timeout') > -1 || e.message.indexOf('ETIMEDOUT') > -1)) {
+            await app.sleep(5000); // try again
+            return await phin_replace.bind(app, options, (attempts + 1));
+        } else throw e;
+    }
 }

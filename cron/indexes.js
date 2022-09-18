@@ -104,14 +104,9 @@ async function applyIndexes(app) {
     await create_collection(app, 'settings');
     await createIndex(app, app.db.collection('settings'), {key: 1}, {unique: true});
     
-    await create_killmail_collection(app, 'killmails');
-    await createIndex(app, app.db.collection('killmails'), {status: 1}, {sparse: true});
-    
+    await create_killmail_collection(app, 'killmails');    
     await create_killmail_collection(app, 'killmails_7');
-    await createIndex(app, app.db.collection('killmails_7'), {epoch: 1}, {});
-
     await create_killmail_collection(app, 'killmails_90');
-    await createIndex(app, app.db.collection('killmails_90'), {epoch: 1}, {});
 }
 
 async function create_collection(app, name) {
@@ -150,6 +145,9 @@ async function create_killmail_collection(app, collection) {
     await createIndex(app, app.db.collection(collection), {killmail_id: 1}, {unique: true});
     await createIndex(app, app.db.collection(collection), {sequence: 1}, {unique: true});
     await createIndex(app, app.db.collection(collection), {year: 1, month: 1, day: 1}, {});
+    await createIndex(app, app.db.collection(collection), {epoch: 1}, {});
+    await createIndex(app, app.db.collection(collection), {status: 1}, {sparse: true});
+
 
     for (let i of ind) {
         var key = 'involved.' + i;
