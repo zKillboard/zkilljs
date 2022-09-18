@@ -917,7 +917,7 @@ function build_modifiers() {
     else if ($("#filter-losses").hasClass("btn-primary")) modifiers.push('lost');
     else noop();
 
-    if (type == 'label') modifiers.push(id);
+    if (type == 'label' && id != 'all') modifiers.push(id);
 
     modifiers.sort();
     return modifiers;
