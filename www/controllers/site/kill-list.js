@@ -5,7 +5,7 @@ module.exports = {
    get: get
 }
 
-let batch_size = 100;
+let batch_size = 50;
 const cache = {};
 function clear_kill_list_cache() {
     cache = {};
