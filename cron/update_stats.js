@@ -34,7 +34,28 @@ let first_run = true;
 async function f(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
 
-    await app.db.statistics.updateMany({reset: true}, {$set: {'update_alltime': true, update_recent: true, update_week: true, 'week.reset': true, 'recent.reset': true, 'alltime.reset': true}, $unset: {reset: 1}}, {multi: true});
+    // Check for records that need to be reset
+    let iterator = await app.db.statistics.find({reset: true}).batchSize(50).limit(1000);
+    while (await iterator.hasNext()) {
+        let row = await iterator.next();
+
+        let match = ((row.type == 'label' && row.id == 'all') ? {} : {['involved.' + row.type]: row.id});
+        // Get the maximum sequence for this row
+        let killmails = await app.db.killmails.find(match).sort({sequence: -1}).limit(1);
+        let killmail = await killmails.next();
+        let new_sequence = (killmail == null ? 0 : killmail.sequence);
+
+        await app.db.statistics.updateOne({_id: row._id}, {$set: {
+            'update_alltime': true, 
+            'alltime.reset': true,
+            'update_recent': true, 
+            'recent.reset': true, 
+            'update_week': true, 
+            'week.reset': true,
+            sequence: new_sequence,
+            reset: false
+        }});
+    }
 
     if (first_run) {
         for (const type of Object.keys(types)) {
