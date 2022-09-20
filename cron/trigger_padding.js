@@ -2,7 +2,8 @@
 
 module.exports = {
     exec: f,
-    span: 86400
+    span: 86400,
+    offset: -39720 // run during downtime
 }
 
 // the padding label will be applied to any ships that is the 5th or higher ship to have an equivalent padhash for a day
@@ -12,6 +13,7 @@ async function f(app) {
 
 	try {
 		app.padhash_checking = false;
+		console.log('Padhash triggers activating...')
 		await discover_years(app);
 	} finally {
 		app.padhash_checking = false;
@@ -35,6 +37,14 @@ async function discover_days(app, year, month) {
 
 async function discover_padhashes(app, year, month, day) {
 	if (app.bailout) return;
+
+	// Check padhash count for this day
+	let count = await app.db.killmails.countDocuments({year: year, month: month, day: day, padhash: {$exists: true}});
+	// Compare to what we've done previously
+	let rkey = year + ':' + month + ':' + day;
+	let previous_count = parseInt(await app.redis.hget('zkb:padmapcount', rkey) | 0);
+	if (previous_count == count) return; // No need to check again
+
 	let match = {
 		year: year,
 		month: month,
@@ -87,6 +97,7 @@ async function discover_padhashes(app, year, month, day) {
 		}
 	}
 	if (padding > 0) console.log(year, month, day, 'has', padding.toLocaleString(), 'killmails marked as padding');
+	await app.redis.hset('zkb:padmapcount', rkey, count);
 }
 
 function add2Set(set, arr) {
