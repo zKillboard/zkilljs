@@ -227,24 +227,27 @@ const stats = {
     },
 
     group: async function (app, collection, match, type, killed_lost = 'killed') {
-        var unwind_match = {};
+        let unwind_match = {$ne: 0};
         if (killed_lost == 'lost' && negatives.indexOf(type) != -1) unwind_match['$lt'] = 0;
-        else unwind_match['$gt'] = 0;
+        else if (killed_lost == 'killed') unwind_match['$gt'] = 0;
         
         const util = require('util');
         var retval = [];
 
+        let field = 'involved.' + type;
+        let field_reference = '$' + field;
+
         var agg = [{
             $match: match
         }, {
-            $unwind: '$involved.' + type
+            $unwind: field_reference
         }, {
             $match: {
-                ['involved.' + type]: unwind_match
+                [field]: unwind_match
             }
         }, {
             $group: {
-                _id: '$involved.' + type,
+                _id: field_reference,
                 count: {
                     $sum: 1
                 }
@@ -273,45 +276,36 @@ const stats = {
     },
 
     topISK: async function (app, collection, match, type, limit = 10, killed_lost = 'killed') {
-        var retval = [];
-        var unwind_match = {};
+        let retval = [];
+        let unwind_match = {$ne: 0};
         if (killed_lost == 'lost' && negatives.indexOf(type) != -1) unwind_match['$lt'] = 0;
-        else unwind_match['$gt'] = 0;
+        else if (killed_lost == 'killed') unwind_match['$gt'] = 0;
 
-        var agg = [{
-                $match: match
-            }, {
-                $project: {
-                    killmail_id: 1,
-                    total_value: 1
-                }
-            }, {
-                $match: {
-                    'total_value': {
-                        $gt: 10000
-                    }
-                }
-            }, {
-                $sort: {
-                    total_value: -1
-                }
-            }, {
-                $limit: limit
-            }
-        ];
+        return await app.db[collection].aggregate([
+            {$match: match},
+            {$project: {killmail_id: 1, total_value: 1}},
+            {$match: { 'total_value': { $gt: 10000 } } },
+            {$sort: {total_value: -1}},
+            {$limit: limit}
+        ], {allowDiskUse: true}).maxTimeMS(3600000).toArray();
+    },
 
-        return await app.db[collection].aggregate(agg, {
-            allowDiskUse: true
-        }).maxTimeMS(3600000).toArray();
+    distinct_count: async function (app, collection, match, type, killed_lost = 'killed') {
+        let unwind_match = {$ne: 0};
+        if (killed_lost == 'lost' && negatives.indexOf(type) != -1) unwind_match['$lt'] = 0;
+        else if (killed_lost == 'killed') unwind_match['$gt'] = 0;
 
-        while (await result.hasNext()) {
-            var row = await result.next();
-            row[type] = row._id;
-            delete row._id;
-            retval.push(row);
-        }
-        await result.close();
-        return retval;
+        let field = 'involved.' + type;
+        let field_reference = '$' + field;
+        let ret = await app.db[collection].aggregate([
+            {$match: match}, 
+            {$unwind: field_reference},
+            {$match: {[field]: unwind_match}},
+            {$project: {grouped: {$abs: field_reference}}}, 
+            {$group: {_id: '$grouped'}}, 
+            {$group: {_id: 0, count: {$sum: 1}}}
+            ], {allowDiskUse: true}).maxTimeMS(3600000).toArray();
+        return (ret.length == 0 ? 0 : ret[0].count);
     },
 
     do_agg: async function (app, collection, aggregate, type) {
