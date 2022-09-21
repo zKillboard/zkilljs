@@ -16,7 +16,7 @@ A rewrite of zkillboard using JavaScript Node and NPM packages.
 - (install) implement zkbsetup for wormhole classes (zkbsetup.php)
 - implement redisq output
 - implement wallet listening, applying adfree, and thank you evemails
-- implement sponsorships
+- implement sponsorships (with label)
 
 #### Done
 - implement alltime ranking
@@ -42,7 +42,6 @@ A rewrite of zkillboard using JavaScript Node and NPM packages.
 
 ### Frontend
 
-- implement ztop
 - implement sitemap (xml still?)
 - implement job for queueRelated
 - active pvp 
@@ -56,27 +55,32 @@ A rewrite of zkillboard using JavaScript Node and NPM packages.
 - LastHour page (does anyone even use this?!)
 - Login/Logout
 - API removal
-- Tickets
 - Payments history
 - Other account settings
 - Add random hull destruction sound
+- Add link to view raw killmail API
+- Add link to save a killmail's fit (when logged in)
+- Add External links, copy fit, etc.
 
 #### Overview Page
 - Statistics, Ships, ISK, Involved Pct, Ranks for each w/ Kills/Losses, Dangerous/Snuggly Bar, Gangs/Solo Bar
-- Most Valuable Kills
-- Recent Kills (paginated)
 - Heat Map
 - Top Chars, Corps, Ships, Systems, Locations
-- Menu: All, Kills, Losses, Trophies(?), Top, Ranks, Stats (use label dropdown?), Supers (maybe? alliances)
+- Menu: Trophies(?), Ranks, Stats (use label dropdown?)
 
 #### Done
+- Most Valuable Kills
+- Recent Kills (paginated)
+- implement ztop
 - Searching
 - implement redis searching for names
 - Char Info
 - Top chars, corps, allis, ships
+- Tickets (will not be implemented, we now use Discord)
+- Menu: All, Kills, Losses, Top
 
 
 ### Probably won't do
 - Map (will need a complete overhaul, so big big maybe)
 - trophies
-- implement hasSupers to show hasSupers on alli/corp pages (maybe, really only used by an elite few)
+- implement hasSupers to show hasSupers on alli/corp pages (maybe, really only used by an elite few) and can be done with advanced search now
