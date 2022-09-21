@@ -14,6 +14,8 @@ async function get(req, res) {
 
     if (type == undefined) type = 'label';
     if (id == undefined) id = 'pvp';
+    type = type.toLowerCase();
+    id = id.toLowerCase();
 
     req.alternativeUrl = '/' + type + '/' + id;
     let valid = req.verify_query_params(req, {});
