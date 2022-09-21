@@ -42,6 +42,10 @@ async function applyIndexes(app) {
     await createIndex(app, app.db.collection('datacache'), {requrl: 1}, {unique: true});
     await createIndex(app, app.db.collection('datacache'), {epoch: 1});
 
+    await create_collection(app, 'insurance');
+    await createIndex(app, app.db.collection('insurance'), {type_id: 1}, {});
+    await createIndex(app, app.db.collection('insurance'), {type_id: 1, epoch: 1}, {unique: true});
+
     await create_collection(app, 'killhashes');
     await createIndex(app, app.db.collection('killhashes'), {killmail_id: 1, hash: 1}, {unique: true});
     await createIndex(app, app.db.collection('killhashes'), {status: 1});

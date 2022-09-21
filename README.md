@@ -10,7 +10,6 @@ A rewrite of zkillboard using JavaScript Node and NPM packages.
 - character apis (scoped sso v2)
 - corporation apis (scoped sso v2)
 - implement scope cleanup
-- fetch insurance
 - fetch implant slots (is this in esi item info now?)
 - implement ganked detection
 - (install) implement zkbsetup for wormhole classes (zkbsetup.php)
@@ -19,6 +18,7 @@ A rewrite of zkillboard using JavaScript Node and NPM packages.
 - implement sponsorships (with label)
 
 #### Done
+- fetch insurance
 - implement alltime ranking
 - implement recent ranking (last 90 days)
 - implement weekly ranking (last 7 days) 
