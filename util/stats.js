@@ -291,6 +291,12 @@ const stats = {
     },
 
     distinct_count: async function (app, collection, match, type, killed_lost = 'killed') {
+        if (type == 'label') {
+            // no need to do a pipeline on labels since they're not numeric values that need $abs applied
+            let result = await app.db[collection].distinct('involved.label', match);
+            return result.length;
+        }
+
         let unwind_match = {$ne: 0};
         if (killed_lost == 'lost' && negatives.indexOf(type) != -1) unwind_match['$lt'] = 0;
         else if (killed_lost == 'killed') unwind_match['$gt'] = 0;

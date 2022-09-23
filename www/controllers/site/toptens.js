@@ -17,6 +17,7 @@ let types = [
     'solar_system_id',
     'constellation_id',
     'region_id',
+    'label',
 ];
 
 // poor man's mutex
