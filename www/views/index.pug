@@ -63,13 +63,16 @@ html
                             div.d-flex
                                 div.m-auto
                                 div.btn-group.btn-group-sm
+                                    button#stats-epoch-week.tfilter.stats-epoch.btn.btn-secondary(value='hours-01' radio='epoch')
+                                        i.bi.bi-hourglass-top
+                                    button#stats-epoch-week.tfilter.stats-epoch.btn.btn-secondary(value='hours-24' radio='epoch')
+                                        i.bi.bi-hourglass-bottom
                                     button#stats-epoch-week.tfilter.stats-epoch.btn.btn-primary(value='week' radio='epoch') 7
-                                    button#stats-epoch-recent.tfilter.stats-epoch.btn.btn-secondary(value='recent' radio='epoch') 90
                                     button#stats-epoch-recent.tfilter.stats-epoch.btn.btn-secondary(value='current-month' radio='epoch')
                                         i.bi.bi-calendar3
+                                    button#stats-epoch-recent.tfilter.stats-epoch.btn.btn-secondary(value='recent' radio='epoch') 90
                                     button#stats-epoch-recent.stats-epoch.tfilter.btn.btn-secondary(value='prior-month' radio='epoch')
-                                        i.bi.bi-arrow-left-circle
-                                        i.bi.bi-calendar3
+                                        i.bi.bi-calendar-minus
                                     button#stats-epoch-recent.stats-epoch.tfilter.btn.btn-secondary(value='custom-range'  radio='epoch' disabled)
                                         i.bi.bi-clock
                                     button#stats-epoch-alltime.stats-epoch.tfilter.btn.btn-secondary(value='alltime' radio='epoch') ∞
@@ -103,19 +106,15 @@ div.collapse
             div
             div
 div#loading-zone
-script
-    | var start_time = Date.now()
-//-script(defer src='https://cdn.jsdelivr.net/npm/vanilla-lazyload@12.0.0/dist/lazyload.min.js')
 
 script(defer src='/js/jquery-3.4.1.min.js')
 script(defer src='/js/jquery.autocomplete-v1.4.11.min.js')
 
 script(defer src='/js/popper-1.14.7.min.js')
-//-script(defer src='https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js' integrity='sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM' crossorigin='anonymous')
 script(defer src='/js/bootstrap-4.3.1.min.js')
 script(defer src='/js/history-4.10.1.js')
 script(defer src='/js/reconnecting-websocket.js')
 script(defer data-server_start=server_started src='/js/z.js?v=' + server_started)
 script
-    = 'const server_started=' + server_started + ';'
-    = "const websocket_url='" + env.websocket_url + "';"
+    = 'const server_started= ' + server_started + ';'
+    = "const websocket_url= '" + env.websocket_url + "';"

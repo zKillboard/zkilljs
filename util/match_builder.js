@@ -29,6 +29,8 @@ async function match_builder(app, req, kl_default = 'all') {
     	type = type + '_id';
     	key = 'involved.' + type;
     }
+    let span = app.now();
+    span = span - (span % 900);
 
     for (const modifier of modifiers) {
         switch (modifier) {
@@ -36,13 +38,27 @@ async function match_builder(app, req, kl_default = 'all') {
             case 'lost':
                 kl = modifier;
                 break;
+            case 'hours-01':
+                epoch = 'week';
+                timespan = '60 minutes';
+                match_and.push({epoch : {'$gte' : (span - 3600) }});
+                break;
+            case 'hours-24':
+                epoch = 'week';
+                timespan = '24 hours';
+                match_and.push({epoch : {'$gte' : (span - 86400) }});
+                break;
             case 'week':
+                epoch = modifier;
+                timespan = '7 days';
+                break;
             case 'recent':
+                epoch = modifier;
+                timespan = '90 days';
+                break;
             case 'alltime':
                 epoch = modifier;
-                if (modifier == 'week') timespan = 'last 7 days';
-                else if (modifier == 'recent') timespan = 'last 90 days';
-                else timespan = 'alltime';
+                timespan = 'alltime';
                 break;
             case 'current-month':
                 var date = new Date(), y = date.getFullYear(), m = date.getMonth();
