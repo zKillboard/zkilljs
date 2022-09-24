@@ -41,8 +41,8 @@ div#fulltoptenblock
 				div.top10block.mr-4
 					- var name = type.replace('_id', '_name');
 					- var first = arr[0]
-					- var title = type.replace('_id', '').replace('_', ' ') 
-					h6.top10title= (title + 's').replace('ys', 'ies')
+					- var title = type.replace('_id', '').replace('_', ' ').replace('category', 'categorie') + 's'
+					h6.top10title= title
 						small.ml-1.integer= distinct[type]
 					+show_image('span', type, first[type], first[name], 128)
 					table.table.table-striped.table-hover.table-sm
