@@ -13,7 +13,7 @@ if topisk && topisk.length > 0
 								tr
 									td
 										-var category = (size <= 64 ? 'icon' : 'render')
-										-var url = '/killmail/' + row.killmail_id
+										-var url = '/kill/' + row.killmail_id
 										-var image = 'https://images.evetech.net/types/' + row.item_id + '/' + category + '?size=128'
 										+tag_image(tag, url, image, row.item_name, 128)
 								tr

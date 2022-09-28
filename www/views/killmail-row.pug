@@ -10,7 +10,7 @@ h5.d-none.killmaildate= date
 div.row.m-0.p-0.killrow(victims=victims labels=rawmail.labels epoch=rawmail.epoch)
 	div.killrowblock.col-12.col-md-4.m-0.p-0
 		ul.image
-			-var url = '/killmail/' + rawmail.killmail_id
+			-var url = '/kill/' + rawmail.killmail_id
 			-var image = 'https://images.evetech.net/types/' + rawmail.victim.ship_type_id + '/icon?size=' + 64
 			-var name = 'Killmail ' + rawmail.killmail_id
 			+tag_image('span', url, image, name, 64)

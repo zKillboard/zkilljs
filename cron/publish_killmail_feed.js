@@ -66,7 +66,7 @@ async function publishToKillFeed(app, killmail) {
         let www_server_started = await  app.redis.get('zkilljs:www:server_started');
         if (www_server_started != null) {
             promises.push(app.phin({url: 'http://localhost:' + process.env.PORT + '/cache/1hour/killmail/row/' + killmail.killmail_id + '.html?v=' + www_server_started}));
-            promises.push(app.phin({url: 'http://localhost:' + process.env.PORT + '/killmail/' + killmail.killmail_id}));
+            promises.push(app.phin({url: 'http://localhost:' + process.env.PORT + '/kill/' + killmail.killmail_id}));
         }
         await app.waitfor(promises);
         promises.length = 0;

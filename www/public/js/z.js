@@ -188,7 +188,7 @@ function loadPage(url) {
     case "user":
         // TODO
         break;
-    case "killmail":
+    case "kill":
         var killmail_id = id;
         showSection('killmail');
         apply('killmail', '/cache/1hour/killmail/' + killmail_id + '.html?v=' + server_started);
