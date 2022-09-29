@@ -79,6 +79,7 @@ async function applyIndexes(app) {
     await create_collection(app, 'information');
     await createIndex(app, app.db.collection('information'), {type: 1});
     await createIndex(app, app.db.collection('information'), {id: 1}); 
+    await createIndex(app, app.db.collection('information'), {name: 1}); 
     await createIndex(app, app.db.collection('information'), {type: 1, id: 1}, {unique: true});
     await createIndex(app, app.db.collection('information'), {type: 1, last_updated: 1}, {});
     await createIndex(app, app.db.collection('information'), {last_updated: 1}, {});
