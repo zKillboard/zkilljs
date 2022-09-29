@@ -10,9 +10,10 @@ async function f(app) {
 
 	if (app.dbstats.total > 1000) return;
 
-	let iterator = await app.db.information.find({update_name: true}).limit(10000);
+	let iterator = await app.db.information.find({update_search: true}).limit(10000);
 	while (await iterator.hasNext()) {
 		if (app.bailout) break;
+
 		let row = await iterator.next();
 		try {
 		    if (row.type == 'war_id') continue;
@@ -32,8 +33,8 @@ async function f(app) {
 		    	await app.mysql.query('replace into autocomplete values (?, ?, ?, ?)', [row.type, row.id, searchname, row.ticker]);
 	    	}
 	    } finally {
-    		await app.db.information.updateOne({_id: row._id}, {$unset: {update_name: 1}});
-    	    }
+    		await app.db.information.updateOne({_id: row._id}, {$unset: {update_search: 1}});
+    	}
 	}
 	await iterator.close();
 }
