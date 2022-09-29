@@ -2,7 +2,8 @@
 
 module.exports = {
    paths: '/robots.txt',
-   get: get
+   get: get,
+   ttl: 60
 }
 
 async function get(req, res) {

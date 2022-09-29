@@ -2,7 +2,8 @@
 
 module.exports = {
    paths: '/cache/1hour/killmail/:id/remaining.html',
-   get: get
+   get: get,
+   ttl: 86400
 }
 
 async function get(req, res) {

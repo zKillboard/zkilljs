@@ -2,7 +2,8 @@
 
 module.exports = {
    paths: '/site/statistics/:type/:id.html',
-   get: get
+   get: get,
+   ttl: 900
 }
 
 async function get(req, res) {

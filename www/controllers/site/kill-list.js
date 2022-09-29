@@ -2,7 +2,8 @@
 
 module.exports = {
    paths: ['/site/killmails.json', '/cache/1hour/killmails.json'],
-   get: get
+   get: get,
+   ttl: 86400
 }
 
 let batch_size = 50;

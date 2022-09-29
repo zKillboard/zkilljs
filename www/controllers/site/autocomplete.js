@@ -2,7 +2,8 @@
 
 module.exports = {
    paths: '/cache/1hour/autocomplete/',
-   get: get
+   get: get,
+   ttl: 3600
 }
 
 async function get(req, res) {

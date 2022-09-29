@@ -2,7 +2,8 @@
 
 module.exports = {
    paths: '/site/information/:type/:id.html',
-   get: get
+   get: get,
+   ttl: 3600
 }
 
 let all_labels = {};

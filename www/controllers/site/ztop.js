@@ -2,7 +2,8 @@
 
 module.exports = {
    paths: '/site/ztop.txt',
-   get: get
+   get: get,
+   ttl: 1
 }
 
 const utf8 = require('utf8');

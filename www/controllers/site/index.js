@@ -3,7 +3,8 @@
 module.exports = {
    paths: ['/', '/:type/:id', '/:type/:id/'],
    get: get,
-   priority: 1
+   priority: 1,
+   ttl: 3600
 }
 
 async function get(req, res) {

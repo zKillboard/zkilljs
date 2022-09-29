@@ -2,7 +2,8 @@
 
 module.exports = {
    paths: ['/site/toptens.html', '/cache/1hour/toptens.html'],
-   get: get
+   get: get,
+   ttl: 900
 }
 
 let types = [
