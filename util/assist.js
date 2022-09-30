@@ -17,7 +17,7 @@ const esi_rate_intervals = {
 	1110 : 10, 	// 11:10am UTC
 	1800 : 5 	// 06:00pm UTC
 }
-let rate_limit = 0;
+let rate_limit = undefined;
 let rate_limit_override = parseInt(process.env.rate_limit_override);
 function doSetRateLimit() {
 	let d = new Date();
@@ -27,10 +27,9 @@ function doSetRateLimit() {
 		if (current_time >= time) calc_rate_limit = timed_rate_limit;
 	}
 	if (rate_limit_override > 0) calc_rate_limit = rate_limit_override;
-	if (rate_limit != calc_rate_limit) console.log('Setting ESI rate limit per second to', calc_rate_limit);
+	if (rate_limit !== calc_rate_limit) console.log('Setting ESI rate limit per second to', calc_rate_limit);
 	rate_limit = calc_rate_limit;
 }
-setInterval(doSetRateLimit, 1000);
 
 const assist = {
 	esi_result_handler: async function (app, res, url) {
@@ -71,11 +70,15 @@ const assist = {
 	},
 
 	get_rate_limit: function() {
+		if (rate_limit === undefined) {
+			doSetRateLimit();
+			setInterval(doSetRateLimit, 1000);
+		}
 		return rate_limit;
 	},
 
 	esi_limiter : async function (app) {
-		app.rate_limit = rate_limit;
+		app.rate_limit = this.get_rate_limit();
 		return await app.util.assist.limit_per_second(app, this.get_rate_limit);
 	},
 
