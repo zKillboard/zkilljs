@@ -2,9 +2,9 @@ var ws;
 var pageActive = Date.now();
 var subscribed_channels = [];
 var browserHistory = undefined;
-var jquery_loaded = false;
 var path_cache = {};
 var path_hash = {};
+var first_pageview = true;
 
 var timeouts = [];
 
@@ -50,24 +50,24 @@ function historyReady() {
     }
 }
 
-function is_jquery_loaded() {
-    if (typeof $ == 'function') {
-        jquery_loaded = true;
-        console.log('jquery loaded');
-    } else setTimeout(is_jquery_loaded, 1);
-}
-
 // Called at the end of this document since all js libraries are deferred
 function documentReady() {
+    detectAdblock().then((res) => {
+        if (res.uBlockOrigin === true || res.adblockPlus === true) {
+            console.log(res);
+            message = '<center>adblockers break how this site works - please disable them</center>';
+            document.documentElement.innerHTML = message;
+        } else prepPage();
+        $("#body").attr('style', '');
+    });
+}
+
+function prepPage() {
     page_reloaded = false;
     if (typeof Promise == 'undefined' || typeof fetch == 'undefined') {
         alert("This browser sucks, use a better one.");
         return;
     }
-
-    ws_connect();
-    is_jquery_loaded();
-    loadPage();
 
     $("#feedbutton").unbind().on('click', toggle_feed);
     $("#reset_filters").on('click', toggle_feed);
@@ -79,9 +79,6 @@ function documentReady() {
     $("#more_filters_button button").on('click', handle_extra_filters);
 
     $('.pagefilter').on('click', filter_pagenum);
-
-    historyReady();
-    toggleTooltips();
 
     window.addEventListener('online', connection_status_update);
     window.addEventListener('offline', connection_status_update);
@@ -99,6 +96,13 @@ function documentReady() {
             console.log(xhr);
         }
     });
+
+    ws_connect();
+    loadPage();
+
+    historyReady();
+    toggleTooltips();
+
     console.log("Page ready");
 }
 
@@ -200,6 +204,8 @@ function loadPage(url) {
         loadOverview(path, type, id);
         break;
     }
+    if (!first_pageview) gtag('pageview'); // to prevent double pageview on page loads
+    first_pageview = false;
 }
 
 function get_fetch_controller() {
@@ -1181,4 +1187,4 @@ function adjustDateHeaders() {
 }
 
 // Everything has loaded, let's go!
-documentReady();
+setTimeout(documentReady, 1);
