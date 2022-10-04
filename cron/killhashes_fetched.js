@@ -175,6 +175,7 @@ async function parse_mail(killhash) {
         killmail.sequence = sequence;
         involved.label = labels;
         killmail.involved = involved;
+        killmail.padhash = 'not set';
 
         await app.waitfor([remove_alltime, remove_recent, remove_week]);
 

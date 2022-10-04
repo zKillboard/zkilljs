@@ -62,6 +62,7 @@ async function discover_padhashes(app, year, month, day) {
 
 	let padding = 0;
 	for (let padhash of result) {
+		if (padhash == 'not set') continue; // they're not set, ignore them
 		match.padhash = padhash._id;
 		let killmails = await app.db.killmails.find(match).batchSize(100);
 		let count = 0;
