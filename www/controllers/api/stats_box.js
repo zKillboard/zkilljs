@@ -6,17 +6,15 @@ module.exports = {
 }
 
 
-async function getStats(req, res) {
+async function getStats(req, res, app) {
     let parsed = (req.params.type != 'label' ? parseInt(req.params.id) : req.params.id);
     req.params.id = parsed > 0 ? parsed : req.params.id;
-
-    const app = req.app.app;
 
     let query = {
         type: (req.params.type == 'label' ? 'label' : req.params.type + '_id'),
         id: (req.params.type == 'label' ? req.params.id : Math.abs(parseInt(req.params.id)))
     };
-    let result = await req.app.app.db.statistics.findOne(query);
+    let result = await app.db.statistics.findOne(query);
 
     var data = {};
     data.labels = {};

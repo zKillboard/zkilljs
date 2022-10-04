@@ -8,11 +8,9 @@ module.exports = {
 
 let all_labels = {};
 
-async function get(req, res) {
+async function get(req, res, app) {
     let valid = req.verify_query_params(req, {});
     if (valid !== true) return {redirect: valid};
-
-    const app = req.app.app;
 
     if (req.params.type != undefined) req.params.type = req.params.type.toLowerCase();
     if (req.params.type == 'label' && req.params.id != undefined) req.params.id = req.params.id.toLowerCase();
@@ -52,7 +50,7 @@ async function get(req, res) {
             label_name: query.id,
             all_labels: all_labels[query.type]
         }];
-    } else result = await req.app.app.db.information.find(query).toArray();
+    } else result = await app.db.information.find(query).toArray();
 
     result = result[0];
 

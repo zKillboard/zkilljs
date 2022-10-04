@@ -7,9 +7,7 @@ module.exports = {
    ttl: 3600
 }
 
-async function get(req, res) {
-    const app = req.app.app;
-
+async function get(req, res, app) {
     let type = req.params.type;
     let id = req.params.id;
 

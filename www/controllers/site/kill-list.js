@@ -24,9 +24,7 @@ function cleanupSequences() {
 }
 setInterval(cleanupSequences, 15000);
 
-async function get(req, res) {
-    const app = req.app.app;
-
+async function get(req, res, app) {
     let match = await app.util.match_builder(app, req, 'all');
 
     let record = await app.db.statistics.findOne({type: match.type, id: match.id});

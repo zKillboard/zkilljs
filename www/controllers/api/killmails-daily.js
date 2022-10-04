@@ -5,7 +5,7 @@ module.exports = {
    get: get
 }
 
-async function get(req, res) {
+async function get(req, res, app) {
     var valid = req.verify_query_params(req, {});
     if (valid !== true) return {redirect: valid};
 
@@ -41,7 +41,7 @@ async function get(req, res) {
         }
     }];
 
-    let result = await req.app.app.db.killmails.find(query)
+    let result = await app.db.killmails.find(query)
         .project({
             _id: 0,
             killmail_id: 1,

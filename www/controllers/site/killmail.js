@@ -6,9 +6,7 @@ module.exports = {
    ttl: 86400
 }
 
-async function get(req, res) {
-    const app = req.app.app;
-
+async function get(req, res, app) {
     var rawmail = await app.db.rawmails.findOne({
         killmail_id: Number.parseInt(req.params.id)
     });

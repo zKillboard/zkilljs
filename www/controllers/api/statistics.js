@@ -7,15 +7,14 @@ module.exports = {
 
 const utf8 = require('utf8');
 
-async function get(req, res) {
+async function get(req, res, app) {
     var valid = req.verify_query_params(req, {});
     if (valid !== true) return {redirect: valid};
-
 
     let parsed = parseInt(req.params.id);
     req.params.id = parsed > 0 ? parsed : req.params.id;
 
-    let result = await req.app.app.db.statistics.find({
+    let result = await app.db.statistics.find({
         type: req.params.type,
         id: req.params.id
     }).toArray();

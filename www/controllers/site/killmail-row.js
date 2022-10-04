@@ -6,9 +6,8 @@ module.exports = {
    ttl: 86400
 }
 
-async function get(req, res) {
+async function get(req, res, app) {
     var now = Date.now();
-    const app = req.app.app;
     var killmail_id = parseInt(req.params.id);
 
     let valid = {

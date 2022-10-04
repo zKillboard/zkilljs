@@ -6,13 +6,11 @@ module.exports = {
    ttl: 3600
 }
 
-async function get(req, res) {
+async function get(req, res, app) {
     let valid = req.verify_query_params(req, {
         query: 'string'
     });
     if (valid !== true) return {redirect: valid};
-
-    const app = req.app.app;
 
     const filter = req.query.query;
     let allresults = [];

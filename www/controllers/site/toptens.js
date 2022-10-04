@@ -24,9 +24,7 @@ let types = [
 // poor man's mutex
 let pmm = {};
 
-async function get(req, res) {
-    const app = req.app.app;
-
+async function get(req, res, app) {
     let match = await app.util.match_builder(app, req);
 
     let timestamp = app.now();
