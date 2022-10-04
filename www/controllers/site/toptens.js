@@ -3,7 +3,7 @@
 module.exports = {
    paths: ['/site/toptens.html', '/cache/1hour/toptens.html'],
    get: get,
-   ttl: 900
+   ttl: 300
 }
 
 let types = [
@@ -29,19 +29,30 @@ async function get(req, res) {
 
     let match = await app.util.match_builder(app, req);
 
-    let start_time = app.now();
-    let timestamp = start_time;
+    let timestamp = app.now();
     let mod = 300; // default, 5 minutes
 
+
+    let mods = (req.params.modifiers == undefined ? '' : req.params.modifiers).split(',');
     // Pull the stats record, do they have enough kills to warrant week long caches?
     let stats = app.db.statistics.findOne({type: match.type, id: match.id});
     let total = (stats.killed || 0) + (stats.lost || 0);
-    if (total > 1000000) mod = 86400 * 7;
-    else if (total >= 100000) mod = 86400;
-    else if (total < 1000) mod = 30;
-    else if (total < 100) mod = 15;
 
-    timestamp = timestamp - (timestamp % mod); // daily
+    for (let mod of mods) {
+        switch (mod) {
+            case 'weekly':
+                mod = 300; // default for all week long queries
+                break;
+            case 'alltime':
+                if (total > 1000000) mod = 86400 * 7;
+                else if (total >= 100000) mod = 86400;
+                else mod = 3600;
+                break;
+            default:
+                mod = 3600;
+        }
+    }
+    timestamp = timestamp - (timestamp % mod);
 
     let valid = {
         modifiers: 'string',
@@ -121,7 +132,7 @@ async function get(req, res) {
 
     return {
         package: ret,
-        ttl: 300,
+        ttl: mod,
         view: 'toptens.pug'
     };
 }
