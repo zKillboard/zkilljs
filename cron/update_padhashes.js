@@ -12,7 +12,7 @@ const group_cache = {};
 async function f(app) {
     while (app.bailout != true && app.zinitialized != true) await app.sleep(100);
 
-    let result = await app.db.killmails.find({padhash: {$exists: false}}).project({killmail_id: 1, epoch: 1}).sort({killmail_id: -1}).limit(5000);
+    let result = await app.db.killmails.find({padhash: 'not set'}).project({killmail_id: 1, epoch: 1}).sort({killmail_id: -1}).limit(5000);
 
     while (await result.hasNext()) {
         if (app.bailout) return;
