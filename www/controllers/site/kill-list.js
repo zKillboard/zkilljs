@@ -52,7 +52,6 @@ async function get(req, res) {
     if (valid !== true) {
         return {redirect: valid};
     }
-    console.log(match);
 
     let total_kl = (record.killed | 0) + (record.lost | 0);
 
