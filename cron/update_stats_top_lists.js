@@ -2,7 +2,7 @@
 
 module.exports = {
     exec: f,
-    span: 15,
+    span: -1
 }
 
 const types = [
