@@ -52,14 +52,14 @@ function historyReady() {
 
 // Called at the end of this document since all js libraries are deferred
 function documentReady() {
-    detectAdblock().then((res) => {
+    /*detectAdblock().then((res) => {
         if (res.uBlockOrigin === true || res.adblockPlus === true) {
             console.log(res);
-            message = '<center>adblockers break how this site works - please disable them</center>';
+            /*message = '<center>adblockers break how this site works - please disable them</center>';
             document.documentElement.innerHTML = message;
-        } else prepPage();
-        $("#body").attr('style', '');
-    });
+        } 
+    });*/
+    prepPage();
 }
 
 function prepPage() {
