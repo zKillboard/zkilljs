@@ -663,10 +663,11 @@ function ws_action(action, msg, iteration) {
         });
 
         if (action == 'sub') {
-            if (feedenabled || msg == 'zkilljs:public') {
+            if ((feedenabled || msg == 'zkilljs:public') && subscribed_channels.indexOf(msg) == -1) {
                 ws.send(text);
                 subscribed_channels.push(msg);
                 console.log('ws_action: ', action, msg);
+                console.log(subscribed_channels)
             }
         } else {
             ws.send(text);
