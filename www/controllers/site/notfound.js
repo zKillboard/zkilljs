@@ -7,5 +7,5 @@ module.exports = {
 }
 
 async function get(req, res) {
-   return res.redirect('./../');
+   return {redirect: './../'};
 }
