@@ -15,8 +15,9 @@ async function get(req, res, app) {
     });
     var km_date = new Date(killmail.epoch * 1000);
 
-    if (rawmail == null || killmail == null) return {status: 404};
+    if (rawmail == null || killmail == null) return {statusCode: 404};
 
+    let related = find_related_ship(app, rawmail);
     
     // Ensure the attackers array exists
     if (rawmail.attackers == undefined) rawmail.attackers = [];
@@ -150,6 +151,8 @@ async function get(req, res, app) {
     killmail.labels = killmail.involved.label;
     
     delete killmail.involved; // Not needed, present in rawmail 
+    killmail.related = await related;
+    console.log(killmail.related);
 
     var ret = {
         package: {
@@ -201,6 +204,26 @@ function get_all_items(arr) {
         }
     }
     return ret;
+}
+
+async function find_related_ship(app, rawmail) {
+    let match = {
+        'involved.character_id' : (-1 * Math.abs(rawmail.victim.character_id)),
+        'involved.category_id' : -6, // denotes a destroyed ship (not structures, fighters, etc)
+        killmail_id: {
+            '$gte': (rawmail.killmail_id - 200),
+            '$lte': (rawmail.killmail_id + 200),
+            '$ne': rawmail.killmail_id
+        }
+    }
+    let related = await app.db.killmails.findOne(match);
+    if (related == null) return {killmail_id : 0, item_id: 0, item_name: ''};
+    let item_id = Math.abs(related.involved.item_id.sort()[0]);
+    return {
+        killmail_id: related.killmail_id,
+        item_id: item_id,
+        item_name: await app.util.info.get_info_field(app, 'item_id', item_id, 'name')
+    }
 }
 
 const infernoFlags = new Map();

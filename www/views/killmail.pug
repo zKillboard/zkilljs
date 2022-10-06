@@ -28,6 +28,7 @@ div.row.m-0.p-0
 					+info_row_a('Corporation:', 'corporation', victim.corporation_id, victim.corporation_name)
 					+info_row_a('Alliance:', 'alliance', victim.alliance_id, victim.alliance_name)
 					+info_row_a('Faction:', 'faction', victim.faction_id, victim.faction_name)
+					+info_row_a('Related:', 'kill', killmail.related.killmail_id, killmail.related.item_name)
 					+info_row_a('Item:', 'item', victim.ship_type_id, victim.ship_type_name)
 					+info_row_a('Group:', 'group', victim.group_id, victim.group_name)
 					+info_row_a('System:', 'system', rawmail.solar_system_id, rawmail.solar_system_name, 'sec' + rawmail.solar_system_security_rounded)
