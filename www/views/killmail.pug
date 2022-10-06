@@ -30,7 +30,7 @@ div.row.m-0.p-0
 					+info_row_a('Faction:', 'faction', victim.faction_id, victim.faction_name)
 					+info_row_a('Item:', 'item', victim.ship_type_id, victim.ship_type_name)
 					+info_row_a('Group:', 'group', victim.group_id, victim.group_name)
-					+info_row_a('System:', 'system', rawmail.solar_system_id, rawmail.solar_system_name)
+					+info_row_a('System:', 'system', rawmail.solar_system_id, rawmail.solar_system_name, 'sec' + rawmail.solar_system_security_rounded)
 					+info_row_a('Constellation:', 'constellation', rawmail.constellation_id, rawmail.constellation_name)
 					+info_row_a('Region:', 'region', rawmail.region_id, rawmail.region_name)
 					+info_row_a('Location:', 'location', rawmail.location_id, rawmail.location_name)
