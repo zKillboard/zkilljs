@@ -73,6 +73,8 @@ async function get(req, res, app) {
     };
 
     ret.package = await app.util.info.fill(app, ret.package);
+    delete ret.package.solar_system_security_status; // don't display this for systems as "Security"
+    delete ret.package.security_status; // don't display this for systems as "Security"
     ret.package[req.params.type + '_id'] = ret.package.id;
     ret.package[req.params.type + '_name'] = ret.package.name;
 

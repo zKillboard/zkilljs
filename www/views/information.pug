@@ -18,8 +18,8 @@ ul#info-box
 			if inactive == false
 				+info_row('Members:', member_count, 'integer')
 			+info_row('Founded:', founded)
-			+info_row_a('Location: ', 'location', location_id, location_name)
-			+info_row_a('System:', 'system', solar_system_id, solar_system_name)
+			+info_row_a('Location:', 'location', location_id, location_name)
+			+info_row_a('System:', 'system', solar_system_id, solar_system_name, 'sec' + solar_system_security_rounded)
 			+info_row_a('Constellation:', 'constellation', constellation_id, constellation_name)
 			+info_row_a('Region:', 'region', region_id, region_name)
 			+info_row('Security:', security_status, 'decimal')

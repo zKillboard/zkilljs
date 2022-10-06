@@ -7,12 +7,10 @@ const info_fill = {
         if (object == undefined) return object;
         
         // Check for solar system and pre-fill const and region ID's
-        if (object.solar_system_id !== undefined) {
-            /*var constellation = await app.db.util.info(app, 'constellation_id', object.constellation_id);
-            if (constellation != undefined) {
-                object.constellation_id = constellation.id;
-                object.region_id = constellation.region_id;
-            }*/
+        if (object.system_id !== undefined) {
+            console.log(object);
+            let region_id = await app.util.info.get_info_field(app, 'constellation_id', object.constellation_id, 'region_id');
+            if (region_id) object.region_id = region_id;
         }
 
         let keys = Object.keys(object);
@@ -28,6 +26,9 @@ const info_fill = {
     		else {
     			// Step 1, we'll populate names here
     			switch (key) {
+                    case 'system_id':
+                        key = 'solar_system_id';
+                        // Purposeful fall through
                     case 'solar_system_id':
                         record = await app.util.info.get_info(app, key, o, true);
                         if (record != null && record.name != undefined) {
