@@ -3,7 +3,7 @@
 module.exports = {
     exec: f,
     span: 86400,
-    offset: -39720 // run during downtime
+    offset: 39660 // run during downtime
 }
 
 // the padding label will be applied to any ships that is the 5th or higher ship to have an equivalent padhash for a day
@@ -14,25 +14,32 @@ async function f(app) {
 	try {
 		app.padhash_checking = false;
 		console.log('Padhash triggers activating...')
-		await discover_years(app);
+		let padding = await discover_years(app);
+		if (padding > 0) await app.db.statistics.updateOne({type: 'label', id: 'id'}, {$set: {reset: true}});
 	} finally {
 		app.padhash_checking = false;
 	}
 }
 
 async function discover_years(app) {
+	let padding = 0;
 	let years = (await app.db.killmails.distinct('year')).sort().reverse();
-	for (let year of years) await discover_months(app, year);
+	for (let year of years) padding += await discover_months(app, year);
+	return padding;
 }
 
 async function discover_months(app, year) {
+	let padding = 0;
 	let months = (await app.db.killmails.distinct('month', {year: year})).sort().reverse();
-	for (let month of months) await discover_days(app, year, month);
+	for (let month of months) padding += await discover_days(app, year, month);
+	return padding;
 }
 
 async function discover_days(app, year, month) {
+	let padding = 0;
 	let days = (await app.db.killmails.distinct('day', {year: year, month: month})).sort().reverse();
-	for (let day of days) await discover_padhashes(app, year, month, day);
+	for (let day of days) padding += await discover_padhashes(app, year, month, day);
+	return padding;
 }
 
 async function discover_padhashes(app, year, month, day) {
@@ -99,6 +106,7 @@ async function discover_padhashes(app, year, month, day) {
 	}
 	if (padding > 0) console.log(year, month, day, 'has', padding.toLocaleString(), 'killmails marked as padding');
 	await app.redis.hset('zkb:padmapcount', rkey, count);
+	return padding;
 }
 
 function add2Set(set, arr) {
